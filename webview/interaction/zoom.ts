@@ -1,6 +1,7 @@
 // Pan and zoom with d3-zoom on the root <svg>; the diagram lives in a <g> that gets the transform.
 import { select, type Selection } from "d3-selection";
 import { zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } from "d3-zoom";
+import { FIT_MAX_SCALE } from "../render/geometry";
 
 export class ZoomController {
   private readonly behavior: ZoomBehavior<SVGSVGElement, unknown>;
@@ -36,7 +37,7 @@ export class ZoomController {
     const vw = Math.max(rect.width, 10);
     const vh = Math.max(rect.height, 10);
     const pad = 16;
-    const scale = Math.min((vw - pad * 2) / Math.max(contentWidth, 1), (vh - pad * 2) / Math.max(contentHeight, 1), 2);
+    const scale = Math.min((vw - pad * 2) / Math.max(contentWidth, 1), (vh - pad * 2) / Math.max(contentHeight, 1), FIT_MAX_SCALE);
     const tx = (vw - contentWidth * scale) / 2;
     const ty = (vh - contentHeight * scale) / 2;
     const t = zoomIdentity.translate(tx, ty).scale(scale);

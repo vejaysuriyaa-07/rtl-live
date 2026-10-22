@@ -1,0 +1,55 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "en",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "d",
+      "direction": "input",
+      "width": 4
+    },
+    {
+      "name": "q",
+      "direction": "output",
+      "width": 4
+    }
+  ],
+  "structural": {
+    "always": 1,
+    "assigns": 0
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "dff": 1,
+        "mux": 0
+      },
+      "nodes": [
+        {
+          "kind": "dff",
+          "op": "dffe",
+          "width": 4,
+          "pins": [
+            {
+              "id": "EN",
+              "net": "en"
+            },
+            {
+              "id": "CLK",
+              "net": "clk"
+            }
+          ]
+        }
+      ],
+      "noUnknown": true
+    }
+  }
+}

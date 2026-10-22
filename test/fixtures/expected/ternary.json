@@ -1,0 +1,53 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "s",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 8
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 8
+    },
+    {
+      "name": "y",
+      "direction": "output",
+      "width": 8
+    }
+  ],
+  "structural": {
+    "always": 0,
+    "assigns": 1
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "mux": 1
+      },
+      "nodes": [
+        {
+          "kind": "mux",
+          "width": 8,
+          "pinLabels": [
+            "0",
+            "1"
+          ],
+          "pins": [
+            {
+              "id": "S",
+              "net": "s"
+            }
+          ]
+        }
+      ],
+      "noUnknown": true
+    }
+  }
+}

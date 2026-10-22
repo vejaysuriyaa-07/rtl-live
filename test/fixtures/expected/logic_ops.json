@@ -1,0 +1,65 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "y_and",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "y_or",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "y_not",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "always": 0,
+    "assigns": 3
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "gate": 3
+      },
+      "nodes": [
+        {
+          "kind": "gate",
+          "op": "and",
+          "info": {
+            "logical": "1"
+          }
+        },
+        {
+          "kind": "gate",
+          "op": "or",
+          "info": {
+            "logical": "1"
+          }
+        },
+        {
+          "kind": "gate",
+          "op": "not",
+          "info": {
+            "logical": "1"
+          }
+        }
+      ],
+      "noUnknown": true
+    }
+  }
+}

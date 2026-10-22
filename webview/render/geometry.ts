@@ -6,6 +6,10 @@ export const PIN_PITCH = 16;
 export const PORT_NODE_HEIGHT = 20;
 export const GATE_W = 48;
 export const GATE_H = 30;
+/** Fit never zooms past this factor (text keeps its designed size; 1 means at most 100%). */
+export const FIT_MAX_SCALE = 2;
+/** Nominal sidebar viewport used by the layout checks and the Playwright harness. */
+export const NOMINAL_VIEWPORT = { width: 900, height: 600 };
 
 export function textWidth(s: string, charW = CHAR_W): number {
   return Math.ceil(s.length * charW);

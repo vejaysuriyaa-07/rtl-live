@@ -80,6 +80,10 @@ export interface NodeCheck {
   info?: Record<string, string>;
   infoContains?: Record<string, string>;
   warnings?: string[];
+  /** Labels of the input pins, in order (e.g. mux select values) */
+  pinLabels?: string[];
+  /** Pin ids that must not exist (e.g. no CLK on a latch) */
+  noPins?: string[];
 }
 
 const LOGIC_KINDS = new Set(["gate", "reduce", "mux", "pmux", "dff", "arith", "compare", "shift", "unknown"]);
@@ -104,6 +108,11 @@ function nodeMatches(n: Node, c: NodeCheck): boolean {
   if (c.warnings !== undefined && JSON.stringify(n.warnings ?? []) !== JSON.stringify(c.warnings)) return false;
   if (c.info !== undefined) for (const [k, v] of Object.entries(c.info)) if (n.info?.[k] !== v) return false;
   if (c.infoContains !== undefined) for (const [k, v] of Object.entries(c.infoContains)) if (!(n.info?.[k] ?? "").includes(v)) return false;
+  if (c.pinLabels !== undefined) {
+    const labels = n.pins.filter((p) => p.direction === "in" && p.label !== "").map((p) => p.label);
+    if (JSON.stringify(labels) !== JSON.stringify(c.pinLabels)) return false;
+  }
+  if (c.noPins) for (const id of c.noPins) if (n.pins.some((p) => p.id === id)) return false;
   if (c.pins) {
     for (const pc of c.pins) {
       const p = n.pins.find((x) => x.id === pc.id);

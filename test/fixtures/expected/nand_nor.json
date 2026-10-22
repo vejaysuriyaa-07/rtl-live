@@ -1,0 +1,63 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "c",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "y1",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "y2",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "y3",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "always": 0,
+    "assigns": 3
+  },
+  "synth": {
+    "raw": {
+      "count": {
+        "gate:not": 3
+      }
+    },
+    "simplified": {
+      "count": {
+        "gate:nand": 1,
+        "gate:nor": 1,
+        "gate:xnor": 1,
+        "gate:not": 0
+      },
+      "gateInputs": {
+        "gate:nand": [
+          3
+        ],
+        "gate:nor": [
+          3
+        ]
+      },
+      "logicNodes": 3
+    }
+  }
+}
