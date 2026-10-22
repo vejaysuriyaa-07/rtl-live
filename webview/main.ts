@@ -159,6 +159,7 @@ function handle(msg: HostToWebview): void {
   switch (msg.type) {
     case "render": {
       const topChanged = state.doc?.top !== msg.doc.top || state.doc?.sourceUri !== msg.doc.sourceUri;
+      if (state.doc?.sourceUri !== msg.doc.sourceUri) log("info", `showing ${msg.doc.sourceUri}`);
       state.doc = msg.doc;
       if (topChanged) state.stack = [];
       // Drop drill-down entries that no longer exist.

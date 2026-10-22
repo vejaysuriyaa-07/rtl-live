@@ -82,3 +82,79 @@ suite("M8 editing", () => {
     await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
   });
 });
+
+suite("M8 error messages", () => {
+  async function bannerAfter(api: Awaited<ReturnType<typeof getApi>>, docUri: string, edit: () => Thenable<boolean>, expectMessage: RegExp): Promise<{ message: string; line?: number; column?: number }> {
+    const ok = await edit();
+    assert.ok(ok, "edit failed");
+    return waitFor(`banner matching ${expectMessage}`, 10_000, () => {
+      const e = api.provider.lastError;
+      return e && expectMessage.test(e.message) && api.controller.lastRenderEvent?.doc.sourceUri === docUri ? e : undefined;
+    });
+  }
+
+  test("bug 3: messages say what is missing and point at the right line, including the end of the file", async function () {
+    this.timeout(120_000);
+    const api = await getApi();
+    await vscode.commands.executeCommand("workbench.view.extension.rtlLive");
+    await withTimeout(api.whenReady(), 10_000, "webview ready");
+    const { doc, editor } = await openFixture("7458.v");
+    await api.nextRender((e) => e.doc.sourceUri === doc.uri.toString(), 10_000);
+    const uri = doc.uri.toString();
+    // 1. Remove the ';' of "assign w1 = p2a & p2b;" (line 5).
+    const l5 = doc.lineAt(4).text;
+    const semi = l5.lastIndexOf(";");
+    let e = await bannerAfter(api, uri, () => editor.edit((b) => b.delete(new vscode.Range(4, semi, 4, semi + 1))), /^missing ';'$/);
+    assert.strictEqual(e.line, 5);
+    assert.strictEqual(e.column, semi + 1);
+    await vscode.commands.executeCommand("undo");
+    await waitFor("clean again", 10_000, () => (api.provider.lastError === null ? true : undefined));
+    // 2. Remove endmodule: the message points at the end of the file.
+    const endLine = doc.getText().split("\n").findIndex((l) => l.startsWith("endmodule"));
+    e = await bannerAfter(api, uri, () => editor.edit((b) => b.delete(new vscode.Range(endLine, 0, endLine, "endmodule".length))), /^missing endmodule$/);
+    assert.strictEqual(e.line, endLine, "points at the last line with code");
+    await vscode.commands.executeCommand("undo");
+    await waitFor("clean again", 10_000, () => (api.provider.lastError === null ? true : undefined));
+    // 3. Break the port list: drop the closing ')' of the header (line 3 ends with "output p2y);").
+    const l3 = doc.lineAt(2).text;
+    const paren = l3.lastIndexOf(")");
+    e = await bannerAfter(api, uri, () => editor.edit((b) => b.delete(new vscode.Range(2, paren, 2, paren + 2))), /missing '\)' to close the port list/);
+    assert.strictEqual(e.line, 3);
+    // Ports recovered from the broken header are still drawn, greyed out.
+    const last = api.provider.lastRenderMessage;
+    assert.ok(last && last.type === "render");
+    const ports = last.doc.modules["top_module"]!.ports;
+    assert.ok(ports.some((p) => p.name === "p2y"), "p2y still listed");
+    assert.ok(ports.some((p) => p.tentative), "a recovered port is marked tentative");
+    await vscode.commands.executeCommand("undo");
+    await waitFor("clean again", 10_000, () => (api.provider.lastError === null ? true : undefined));
+    // 4. Drop an operand: "assign w1 = p2a & ;" is a missing operand after '&'.
+    const amp = doc.lineAt(4).text.indexOf("& p2b");
+    e = await bannerAfter(api, uri, () => editor.edit((b) => b.delete(new vscode.Range(4, amp + 1, 4, amp + 5))), /^missing operand after '&'$/);
+    assert.strictEqual(e.line, 5);
+    await vscode.commands.executeCommand("undo");
+    await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
+  });
+});
+
+suite("M8 tab switching", () => {
+  test("after many edits in one file, a freshly opened file still reaches the view", async function () {
+    this.timeout(120_000);
+    const api = await getApi();
+    await vscode.commands.executeCommand("workbench.view.extension.rtlLive");
+    await withTimeout(api.whenReady(), 10_000, "webview ready");
+    const a = await openFixture("wire4.v");
+    await api.nextRender((e) => e.doc.sourceUri === a.doc.uri.toString(), 10_000);
+    for (let i = 0; i < 12; i++) {
+      await a.editor.edit((b) => b.insert(new vscode.Position(a.doc.lineCount, 0), `// e${i}\n`));
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    await new Promise((r) => setTimeout(r, 300));
+    const b = await openFixture("notgate.v");
+    const t0 = Date.now();
+    await waitFor("the view to show notgate.v", 5000, () => (api.provider.webviewLogs.some((l) => l === `showing ${b.doc.uri.toString()}`) ? true : undefined));
+    assert.ok(Date.now() - t0 < 2000, "switching tabs took too long");
+    await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
+    await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
+  });
+});

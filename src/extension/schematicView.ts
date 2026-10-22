@@ -3,7 +3,7 @@
 // generations are attached consistently.
 import * as vscode from "vscode";
 import { buildFallbackHtml, buildWebviewHtml, makeNonce } from "./webviewHtml";
-import { isWebviewToHost, type HintInfo, type HostToWebview, type WebviewToHost } from "../shared/protocol";
+import { isWebviewToHost, type BannerError, type HintInfo, type HostToWebview, type WebviewToHost } from "../shared/protocol";
 import { DEFAULT_LIFECYCLE, WebviewLifecycle, type LifecycleOptions } from "./lifecycle";
 import { log } from "./log";
 
@@ -51,6 +51,12 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
   breakHtmlLoads = 0;
   /** Count of render messages actually posted to a webview (tests check replay) */
   postedRenders = 0;
+  /**
+   * Every posted message gets the next number from this counter. The webview drops anything
+   * older than the last message it handled, so the order must be global: scheduler generations
+   * are per document, and a fresh file would otherwise lose to a long-edited one.
+   */
+  private postSeq = 0;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -203,6 +209,12 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
     this.dispatch(raw, t, t.webview);
   }
 
+  /** The last error banner posted (null when cleared, undefined when never posted). */
+  get lastError(): BannerError | null | undefined {
+    const m = this.lastMessages.get("error");
+    return m && m.type === "error" ? m.error : undefined;
+  }
+
   /** The last hint posted (null when cleared, undefined when never posted). */
   get lastHint(): HintInfo | null | undefined {
     const m = this.lastMessages.get("hint");
@@ -231,7 +243,8 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
           target.fallback = false;
           target.lifecycle.ready();
           log.info(`${target.kind} webview ready, replaying ${this.lastMessages.size} message(s)`);
-          for (const m of this.lastMessages.values()) {
+          // Oldest first, so the page's order check accepts every one of them.
+          for (const m of [...this.lastMessages.values()].sort((a, b) => a.generation - b.generation)) {
             if (m.type === "render") this.postedRenders++;
             void webview.postMessage(m);
           }
@@ -269,7 +282,8 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
   }
 
   /** Post to every live webview; remembers the latest message per type for late-ready webviews. */
-  post(msg: HostToWebview): void {
+  post(message: HostToWebview): void {
+    const msg: HostToWebview = { ...message, generation: ++this.postSeq };
     // "render" and "status" are replayable state; transient commands are not.
     if (msg.type === "render" || msg.type === "status" || msg.type === "error" || msg.type === "theme" || msg.type === "hint") {
       this.lastMessages.set(msg.type, msg);
