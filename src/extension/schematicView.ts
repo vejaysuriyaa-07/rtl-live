@@ -33,6 +33,10 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
   readonly webviewLogs: string[] = [];
   private readonly logEmitter = new vscode.EventEmitter<string>();
   readonly onWebviewLog = this.logEmitter.event;
+  /** Ids the webview last highlighted for the editor cursor */
+  lastHighlighted: string[] = [];
+  private readonly highlightEmitter = new vscode.EventEmitter<string[]>();
+  readonly onDidHighlight = this.highlightEmitter.event;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -88,14 +92,49 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
   private setup(target: Target, webview: vscode.Webview): void {
     webview.options = { enableScripts: true, localResourceRoots: this.resourceRoots() };
     const nonce = makeNonce();
-    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "webview.js")).toString();
-    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "webview.css")).toString();
-    const elkWorkerUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "elkWorker.js")).toString();
-    webview.html = buildWebviewHtml({ cspSource: webview.cspSource, nonce, scriptUri, styleUri, elkWorkerUri });
+    const scriptUri = webview
+      .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "webview.js"))
+      .toString();
+    const styleUri = webview
+      .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "webview.css"))
+      .toString();
+    const elkWorkerUri = webview
+      .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "elkWorker.js"))
+      .toString();
+    webview.html = buildWebviewHtml({
+      cspSource: webview.cspSource,
+      nonce,
+      scriptUri,
+      styleUri,
+      elkWorkerUri,
+    });
     target.disposables.push(
-      webview.onDidReceiveMessage((raw: unknown) => {
+      webview.onDidReceiveMessage((raw: unknown) => this.dispatch(raw, target, webview)),
+    );
+  }
+
+  /** Test hook: feed a message as if the sidebar webview had posted it. */
+  simulateWebviewMessage(raw: unknown): void {
+    const t = this.sidebar ?? this.panel?.target;
+    if (!t) throw new Error("no webview to simulate on");
+    this.dispatch(raw, t, t.webview);
+  }
+
+  /** The last render message posted (or queued for a late webview). */
+  get lastRenderMessage(): HostToWebview | undefined {
+    return this.lastMessages.get("render");
+  }
+
+  private dispatch(raw: unknown, target: Target, webview: vscode.Webview): void {
+    {
+      {
         if (!isWebviewToHost(raw)) {
           log.warn(`Dropped malformed webview message: ${JSON.stringify(raw).slice(0, 200)}`);
+          return;
+        }
+        if (raw.type === "highlighted") {
+          this.lastHighlighted = raw.ids;
+          this.highlightEmitter.fire(raw.ids);
           return;
         }
         if (raw.type === "ready") {
@@ -122,8 +161,8 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
             log.error("Webview message handler threw", e);
           }
         }
-      }),
-    );
+      }
+    }
   }
 
   /** Post to every live webview; remembers the latest message per type for late-ready webviews. */
@@ -154,5 +193,6 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
     this.resolvedEmitter.dispose();
     this.readyEmitter.dispose();
     this.logEmitter.dispose();
+    this.highlightEmitter.dispose();
   }
 }

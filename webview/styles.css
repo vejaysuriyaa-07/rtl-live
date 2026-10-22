@@ -252,6 +252,14 @@ body.stale .schematic .viewport {
   opacity: 0.75;
 }
 
+/* Theme hooks: colours come from VS Code variables; only contrast tweaks live here. */
+body[data-theme="highContrast"] .schematic .body,
+body[data-theme="highContrast"] .schematic .gate-body,
+body[data-theme="highContrastLight"] .schematic .body,
+body[data-theme="highContrastLight"] .schematic .gate-body {
+  stroke-width: 2;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .schematic .node,
   .schematic .port {

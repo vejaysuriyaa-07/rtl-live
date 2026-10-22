@@ -6,6 +6,8 @@ import { ElkRunner } from "./layout/elkRunner";
 import { moduleToElk } from "./layout/toElk";
 import { renderModule } from "./render/svg";
 import { ZoomController } from "./interaction/zoom";
+import { applyCursorHighlight, type Cursor } from "./interaction/highlight";
+import { capturePositions, tweenFrom } from "./interaction/animate";
 import { Chrome } from "./ui/chrome";
 import "./styles.css";
 
@@ -29,6 +31,8 @@ const zoomer = new ZoomController(svg, viewport);
 
 let renderSeq = 0;
 let lastRendered: { width: number; height: number; module: string } | undefined;
+let cursor: Cursor | null = null;
+let tweened = 0;
 
 const chrome = new Chrome(app, {
   onFit: () => fit(true),
@@ -85,12 +89,20 @@ async function render(fitNow: boolean): Promise<void> {
     log("error", `layout failed: ${e instanceof Error ? e.message : String(e)}`);
     return;
   }
-  viewport.innerHTML = rendered.inner;
   const moduleChanged = lastRendered?.module !== name;
+  const previous = moduleChanged ? new Map() : capturePositions(viewport);
+  viewport.innerHTML = rendered.inner;
+  tweened = tweenFrom(viewport, previous);
   lastRendered = { width: rendered.width, height: rendered.height, module: name };
   if (fitNow || moduleChanged || !state.fitted) fit(false);
   wireInteractions();
+  highlightCursor();
   persist();
+}
+
+function highlightCursor(): void {
+  const ids = applyCursorHighlight(viewport, cursor);
+  postToHost({ type: "highlighted", generation: state.generation, ids });
 }
 
 function wireInteractions(): void {
@@ -175,6 +187,8 @@ function handle(msg: HostToWebview): void {
       }
       break;
     case "cursor":
+      cursor = msg.cursor;
+      highlightCursor();
       break;
   }
 }
@@ -212,5 +226,5 @@ try {
 } catch {
   // ignore
 }
-window.__rtlLiveTestHooks = { ...(window.__rtlLiveTestHooks ?? {}), state, elk };
+window.__rtlLiveTestHooks = { ...(window.__rtlLiveTestHooks ?? {}), state, elk, tweenCount: () => tweened };
 postToHost({ type: "ready", generation: 0 });

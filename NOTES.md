@@ -155,3 +155,21 @@ Status: done
 Verified:
 - `npm test`: 272 tests. mux2_always, module_shift8, dff_async, counter4, shift4, fsm_moore and arith_compare pass their expectations; with `opt -fast` on and off no unknown-cell boxes appear for any of them.
 - Playwright (32 passing): `artifacts/m5-*.png`; counter4 has a DFF with a clock triangle, an adder and a mux; the fsm_moore DFF tooltip lists `states: A = 1'b0, B = 1'b1`.
+
+## M6: UX polish
+
+Status: done
+
+- Cursor linking: every node, port and net element carries `data-src="l:c:el:ec;..."` (all source ranges, so a merged 3-input AND lights up for any of its original expressions). The webview toggles `.highlight` on cursor messages and posts a `highlighted` message with the ids, which the integration test reads through `provider.lastHighlighted`.
+- Click on a node or port posts `revealSource`; the host moves the selection and reveals the range. `provider.simulateWebviewMessage` is a test hook that runs the same dispatch path as a real webview message.
+- Stale handling: deleting `endmodule` leaves the synthesized diagram on screen (the host does not send a structural render once a document has a synthesized one), status turns to "Stale" with the first error in the banner (clicking it jumps to the line); undo resynthesizes from the cache.
+- Theme: colours come only from VS Code CSS variables; the host posts the theme kind on activation and `onDidChangeActiveColorTheme`, which only sets `body[data-theme]` (high-contrast gets thicker strokes). Light, dark and high-contrast screenshots under `artifacts/m6-*-{light,dark,hc}.png` use the Playwright harness variable sets.
+- Animation: nodes and ports that moved between renders tween for 150 ms with a CSS transform that undoes the move and transitions back; skipped under `prefers-reduced-motion`. Could not be verified visually headlessly; the code path runs in every Playwright re-render.
+- Export: SVG is self-contained (resolved theme variables and the schematic rules are inlined, background rect added); PNG renders the SVG at 2x into a canvas. The exported SVG parses as XML in Chromium with no `http(s)://`, `url(`, `xlink:href`, `<link>`, `<script>` or `@import` besides the SVG namespace. Saved files go through `showSaveDialog` next to the source file.
+- "Open in editor panel" reuses `dist/webview.js` in a `WebviewPanel`; both webviews receive every message and replay the last render/status/error/theme when they become ready.
+- Keys: `f` fit, `+`/`=` and `-` zoom, `Backspace` drill up.
+
+Verified:
+- Integration (8 passing): cursor on `assign out = ~in` highlights `gate:not:...`; moving to line 1 clears it; `revealSource` moves the selection to line 9 columns 16..23 of 7458.v; deleting `endmodule` gives status stale while the last render message still holds the synthesized 6-node diagram, and undo returns to synthesized.
+- Playwright (47 passing in all): theme screenshots, export SVG XML check (`artifacts/m6-7458-export.svg`), cursor highlight of the OR gate on line 9, keyboard zoom and fit.
+- `npm test`: 272 tests.

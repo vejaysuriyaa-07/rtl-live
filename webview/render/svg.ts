@@ -45,7 +45,8 @@ function index(layout: ElkGraphOut): Indexed {
 function srcAttr(src: { line: number; column: number; endLine: number; endColumn: number }[]): string {
   const s = src[0];
   if (!s) return "";
-  return ` data-line="${s.line}" data-column="${s.column}" data-end-line="${s.endLine}" data-end-column="${s.endColumn}"`;
+  const all = src.map((r) => `${r.line}:${r.column}:${r.endLine}:${r.endColumn}`).join(";");
+  return ` data-line="${s.line}" data-column="${s.column}" data-end-line="${s.endLine}" data-end-column="${s.endColumn}" data-src="${all}"`;
 }
 
 function renderPortNode(port: Port, n: ElkNodeOut): string {

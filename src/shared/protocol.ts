@@ -49,7 +49,8 @@ export type WebviewToHost =
   | { type: "export"; generation: number; format: "svg" | "png"; data: string }
   | { type: "revealError"; generation: number; line: number; column: number }
   | { type: "openInPanel"; generation: number }
-  | { type: "drill"; generation: number; module: string };
+  | { type: "drill"; generation: number; module: string }
+  | { type: "highlighted"; generation: number; ids: string[] };
 
 const HOST_TYPES: ReadonlySet<string> = new Set([
   "render",
@@ -71,6 +72,7 @@ const WEBVIEW_TYPES: ReadonlySet<string> = new Set([
   "revealError",
   "openInPanel",
   "drill",
+  "highlighted",
 ]);
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -99,6 +101,8 @@ export function isWebviewToHost(x: unknown): x is WebviewToHost {
       return typeof x["top"] === "string";
     case "drill":
       return typeof x["module"] === "string";
+    case "highlighted":
+      return Array.isArray(x["ids"]) && (x["ids"] as unknown[]).every((i) => typeof i === "string");
     case "export":
       return typeof x["data"] === "string" && (x["format"] === "svg" || x["format"] === "png");
     default:
