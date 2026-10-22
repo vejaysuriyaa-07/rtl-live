@@ -28,7 +28,7 @@
     }
   ],
   "synth": {
-    "simplified": {
+    "rtl": {
       "logicNodes": 0,
       "minCount": {
         "split": 1

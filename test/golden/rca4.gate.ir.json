@@ -1,0 +1,1472 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "fa",
+    "top_module"
+  ],
+  "modules": {
+    "fa": {
+      "name": "fa",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "gate:and:3aea75995e",
+              "pin": "A"
+            },
+            {
+              "node": "gate:and:5bd91b22a6",
+              "pin": "A"
+            },
+            {
+              "node": "gate:xor:6cc329b009",
+              "pin": "I0"
+            }
+          ],
+          "src": [
+            {
+              "column": 17,
+              "endColumn": 18,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "gate:and:3aea75995e",
+              "pin": "B"
+            },
+            {
+              "node": "gate:and:7347166216",
+              "pin": "A"
+            },
+            {
+              "node": "gate:xor:6cc329b009",
+              "pin": "I1"
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 21,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:cin",
+            "pin": "cin"
+          },
+          "id": "net:cin",
+          "name": "cin",
+          "sinks": [
+            {
+              "node": "gate:and:5bd91b22a6",
+              "pin": "B"
+            },
+            {
+              "node": "gate:and:7347166216",
+              "pin": "B"
+            },
+            {
+              "node": "gate:xor:6cc329b009",
+              "pin": "I2"
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 26,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:and:3aea75995e",
+            "pin": "Y"
+          },
+          "id": "net:gate:and:3aea75995e.Y",
+          "sinks": [
+            {
+              "node": "gate:or:ddd810a857",
+              "pin": "I0"
+            }
+          ],
+          "src": [
+            {
+              "column": 18,
+              "endColumn": 23,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:and:5bd91b22a6",
+            "pin": "Y"
+          },
+          "id": "net:gate:and:5bd91b22a6.Y",
+          "sinks": [
+            {
+              "node": "gate:or:ddd810a857",
+              "pin": "I1"
+            }
+          ],
+          "src": [
+            {
+              "column": 28,
+              "endColumn": 35,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:and:7347166216",
+            "pin": "Y"
+          },
+          "id": "net:gate:and:7347166216.Y",
+          "sinks": [
+            {
+              "node": "gate:or:ddd810a857",
+              "pin": "I2"
+            }
+          ],
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 47,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:or:ddd810a857",
+            "pin": "Y"
+          },
+          "id": "net:cout",
+          "name": "cout",
+          "sinks": [
+            {
+              "node": "port:cout",
+              "pin": "cout"
+            }
+          ],
+          "src": [
+            {
+              "column": 38,
+              "endColumn": 42,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:xor:6cc329b009",
+            "pin": "Y"
+          },
+          "id": "net:s",
+          "name": "s",
+          "sinks": [
+            {
+              "node": "port:s",
+              "pin": "s"
+            }
+          ],
+          "src": [
+            {
+              "column": 35,
+              "endColumn": 36,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "gate:and:3aea75995e",
+          "kind": "gate",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:gate:and:3aea75995e.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 18,
+              "endColumn": 23,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:and:5bd91b22a6",
+          "kind": "gate",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:cin",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:gate:and:5bd91b22a6.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 28,
+              "endColumn": 35,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:and:7347166216",
+          "kind": "gate",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:cin",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:gate:and:7347166216.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 47,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:or:ddd810a857",
+          "kind": "gate",
+          "label": "OR",
+          "op": "or",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "I0",
+              "label": "",
+              "net": "net:gate:and:3aea75995e.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "I1",
+              "label": "",
+              "net": "net:gate:and:5bd91b22a6.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "I2",
+              "label": "",
+              "net": "net:gate:and:7347166216.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:cout",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 17,
+              "endColumn": 48,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:xor:6cc329b009",
+          "kind": "gate",
+          "label": "XOR",
+          "op": "xor",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "I0",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "I1",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "I2",
+              "label": "",
+              "net": "net:cin",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:s",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 17,
+              "endColumn": 28,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "src": [
+            {
+              "column": 17,
+              "endColumn": 18,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 21,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "cin",
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 26,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "s",
+          "src": [
+            {
+              "column": 35,
+              "endColumn": 36,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "cout",
+          "src": [
+            {
+              "column": 38,
+              "endColumn": 42,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 2
+      }
+    },
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "split:net:a",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "split:net:b",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "port:cin",
+            "pin": "cin"
+          },
+          "id": "net:cin",
+          "name": "cin",
+          "sinks": [
+            {
+              "node": "inst:f0",
+              "pin": "cin"
+            }
+          ],
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 46,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:f0",
+            "pin": "cout"
+          },
+          "id": "net:c1",
+          "name": "c1",
+          "sinks": [
+            {
+              "node": "inst:f1",
+              "pin": "cin"
+            }
+          ],
+          "src": [
+            {
+              "column": 8,
+              "endColumn": 10,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:f0",
+            "pin": "s"
+          },
+          "id": "net:inst:f0.s",
+          "sinks": [
+            {
+              "node": "join:266a4ed033",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 6,
+              "endColumn": 35,
+              "endLine": 8,
+              "line": 8
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:f1",
+            "pin": "cout"
+          },
+          "id": "net:c2",
+          "name": "c2",
+          "sinks": [
+            {
+              "node": "inst:f2",
+              "pin": "cin"
+            }
+          ],
+          "src": [
+            {
+              "column": 12,
+              "endColumn": 14,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:f1",
+            "pin": "s"
+          },
+          "id": "net:inst:f1.s",
+          "sinks": [
+            {
+              "node": "join:266a4ed033",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 6,
+              "endColumn": 35,
+              "endLine": 9,
+              "line": 9
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:f2",
+            "pin": "cout"
+          },
+          "id": "net:c3",
+          "name": "c3",
+          "sinks": [
+            {
+              "node": "inst:f3",
+              "pin": "cin"
+            }
+          ],
+          "src": [
+            {
+              "column": 16,
+              "endColumn": 18,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:f2",
+            "pin": "s"
+          },
+          "id": "net:inst:f2.s",
+          "sinks": [
+            {
+              "node": "join:266a4ed033",
+              "pin": "in2"
+            }
+          ],
+          "src": [
+            {
+              "column": 6,
+              "endColumn": 35,
+              "endLine": 10,
+              "line": 10
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:f3",
+            "pin": "cout"
+          },
+          "id": "net:cout",
+          "name": "cout",
+          "sinks": [
+            {
+              "node": "port:cout",
+              "pin": "cout"
+            }
+          ],
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 75,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:f3",
+            "pin": "s"
+          },
+          "id": "net:inst:f3.s",
+          "sinks": [
+            {
+              "node": "join:266a4ed033",
+              "pin": "in3"
+            }
+          ],
+          "src": [
+            {
+              "column": 6,
+              "endColumn": 37,
+              "endLine": 11,
+              "line": 11
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:a",
+            "pin": "out[0]"
+          },
+          "id": "net:a[0]",
+          "name": "a[0]",
+          "sinks": [
+            {
+              "node": "inst:f0",
+              "pin": "a"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[0]"
+          },
+          "id": "net:b[0]",
+          "name": "b[0]",
+          "sinks": [
+            {
+              "node": "inst:f0",
+              "pin": "b"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:a",
+            "pin": "out[1]"
+          },
+          "id": "net:a[1]",
+          "name": "a[1]",
+          "sinks": [
+            {
+              "node": "inst:f1",
+              "pin": "a"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[1]"
+          },
+          "id": "net:b[1]",
+          "name": "b[1]",
+          "sinks": [
+            {
+              "node": "inst:f1",
+              "pin": "b"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:a",
+            "pin": "out[2]"
+          },
+          "id": "net:a[2]",
+          "name": "a[2]",
+          "sinks": [
+            {
+              "node": "inst:f2",
+              "pin": "a"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[2]"
+          },
+          "id": "net:b[2]",
+          "name": "b[2]",
+          "sinks": [
+            {
+              "node": "inst:f2",
+              "pin": "b"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:a",
+            "pin": "out[3]"
+          },
+          "id": "net:a[3]",
+          "name": "a[3]",
+          "sinks": [
+            {
+              "node": "inst:f3",
+              "pin": "a"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[3]"
+          },
+          "id": "net:b[3]",
+          "name": "b[3]",
+          "sinks": [
+            {
+              "node": "inst:f3",
+              "pin": "b"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "join:266a4ed033",
+            "pin": "out"
+          },
+          "id": "net:s",
+          "name": "s",
+          "sinks": [
+            {
+              "node": "port:s",
+              "pin": "s"
+            }
+          ],
+          "src": [
+            {
+              "column": 61,
+              "endColumn": 62,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "nodes": [
+        {
+          "id": "split:net:a",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "bits": "[0]",
+              "direction": "out",
+              "id": "out[0]",
+              "label": "",
+              "net": "net:a[0]",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "bits": "[1]",
+              "direction": "out",
+              "id": "out[1]",
+              "label": "",
+              "net": "net:a[1]",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "bits": "[2]",
+              "direction": "out",
+              "id": "out[2]",
+              "label": "",
+              "net": "net:a[2]",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "bits": "[3]",
+              "direction": "out",
+              "id": "out[3]",
+              "label": "",
+              "net": "net:a[3]",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "split:net:b",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "bits": "[0]",
+              "direction": "out",
+              "id": "out[0]",
+              "label": "",
+              "net": "net:b[0]",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "bits": "[1]",
+              "direction": "out",
+              "id": "out[1]",
+              "label": "",
+              "net": "net:b[1]",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "bits": "[2]",
+              "direction": "out",
+              "id": "out[2]",
+              "label": "",
+              "net": "net:b[2]",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "bits": "[3]",
+              "direction": "out",
+              "id": "out[3]",
+              "label": "",
+              "net": "net:b[3]",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        },
+        {
+          "drillTarget": "fa",
+          "id": "inst:f0",
+          "kind": "instance",
+          "label": "f0 : fa",
+          "moduleType": "fa",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "a",
+              "label": "a",
+              "net": "net:a[0]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "b",
+              "label": "b",
+              "net": "net:b[0]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "cin",
+              "label": "cin",
+              "net": "net:cin",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "cout",
+              "label": "cout",
+              "net": "net:c1",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "s",
+              "label": "s",
+              "net": "net:inst:f0.s",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 6,
+              "endColumn": 35,
+              "endLine": 8,
+              "line": 8
+            }
+          ],
+          "width": 1
+        },
+        {
+          "drillTarget": "fa",
+          "id": "inst:f1",
+          "kind": "instance",
+          "label": "f1 : fa",
+          "moduleType": "fa",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "a",
+              "label": "a",
+              "net": "net:a[1]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "b",
+              "label": "b",
+              "net": "net:b[1]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "cin",
+              "label": "cin",
+              "net": "net:c1",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "cout",
+              "label": "cout",
+              "net": "net:c2",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "s",
+              "label": "s",
+              "net": "net:inst:f1.s",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 6,
+              "endColumn": 35,
+              "endLine": 9,
+              "line": 9
+            }
+          ],
+          "width": 1
+        },
+        {
+          "drillTarget": "fa",
+          "id": "inst:f2",
+          "kind": "instance",
+          "label": "f2 : fa",
+          "moduleType": "fa",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "a",
+              "label": "a",
+              "net": "net:a[2]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "b",
+              "label": "b",
+              "net": "net:b[2]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "cin",
+              "label": "cin",
+              "net": "net:c2",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "cout",
+              "label": "cout",
+              "net": "net:c3",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "s",
+              "label": "s",
+              "net": "net:inst:f2.s",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 6,
+              "endColumn": 35,
+              "endLine": 10,
+              "line": 10
+            }
+          ],
+          "width": 1
+        },
+        {
+          "drillTarget": "fa",
+          "id": "inst:f3",
+          "kind": "instance",
+          "label": "f3 : fa",
+          "moduleType": "fa",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "a",
+              "label": "a",
+              "net": "net:a[3]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "b",
+              "label": "b",
+              "net": "net:b[3]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "cin",
+              "label": "cin",
+              "net": "net:c3",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "cout",
+              "label": "cout",
+              "net": "net:cout",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "s",
+              "label": "s",
+              "net": "net:inst:f3.s",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 6,
+              "endColumn": 37,
+              "endLine": 11,
+              "line": 11
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "join:266a4ed033",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[3]",
+              "direction": "in",
+              "id": "in3",
+              "label": "",
+              "net": "net:inst:f3.s",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "bits": "[2]",
+              "direction": "in",
+              "id": "in2",
+              "label": "",
+              "net": "net:inst:f2.s",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "bits": "[1]",
+              "direction": "in",
+              "id": "in1",
+              "label": "",
+              "net": "net:inst:f1.s",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "bits": "[0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "",
+              "net": "net:inst:f0.s",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:s",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 61,
+              "endColumn": 62,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "input",
+          "name": "cin",
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 46,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "s",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 61,
+              "endColumn": 62,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "output",
+          "name": "cout",
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 75,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 12,
+        "line": 6
+      }
+    }
+  },
+  "sourceUri": "rca4.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

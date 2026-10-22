@@ -1,0 +1,314 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:clk",
+            "pin": "clk"
+          },
+          "id": "net:clk",
+          "name": "clk",
+          "sinks": [
+            {
+              "node": "inst:d1",
+              "pin": "clk"
+            },
+            {
+              "node": "inst:d2",
+              "pin": "clk"
+            },
+            {
+              "node": "inst:d3",
+              "pin": "clk"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "inst:d1",
+              "pin": "d"
+            }
+          ],
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 37,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:d1",
+            "pin": "q"
+          },
+          "id": "net:q1",
+          "name": "q1",
+          "sinks": [
+            {
+              "node": "inst:d2",
+              "pin": "d"
+            }
+          ],
+          "src": [
+            {
+              "column": 8,
+              "endColumn": 10,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:d2",
+            "pin": "q"
+          },
+          "id": "net:q2",
+          "name": "q2",
+          "sinks": [
+            {
+              "node": "inst:d3",
+              "pin": "d"
+            }
+          ],
+          "src": [
+            {
+              "column": 12,
+              "endColumn": 14,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:d3",
+            "pin": "q"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "port:q",
+              "pin": "q"
+            }
+          ],
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 47,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "inst:d1",
+          "kind": "blackbox",
+          "label": "d1 : my_dff",
+          "moduleType": "my_dff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "clk",
+              "label": "clk",
+              "net": "net:clk",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "d",
+              "label": "d",
+              "net": "net:d",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "q",
+              "label": "q",
+              "net": "net:q1",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 10,
+              "endColumn": 39,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "inst:d2",
+          "kind": "blackbox",
+          "label": "d2 : my_dff",
+          "moduleType": "my_dff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "clk",
+              "label": "clk",
+              "net": "net:clk",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "d",
+              "label": "d",
+              "net": "net:q1",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "q",
+              "label": "q",
+              "net": "net:q2",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 10,
+              "endColumn": 39,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "inst:d3",
+          "kind": "blackbox",
+          "label": "d3 : my_dff",
+          "moduleType": "my_dff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "clk",
+              "label": "clk",
+              "net": "net:clk",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "d",
+              "label": "d",
+              "net": "net:q2",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "q",
+              "label": "q",
+              "net": "net:q",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 10,
+              "endColumn": 38,
+              "endLine": 5,
+              "line": 5
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "clk",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 37,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "q",
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 47,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 6,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "module_shift.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

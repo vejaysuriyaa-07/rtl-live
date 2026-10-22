@@ -1,0 +1,957 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "add16",
+    "top_module"
+  ],
+  "modules": {
+    "add16": {
+      "name": "add16",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "arith:add:be8aaeafb3",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 27,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "arith:add:be8aaeafb3",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 44,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "port:cin",
+            "pin": "cin"
+          },
+          "id": "net:cin",
+          "name": "cin",
+          "sinks": [
+            {
+              "node": "arith:add:4aafc46855",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 52,
+              "endColumn": 55,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "arith:add:be8aaeafb3",
+            "pin": "Y"
+          },
+          "id": "net:arith:add:be8aaeafb3.Y",
+          "sinks": [
+            {
+              "node": "arith:add:4aafc46855",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 29,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 17
+        },
+        {
+          "driver": {
+            "node": "arith:add:4aafc46855",
+            "pin": "Y"
+          },
+          "id": "net:arith:add:4aafc46855.Y",
+          "sinks": [
+            {
+              "node": "split:net:arith:add:4aafc46855.Y",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 17
+        },
+        {
+          "driver": {
+            "node": "split:net:arith:add:4aafc46855.Y",
+            "pin": "out[15:0]"
+          },
+          "id": "net:arith:add:4aafc46855.Y[15:0]",
+          "name": "arith:add:4aafc46855.Y[15:0]",
+          "sinks": [
+            {
+              "node": "port:sum",
+              "pin": "sum"
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "split:net:arith:add:4aafc46855.Y",
+            "pin": "out[16]"
+          },
+          "id": "net:arith:add:4aafc46855.Y[16]",
+          "name": "arith:add:4aafc46855.Y[16]",
+          "sinks": [
+            {
+              "node": "port:cout",
+              "pin": "cout"
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "arith:add:be8aaeafb3",
+          "kind": "arith",
+          "label": "+",
+          "op": "add",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:arith:add:be8aaeafb3.Y",
+              "side": "east",
+              "width": 17
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 29,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 17
+        },
+        {
+          "id": "arith:add:4aafc46855",
+          "kind": "arith",
+          "label": "+",
+          "op": "add",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:arith:add:be8aaeafb3.Y",
+              "side": "west",
+              "width": 17
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:cin",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:arith:add:4aafc46855.Y",
+              "side": "east",
+              "width": 17
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 17
+        },
+        {
+          "id": "split:net:arith:add:4aafc46855.Y",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:arith:add:4aafc46855.Y",
+              "side": "west",
+              "width": 17
+            },
+            {
+              "bits": "[15:0]",
+              "direction": "out",
+              "id": "out[15:0]",
+              "label": "",
+              "net": "net:arith:add:4aafc46855.Y[15:0]",
+              "side": "east",
+              "width": 16
+            },
+            {
+              "bits": "[16]",
+              "direction": "out",
+              "id": "out[16]",
+              "label": "",
+              "net": "net:arith:add:4aafc46855.Y[16]",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 17
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "range": "[15:0]",
+          "src": [
+            {
+              "column": 27,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 16
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "range": "[15:0]",
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 44,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 16
+        },
+        {
+          "direction": "input",
+          "name": "cin",
+          "src": [
+            {
+              "column": 52,
+              "endColumn": 55,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "sum",
+          "range": "[15:0]",
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 74,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 16
+        },
+        {
+          "direction": "output",
+          "name": "cout",
+          "src": [
+            {
+              "column": 83,
+              "endColumn": 87,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 3,
+        "line": 1
+      }
+    },
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "split:net:a",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 33,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "split:net:b",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 49,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        },
+        {
+          "driver": {
+            "node": "inst:hi",
+            "pin": "sum"
+          },
+          "id": "net:inst:hi.sum",
+          "sinks": [
+            {
+              "node": "join:de6387f16a",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 78,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "inst:lo",
+            "pin": "cout"
+          },
+          "id": "net:c",
+          "name": "c",
+          "sinks": [
+            {
+              "node": "inst:hi",
+              "pin": "cin"
+            }
+          ],
+          "src": [
+            {
+              "column": 8,
+              "endColumn": 9,
+              "endLine": 5,
+              "line": 5
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:lo",
+            "pin": "sum"
+          },
+          "id": "net:inst:lo.sum",
+          "sinks": [
+            {
+              "node": "join:de6387f16a",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 79,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "split:net:a",
+            "pin": "out[31:16]"
+          },
+          "id": "net:a[31:16]",
+          "name": "a[31:16]",
+          "sinks": [
+            {
+              "node": "inst:hi",
+              "pin": "a"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 33,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[31:16]"
+          },
+          "id": "net:b[31:16]",
+          "name": "b[31:16]",
+          "sinks": [
+            {
+              "node": "inst:hi",
+              "pin": "b"
+            }
+          ],
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 49,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "split:net:a",
+            "pin": "out[15:0]"
+          },
+          "id": "net:a[15:0]",
+          "name": "a[15:0]",
+          "sinks": [
+            {
+              "node": "inst:lo",
+              "pin": "a"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 33,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[15:0]"
+          },
+          "id": "net:b[15:0]",
+          "name": "b[15:0]",
+          "sinks": [
+            {
+              "node": "inst:lo",
+              "pin": "b"
+            }
+          ],
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 49,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "const:1'b0:694c7136e7",
+            "pin": "Y"
+          },
+          "id": "net:const:1'b0:694c7136e7.Y",
+          "sinks": [
+            {
+              "node": "inst:lo",
+              "pin": "cin"
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 79,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "join:de6387f16a",
+            "pin": "out"
+          },
+          "id": "net:sum",
+          "name": "sum",
+          "sinks": [
+            {
+              "node": "port:sum",
+              "pin": "sum"
+            }
+          ],
+          "src": [
+            {
+              "column": 65,
+              "endColumn": 68,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        }
+      ],
+      "nodes": [
+        {
+          "id": "split:net:a",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 32
+            },
+            {
+              "bits": "[31:16]",
+              "direction": "out",
+              "id": "out[31:16]",
+              "label": "",
+              "net": "net:a[31:16]",
+              "side": "east",
+              "width": 16
+            },
+            {
+              "bits": "[15:0]",
+              "direction": "out",
+              "id": "out[15:0]",
+              "label": "",
+              "net": "net:a[15:0]",
+              "side": "east",
+              "width": 16
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 33,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        },
+        {
+          "id": "split:net:b",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 32
+            },
+            {
+              "bits": "[31:16]",
+              "direction": "out",
+              "id": "out[31:16]",
+              "label": "",
+              "net": "net:b[31:16]",
+              "side": "east",
+              "width": 16
+            },
+            {
+              "bits": "[15:0]",
+              "direction": "out",
+              "id": "out[15:0]",
+              "label": "",
+              "net": "net:b[15:0]",
+              "side": "east",
+              "width": 16
+            }
+          ],
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 49,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        },
+        {
+          "drillTarget": "add16",
+          "id": "inst:hi",
+          "kind": "instance",
+          "label": "hi : add16",
+          "moduleType": "add16",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "a",
+              "label": "a",
+              "net": "net:a[31:16]",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "in",
+              "id": "b",
+              "label": "b",
+              "net": "net:b[31:16]",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "in",
+              "id": "cin",
+              "label": "cin",
+              "net": "net:c",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "cout",
+              "label": "cout",
+              "net": null,
+              "side": "east",
+              "width": 0
+            },
+            {
+              "direction": "out",
+              "id": "sum",
+              "label": "sum",
+              "net": "net:inst:hi.sum",
+              "side": "east",
+              "width": 16
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 78,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "const:1'b0:694c7136e7",
+          "info": {
+            "value": "1'b0"
+          },
+          "kind": "const",
+          "label": "1'b0",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:1'b0:694c7136e7.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 79,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "drillTarget": "add16",
+          "id": "inst:lo",
+          "kind": "instance",
+          "label": "lo : add16",
+          "moduleType": "add16",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "a",
+              "label": "a",
+              "net": "net:a[15:0]",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "in",
+              "id": "b",
+              "label": "b",
+              "net": "net:b[15:0]",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "in",
+              "id": "cin",
+              "label": "cin",
+              "net": "net:const:1'b0:694c7136e7.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "cout",
+              "label": "cout",
+              "net": "net:c",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "sum",
+              "label": "sum",
+              "net": "net:inst:lo.sum",
+              "side": "east",
+              "width": 16
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 79,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "join:de6387f16a",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[31:16]",
+              "direction": "in",
+              "id": "in1",
+              "label": "",
+              "net": "net:inst:hi.sum",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "bits": "[15:0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "",
+              "net": "net:inst:lo.sum",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:sum",
+              "side": "east",
+              "width": 32
+            }
+          ],
+          "src": [
+            {
+              "column": 65,
+              "endColumn": 68,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "range": "[31:0]",
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 33,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "range": "[31:0]",
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 49,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        },
+        {
+          "direction": "output",
+          "name": "sum",
+          "range": "[31:0]",
+          "src": [
+            {
+              "column": 65,
+              "endColumn": 68,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 32
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 8,
+        "line": 4
+      }
+    }
+  },
+  "sourceUri": "module_add_full.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

@@ -56,7 +56,7 @@
     "assigns": 1
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "logicNodes": 0,
       "count": {
         "const": 1,

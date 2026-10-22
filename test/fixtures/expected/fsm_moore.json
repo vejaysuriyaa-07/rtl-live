@@ -35,12 +35,11 @@
     ]
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
-        "dff": 1
-      },
-      "minCount": {
-        "mux": 1
+        "dff": 1,
+        "pmux": 1,
+        "compare:eq": 0
       },
       "noUnknown": true,
       "nodes": [
@@ -52,6 +51,50 @@
           }
         },
         {
+          "kind": "dff",
+          "op": "sdff",
+          "pins": [
+            {
+              "id": "R",
+              "net": "reset"
+            }
+          ],
+          "infoContains": {
+            "reset": "sync"
+          }
+        },
+        {
+          "kind": "pmux",
+          "width": 1,
+          "pinLabels": [
+            "0",
+            "1"
+          ],
+          "pins": [
+            {
+              "id": "S",
+              "width": 1
+            }
+          ]
+        }
+      ],
+      "netWidth": {
+        "next_state": 1
+      }
+    },
+    "gate": {
+      "count": {
+        "dff": 1
+      },
+      "minCount": {
+        "mux": 2
+      },
+      "nodes": [
+        {
+          "kind": "dff",
+          "op": "dff"
+        },
+        {
           "kind": "mux",
           "pins": [
             {
@@ -60,10 +103,7 @@
             }
           ]
         }
-      ],
-      "netWidth": {
-        "next_state": 1
-      }
+      ]
     }
   }
 }

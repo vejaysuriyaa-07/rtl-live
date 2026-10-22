@@ -32,19 +32,22 @@ const milestones = activeMilestones();
 describe("golden IR", () => {
   for (const m of milestones) {
     for (const name of SYNTH_FIXTURES_BY_MILESTONE[m] ?? []) {
-      it(`${name} matches ${name.replace(/\.v$/, ".ir.json")}`, async () => {
-        const res = await synthFixture(parser, readFixture(HDLBITS, name), name);
-        expect(res.ok, res.error?.message).toBe(true);
-        // Strip per-run fields so the snapshot has no timestamps or generations.
-        const doc = { ...res.doc!, generation: 0, sourceUri: name };
-        const text = `${JSON.stringify(sortKeys(doc), null, 2)}\n`;
-        const file = join(GOLDEN_DIR, name.replace(/\.v$/, ".ir.json"));
-        if (UPDATE || !existsSync(file)) {
-          mkdirSync(GOLDEN_DIR, { recursive: true });
-          writeFileSync(file, text);
-        }
-        expect(text).toBe(readFileSync(file, "utf8"));
-      });
+      for (const view of ["rtl", "gate"] as const) {
+        const golden = name.replace(/\.v$/, view === "rtl" ? ".ir.json" : ".gate.ir.json");
+        it(`${name} ${view} matches ${golden}`, async () => {
+          const res = await synthFixture(parser, readFixture(HDLBITS, name), name, { view });
+          expect(res.ok, res.error?.message).toBe(true);
+          // Strip per-run fields so the snapshot has no timestamps or generations.
+          const doc = { ...res.doc!, generation: 0, sourceUri: name };
+          const text = `${JSON.stringify(sortKeys(doc), null, 2)}\n`;
+          const file = join(GOLDEN_DIR, golden);
+          if (UPDATE || !existsSync(file)) {
+            mkdirSync(GOLDEN_DIR, { recursive: true });
+            writeFileSync(file, text);
+          }
+          expect(text).toBe(readFileSync(file, "utf8"));
+        });
+      }
     }
   }
 });

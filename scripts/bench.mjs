@@ -85,7 +85,7 @@ for (const f of fixtures) {
   for (const { name, be } of backends) {
     const times = [];
     for (let i = 0; i < 8; i++) {
-      const res = await m.synthesize(be, { text, file, top, sourceUri: f, generation: i, optimize: false, simplify: m.DEFAULT_SIMPLIFY, timeoutMs: 20000, signal: new AbortController().signal });
+      const res = await m.synthesize(be, { view: "rtl", text, file, top, sourceUri: f, generation: i, optimize: false, simplify: m.DEFAULT_SIMPLIFY, timeoutMs: 20000, signal: new AbortController().signal });
       if (!res.ok) throw new Error(`${f}: ${name} failed: ${res.error?.message}`);
       doc = res.doc;
       if (i > 0) times.push(res.elapsedMs); // first run warms the cache paths

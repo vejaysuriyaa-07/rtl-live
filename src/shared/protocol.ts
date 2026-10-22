@@ -6,8 +6,12 @@ import type { SchematicDoc } from "../ir/types";
 
 export type Fidelity = "structural" | "synthesized" | "stale";
 
+export type ViewKind = "rtl" | "gate";
+
 export interface StatusInfo {
   fidelity: Fidelity;
+  /** Which synthesized view the host is showing or will show */
+  view?: ViewKind;
   /** Structural view of text that does not parse yet: badge reads "Editing" */
   editing?: boolean;
   backend: "native" | "wasm" | "off" | "none";
@@ -63,7 +67,8 @@ export type WebviewToHost =
   | { type: "highlighted"; generation: number; ids: string[] }
   | { type: "pong"; generation: number; id: number }
   | { type: "reloadWindow"; generation: number }
-  | { type: "setLanguage"; generation: number; language: "verilog" | "systemverilog" };
+  | { type: "setLanguage"; generation: number; language: "verilog" | "systemverilog" }
+  | { type: "setView"; generation: number; view: ViewKind };
 
 const HOST_TYPES: ReadonlySet<string> = new Set([
   "render",
@@ -91,6 +96,7 @@ const WEBVIEW_TYPES: ReadonlySet<string> = new Set([
   "pong",
   "reloadWindow",
   "setLanguage",
+  "setView",
 ]);
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -127,6 +133,8 @@ export function isWebviewToHost(x: unknown): x is WebviewToHost {
       return typeof x["id"] === "number";
     case "setLanguage":
       return x["language"] === "verilog" || x["language"] === "systemverilog";
+    case "setView":
+      return x["view"] === "rtl" || x["view"] === "gate";
     default:
       return true;
   }

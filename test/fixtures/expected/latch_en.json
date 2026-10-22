@@ -22,7 +22,7 @@
     "assigns": 0
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "dff": 1
       },

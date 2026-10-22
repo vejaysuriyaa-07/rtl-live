@@ -37,7 +37,7 @@
     "assigns": 1
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "mux": 2,
         "gate:and": 2

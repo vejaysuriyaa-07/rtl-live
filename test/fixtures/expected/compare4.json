@@ -1,0 +1,74 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 4
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 4
+    },
+    {
+      "name": "gt",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "eq",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "lt",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "assigns": 3
+  },
+  "synth": {
+    "rtl": {
+      "count": {
+        "compare:gt": 1,
+        "compare:eq": 1,
+        "compare:lt": 1
+      },
+      "logicNodes": 3,
+      "nodes": [
+        {
+          "kind": "compare",
+          "op": "gt",
+          "label": ">",
+          "pins": [
+            {
+              "id": "A",
+              "width": 4
+            },
+            {
+              "id": "B",
+              "width": 4
+            },
+            {
+              "id": "Y",
+              "width": 1
+            }
+          ]
+        },
+        {
+          "kind": "compare",
+          "op": "eq",
+          "label": "="
+        },
+        {
+          "kind": "compare",
+          "op": "lt",
+          "label": "<"
+        }
+      ]
+    }
+  }
+}

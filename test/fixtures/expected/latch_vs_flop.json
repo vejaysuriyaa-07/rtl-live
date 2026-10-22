@@ -1,0 +1,68 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "d",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "q_latch",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "q_flop",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "always": 2
+  },
+  "synth": {
+    "rtl": {
+      "count": {
+        "dff": 2
+      },
+      "nodes": [
+        {
+          "kind": "dff",
+          "op": "dlatch",
+          "warnings": [
+            "latch"
+          ],
+          "noPins": [
+            "CLK"
+          ],
+          "pins": [
+            {
+              "id": "Q",
+              "net": "q_latch"
+            }
+          ]
+        },
+        {
+          "kind": "dff",
+          "op": "dff",
+          "warnings": [],
+          "pins": [
+            {
+              "id": "CLK",
+              "net": "clk"
+            },
+            {
+              "id": "Q",
+              "net": "q_flop"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

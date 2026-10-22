@@ -32,7 +32,7 @@
     "assigns": 3
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "gate": 3
       },

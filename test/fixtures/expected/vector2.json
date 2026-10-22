@@ -13,7 +13,7 @@
     }
   ],
   "synth": {
-    "simplified": {
+    "rtl": {
       "logicNodes": 0,
       "count": {
         "split": 1,

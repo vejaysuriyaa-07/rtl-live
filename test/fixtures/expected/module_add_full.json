@@ -48,7 +48,7 @@
     ]
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "instance": 2,
         "blackbox": 0

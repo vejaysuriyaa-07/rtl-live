@@ -124,9 +124,13 @@ export interface Diagnostic {
   source: "structural" | "synth" | "layout" | "host";
 }
 
+export type SynthViewKind = "rtl" | "gate";
+
 export interface SchematicDoc {
   version: number;
   fidelity: Fidelity;
+  /** For synthesized docs: which of the two synthesized views this is */
+  view?: SynthViewKind;
   /** Name of the top module; may be empty when the document has no modules */
   top: string;
   modules: Record<string, ModuleView>;

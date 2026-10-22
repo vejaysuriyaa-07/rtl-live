@@ -1,0 +1,183 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:en",
+            "pin": "en"
+          },
+          "id": "net:en",
+          "name": "en",
+          "sinks": [
+            {
+              "node": "dff:dlatch:1750d827bc",
+              "pin": "EN"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 27,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "dff:dlatch:1750d827bc",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 41,
+              "endColumn": 42,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "dff:dlatch:1750d827bc",
+            "pin": "Q"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "port:q",
+              "pin": "q"
+            }
+          ],
+          "src": [
+            {
+              "column": 61,
+              "endColumn": 62,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "nodes": [
+        {
+          "id": "dff:dlatch:1750d827bc",
+          "kind": "dff",
+          "label": "LATCH",
+          "op": "dlatch",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:d",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "EN",
+              "label": "EN",
+              "net": "net:en",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 19,
+              "endLine": 3,
+              "line": 2
+            }
+          ],
+          "warnings": [
+            "latch"
+          ],
+          "width": 4
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "en",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 27,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 41,
+              "endColumn": 42,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "output",
+          "name": "q",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 61,
+              "endColumn": 62,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 4,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "latch_en.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "rtl"
+}

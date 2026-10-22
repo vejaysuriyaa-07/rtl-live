@@ -47,7 +47,7 @@
     ]
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "blackbox": 2,
         "const": 1,

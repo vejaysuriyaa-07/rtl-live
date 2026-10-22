@@ -1,0 +1,225 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:clk",
+            "pin": "clk"
+          },
+          "id": "net:clk",
+          "name": "clk",
+          "sinks": [
+            {
+              "node": "dff:dffe:0dc705fb47",
+              "pin": "CLK"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:en",
+            "pin": "en"
+          },
+          "id": "net:en",
+          "name": "en",
+          "sinks": [
+            {
+              "node": "dff:dffe:0dc705fb47",
+              "pin": "EN"
+            }
+          ],
+          "src": [
+            {
+              "column": 30,
+              "endColumn": 32,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "dff:dffe:0dc705fb47",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "dff:dffe:0dc705fb47",
+            "pin": "Q"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "port:q",
+              "pin": "q"
+            }
+          ],
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 49,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "dff:dffe:0dc705fb47",
+          "info": {
+            "clock": "posedge"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "dffe",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:d",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "EN",
+              "label": "EN",
+              "net": "net:en",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 20,
+              "endLine": 4,
+              "line": 3
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "clk",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "en",
+          "src": [
+            {
+              "column": 30,
+              "endColumn": 32,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "q",
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 49,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 2
+      }
+    }
+  },
+  "sourceUri": "en_flop.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "rtl"
+}

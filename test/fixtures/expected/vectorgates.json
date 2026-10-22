@@ -28,7 +28,7 @@
     }
   ],
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "gate:or": 2,
         "gate:not": 2,

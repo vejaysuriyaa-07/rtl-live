@@ -193,7 +193,19 @@ function genericSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   );
 }
 
+/** Small warning triangle in the top-right corner for nodes with warnings (an inferred latch). */
+function warningBadge(node: Node, w: number): string {
+  if (!node.warnings || node.warnings.length === 0) return "";
+  const x = w - 7;
+  const y = 7;
+  return `<g class="warn" data-warning="${esc(node.warnings.join(","))}"><path class="warn-badge" d="M${fmt(x)},${fmt(y - 6)} L${fmt(x + 6)},${fmt(y + 4)} L${fmt(x - 6)},${fmt(y + 4)} Z"/><text class="warn-badge-text" x="${fmt(x)}" y="${fmt(y + 3)}" text-anchor="middle">!</text><title>${esc(`warning: ${node.warnings.join(", ")}`)}</title></g>`;
+}
+
 export function symbolMarkup(node: Node, w: number, h: number, pins: PinPos): string {
+  return symbolBody(node, w, h, pins) + warningBadge(node, w);
+}
+
+function symbolBody(node: Node, w: number, h: number, pins: PinPos): string {
   switch (node.kind) {
     case "gate":
       return gateSymbol(node, w, h, pins);

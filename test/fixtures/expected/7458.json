@@ -80,7 +80,7 @@
         "gate:or": 2
       }
     },
-    "simplified": {
+    "rtl": {
       "count": {
         "gate:and": 4,
         "gate:or": 2

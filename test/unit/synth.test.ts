@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { StructuralParser } from "../../src/structural/types";
 import { HDLBITS, makeTreeSitterParser, readExpected, readFixture } from "./helpers";
-import { SYNTH_FIXTURES_BY_MILESTONE, activeMilestones, disposeTestBackend, runChecks, synthFixture, testBackend, type Checks } from "./synthHelpers";
+import { SYNTH_FIXTURES_BY_MILESTONE, activeMilestones, disposeTestBackend, runChecks, synthFixture, testBackend, type SynthExpectations } from "./synthHelpers";
 
 let parser: StructuralParser;
 
@@ -18,15 +18,25 @@ describe("synthesis expectations", () => {
     for (const name of SYNTH_FIXTURES_BY_MILESTONE[m] ?? []) {
       it(`${m} ${name}`, async () => {
         const expected = readExpected(name);
-        const synth = expected?.["synth"] as { raw?: Checks; simplified?: Checks; module?: string } | undefined;
+        const synth = expected?.["synth"] as SynthExpectations | undefined;
         expect(synth, `no synth expectations for ${name}`).toBeDefined();
-        const res = await synthFixture(parser, readFixture(HDLBITS, name), name);
-        expect(res.ok, `synthesis failed: ${res.error?.message ?? ""}\n${res.stderr}`).toBe(true);
         const moduleName = synth!.module ?? "top_module";
-        if (synth!.raw) runChecks(res.rawDoc!, moduleName, synth!.raw, `${name} raw`);
-        if (synth!.simplified) runChecks(res.doc!, moduleName, synth!.simplified, `${name} simplified`);
-        expect(res.doc!.fidelity).toBe("synthesized");
-        expect(res.doc!.top).toBe((expected!["top"] as string | undefined) ?? "top_module");
+        const text = readFixture(HDLBITS, name);
+        const rtl = await synthFixture(parser, text, name, { view: "rtl" });
+        expect(rtl.ok, `rtl synthesis failed: ${rtl.error?.message ?? ""}\n${rtl.stderr}`).toBe(true);
+        if (synth!.rtl) runChecks(rtl.doc!, moduleName, synth!.rtl, `${name} rtl`);
+        for (const [mod, checks] of Object.entries(synth!.rtlModules ?? {})) runChecks(rtl.doc!, mod, checks, `${name} rtl ${mod}`);
+        expect(rtl.doc!.fidelity).toBe("synthesized");
+        expect(rtl.doc!.view).toBe("rtl");
+        expect(rtl.doc!.top).toBe((expected!["top"] as string | undefined) ?? "top_module");
+        if (synth!.raw || synth!.gate || synth!.gateModules) {
+          const gate = await synthFixture(parser, text, name, { view: "gate" });
+          expect(gate.ok, `gate synthesis failed: ${gate.error?.message ?? ""}\n${gate.stderr}`).toBe(true);
+          if (synth!.raw) runChecks(gate.rawDoc!, moduleName, synth!.raw, `${name} raw`);
+          if (synth!.gate) runChecks(gate.doc!, moduleName, synth!.gate, `${name} gate`);
+          for (const [mod, checks] of Object.entries(synth!.gateModules ?? {})) runChecks(gate.doc!, mod, checks, `${name} gate ${mod}`);
+          expect(gate.doc!.view).toBe("gate");
+        }
       });
     }
   }

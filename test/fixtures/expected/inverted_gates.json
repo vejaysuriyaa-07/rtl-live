@@ -1,0 +1,47 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "y_nand",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "y_nor",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "y_xnor",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "assigns": 3
+  },
+  "synth": {
+    "rtl": {
+      "count": {
+        "gate:nand": 1,
+        "gate:nor": 1,
+        "gate:xnor": 1,
+        "gate:not": 0,
+        "gate:and": 0,
+        "gate:or": 0,
+        "gate:xor": 0
+      },
+      "logicNodes": 3
+    }
+  }
+}

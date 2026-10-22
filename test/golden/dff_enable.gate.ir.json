@@ -1,0 +1,299 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:clk",
+            "pin": "clk"
+          },
+          "id": "net:clk",
+          "name": "clk",
+          "sinks": [
+            {
+              "node": "dff:dff:5d546605c6",
+              "pin": "CLK"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:en",
+            "pin": "en"
+          },
+          "id": "net:en",
+          "name": "en",
+          "sinks": [
+            {
+              "node": "mux:4172595832",
+              "pin": "S"
+            }
+          ],
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 38,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "mux:4172595832",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 52,
+              "endColumn": 53,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "dff:dff:5d546605c6",
+            "pin": "Q"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "mux:4172595832",
+              "pin": "A"
+            },
+            {
+              "node": "port:q",
+              "pin": "q"
+            }
+          ],
+          "src": [
+            {
+              "column": 72,
+              "endColumn": 73,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "mux:4172595832",
+            "pin": "Y"
+          },
+          "id": "net:mux:4172595832.Y",
+          "sinks": [
+            {
+              "node": "dff:dff:5d546605c6",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 20,
+              "endLine": 3,
+              "line": 2
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "nodes": [
+        {
+          "id": "dff:dff:5d546605c6",
+          "info": {
+            "clock": "posedge"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "dff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:mux:4172595832.Y",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 20,
+              "endLine": 3,
+              "line": 2
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "mux:4172595832",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:q",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:d",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:en",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:mux:4172595832.Y",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 11,
+              "endLine": 3,
+              "line": 3
+            },
+            {
+              "column": 5,
+              "endColumn": 20,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "clk",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "en",
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 38,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 52,
+              "endColumn": 53,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "output",
+          "name": "q",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 72,
+              "endColumn": 73,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 4,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "dff_enable.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

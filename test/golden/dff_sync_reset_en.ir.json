@@ -1,0 +1,272 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:clk",
+            "pin": "clk"
+          },
+          "id": "net:clk",
+          "name": "clk",
+          "sinks": [
+            {
+              "node": "dff:sdffe:44cd57fd71",
+              "pin": "CLK"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:rst",
+            "pin": "rst"
+          },
+          "id": "net:rst",
+          "name": "rst",
+          "sinks": [
+            {
+              "node": "dff:sdffe:44cd57fd71",
+              "pin": "R"
+            }
+          ],
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 39,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:en",
+            "pin": "en"
+          },
+          "id": "net:en",
+          "name": "en",
+          "sinks": [
+            {
+              "node": "dff:sdffe:44cd57fd71",
+              "pin": "EN"
+            }
+          ],
+          "src": [
+            {
+              "column": 47,
+              "endColumn": 49,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "dff:sdffe:44cd57fd71",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 63,
+              "endColumn": 64,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "dff:sdffe:44cd57fd71",
+            "pin": "Q"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "port:q",
+              "pin": "q"
+            }
+          ],
+          "src": [
+            {
+              "column": 83,
+              "endColumn": 84,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "nodes": [
+        {
+          "id": "dff:sdffe:44cd57fd71",
+          "info": {
+            "clock": "posedge",
+            "reset": "sync, value 0000"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "sdffe",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:d",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "EN",
+              "label": "EN",
+              "net": "net:en",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "R",
+              "label": "R",
+              "net": "net:rst",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 25,
+              "endLine": 4,
+              "line": 2
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "clk",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "rst",
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 39,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "en",
+          "src": [
+            {
+              "column": 47,
+              "endColumn": 49,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 63,
+              "endColumn": 64,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "output",
+          "name": "q",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 83,
+              "endColumn": 84,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "dff_sync_reset_en.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "rtl"
+}

@@ -3,13 +3,16 @@ import type { SchematicDoc, Diagnostic } from "../ir/types";
 import { fromYosys } from "../ir/fromYosys";
 import { simplifyModule, type SimplifyOptions } from "../ir/simplify";
 import { annotateStateRegisters } from "../ir/fsmInfo";
+import { rtlView } from "../ir/rtlView";
 import type { StructuralFile } from "../structural/types";
 import type { SynthBackend } from "./backend";
 import { collectStubs, stubsToVerilog } from "./blackboxStubs";
-import { BLACKBOX_FILE, INPUT_FILE, OUTPUT_FILE, SCRIPT_FILE, buildScript, type ScriptOptions } from "./script";
+import { BLACKBOX_FILE, INPUT_FILE, OUTPUT_FILE, SCRIPT_FILE, buildScript, type ScriptOptions, type SynthView } from "./script";
 import { isYosysDesign, type YosysDesign } from "./yosysJson";
 
 export interface SynthesizeOptions {
+  /** Which diagram to build; see ScriptOptions.view */
+  view: SynthView;
   text: string;
   file: StructuralFile;
   top: string;
@@ -63,6 +66,7 @@ export async function synthesize(backend: SynthBackend, opts: SynthesizeOptions,
   const stubs = stubsToVerilog(collectStubs(opts.file, opts.top));
   const scriptOpts: ScriptOptions = {
     top: opts.top,
+    view: opts.view,
     hasBlackboxes: stubs !== "",
     optimize: opts.optimize,
     extraPasses: opts.extraPasses,
@@ -98,8 +102,9 @@ export async function synthesize(backend: SynthBackend, opts: SynthesizeOptions,
   const modules: SchematicDoc["modules"] = {};
   for (const [name, view] of Object.entries(rawDoc.modules)) {
     const sm = opts.file.modules.find((m) => m.name === name);
-    modules[name] = annotateStateRegisters(simplifyModule(view, opts.simplify), sm);
+    const shaped = opts.view === "rtl" ? rtlView(view) : view;
+    modules[name] = annotateStateRegisters(simplifyModule(shaped, opts.simplify), sm);
   }
-  const doc: SchematicDoc = { ...rawDoc, modules };
+  const doc: SchematicDoc = { ...rawDoc, modules, view: opts.view };
   return { ...base, ok: true, doc, rawDoc, diagnostics: rawDoc.diagnostics, unknownCellTypes, elapsedMs: performance.now() - t0 };
 }

@@ -36,7 +36,7 @@
     "assigns": 3
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "gate:xnor": 2,
         "reduce:xnor": 1,

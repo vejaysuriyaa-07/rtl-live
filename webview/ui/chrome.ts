@@ -11,6 +11,7 @@ export interface ChromeHandlers {
   onDrillTo(depth: number): void;
   onErrorClick(err: BannerError): void;
   onHintAction(command: "setLanguage"): void;
+  onSetView(view: "rtl" | "gate"): void;
 }
 
 function button(label: string, title: string, onClick: () => void, cls = ""): HTMLButtonElement {
@@ -24,6 +25,7 @@ function button(label: string, title: string, onClick: () => void, cls = ""): HT
 
 export class Chrome {
   private readonly topSelect: HTMLSelectElement;
+  private readonly viewButtons: Record<"rtl" | "gate", HTMLButtonElement>;
   private readonly statusEl: HTMLElement;
   private readonly bannerEl: HTMLElement;
   private readonly breadcrumbEl: HTMLElement;
@@ -50,6 +52,15 @@ export class Chrome {
       button("+", "Zoom in (+)", () => handlers.onZoomIn()),
       button("−", "Zoom out (-)", () => handlers.onZoomOut()),
     );
+    this.viewButtons = {
+      rtl: button("RTL", "RTL view: shaped like the source (case is one mux, enable flops keep their EN pin)", () => handlers.onSetView("rtl"), "view-btn"),
+      gate: button("Gate", "Gate view: what synthesis builds (enables and resets become muxes)", () => handlers.onSetView("gate"), "view-btn"),
+    };
+    const views = document.createElement("span");
+    views.className = "tb-views";
+    views.append(this.viewButtons.rtl, this.viewButtons.gate);
+    toolbar.append(views);
+    this.setView("rtl");
     this.topSelect = document.createElement("select");
     this.topSelect.className = "tb-select";
     this.topSelect.title = "Top module";
@@ -84,8 +95,17 @@ export class Chrome {
     this.topSelect.hidden = names.length <= 1;
   }
 
+  setView(view: "rtl" | "gate"): void {
+    for (const [k, b] of Object.entries(this.viewButtons)) {
+      b.classList.toggle("active", k === view);
+      b.setAttribute("aria-pressed", k === view ? "true" : "false");
+    }
+  }
+
   setStatus(s: StatusInfo): void {
-    const badge = s.warmingUp ? "Warming up" : s.fidelity === "synthesized" ? "Synthesized" : s.fidelity === "stale" ? "Stale" : s.editing ? "Editing" : "Structural";
+    if (s.view) this.setView(s.view);
+    const viewName = s.view === "gate" ? "Gate" : "RTL";
+    const badge = s.warmingUp ? "Warming up" : s.fidelity === "synthesized" ? `${viewName} view` : s.fidelity === "stale" ? "Stale" : s.editing ? "Editing" : "Structural";
     const cls = s.warmingUp ? "warming" : s.editing && s.fidelity === "structural" ? "editing" : s.fidelity;
     const backend = s.backend === "none" || s.backend === "off" ? "" : ` · ${s.backend}${s.backendVersion ? ` ${s.backendVersion}` : ""}`;
     this.statusEl.innerHTML = "";

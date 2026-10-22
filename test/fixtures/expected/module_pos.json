@@ -49,7 +49,7 @@
     ]
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "blackbox": 1
       },

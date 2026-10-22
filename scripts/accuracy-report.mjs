@@ -6,10 +6,10 @@ import { join, resolve } from "node:path";
 
 const root = resolve(new URL(".", import.meta.url).pathname, "..");
 const results = JSON.parse(readFileSync(join(root, "artifacts", "accuracy.json"), "utf8"));
-const views = ["structural", "gate"];
+const views = ["structural", "rtl", "gate"];
 const levels = ["L1", "L2", "L3"];
 
-const mark = (c) => (c.ok ? "pass" : "FAIL");
+const mark = (c) => (c.ok ? (c.detail && c.detail.skipped ? "n/a" : "pass") : "FAIL");
 const rows = [];
 const reasons = [];
 const totals = {};
@@ -20,6 +20,7 @@ for (const r of results) {
     if (!vr) continue;
     rows.push(`| ${r.fixture} | ${v} | ${levels.map((l) => mark(vr[l])).join(" | ")} |`);
     for (const l of levels) {
+      if (vr[l].ok && vr[l].detail && vr[l].detail.skipped) continue;
       totals[`${v}.${l}`][vr[l].ok ? "pass" : "fail"]++;
       if (!vr[l].ok) reasons.push(`- ${r.fixture}, ${v} view, ${l}: ${vr[l].reason ?? "failed"}`);
     }
@@ -35,7 +36,8 @@ out.push("");
 out.push("Levels:");
 out.push("");
 out.push("- L1 functional: the netlist exported from the diagram (src/ir/toVerilog.ts) simulates identically to the source under Icarus Verilog on random vectors (clocked designs cycle by cycle). Bits that are x or z on either side are skipped and counted.");
-out.push("- L2 structural: the assertions in test/fixtures/expected/<fixture>.json hold (ports and structural counts for the structural view; node, net, pin and width assertions for the gate view).");
+out.push("- L2 structural: the assertions in test/fixtures/expected/<fixture>.json hold (ports and structural counts for the structural view; node, net, pin and width assertions in the rtl and gate blocks for the two synthesized views).");
+out.push("- n/a: the gate view is asserted only where it differs from the RTL view (ACCURACY.md 6.2).");
 out.push("- L3 readable: labels fit their symbols, no two labels overlap, every bus has a width label, Fit stays at or below 100 percent, no wire crosses a symbol.");
 out.push("");
 out.push("## Summary");

@@ -1,0 +1,366 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "gate:and:3aea75995e",
+              "pin": "A"
+            },
+            {
+              "node": "gate:or:53314be3b9",
+              "pin": "A"
+            },
+            {
+              "node": "gate:xor:d05cdfac44",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "gate:and:3aea75995e",
+              "pin": "B"
+            },
+            {
+              "node": "gate:or:53314be3b9",
+              "pin": "B"
+            },
+            {
+              "node": "gate:xor:d05cdfac44",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 28,
+              "endColumn": 29,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:and:3aea75995e",
+            "pin": "Y"
+          },
+          "id": "net:y_nand",
+          "name": "y_nand",
+          "sinks": [
+            {
+              "node": "port:y_nand",
+              "pin": "y_nand"
+            }
+          ],
+          "src": [
+            {
+              "column": 38,
+              "endColumn": 44,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:or:53314be3b9",
+            "pin": "Y"
+          },
+          "id": "net:y_nor",
+          "name": "y_nor",
+          "sinks": [
+            {
+              "node": "port:y_nor",
+              "pin": "y_nor"
+            }
+          ],
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 51,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:xor:d05cdfac44",
+            "pin": "Y"
+          },
+          "id": "net:y_xnor",
+          "name": "y_xnor",
+          "sinks": [
+            {
+              "node": "port:y_xnor",
+              "pin": "y_xnor"
+            }
+          ],
+          "src": [
+            {
+              "column": 53,
+              "endColumn": 59,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "gate:and:3aea75995e",
+          "kind": "gate",
+          "label": "NAND",
+          "op": "nand",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y_nand",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 26,
+              "endLine": 3,
+              "line": 3
+            },
+            {
+              "column": 19,
+              "endColumn": 27,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:or:53314be3b9",
+          "kind": "gate",
+          "label": "NOR",
+          "op": "nor",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y_nor",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 26,
+              "endLine": 4,
+              "line": 4
+            },
+            {
+              "column": 19,
+              "endColumn": 27,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:xor:d05cdfac44",
+          "kind": "gate",
+          "label": "XNOR",
+          "op": "xnor",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y_xnor",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 26,
+              "endLine": 5,
+              "line": 5
+            },
+            {
+              "column": 19,
+              "endColumn": 27,
+              "endLine": 5,
+              "line": 5
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "src": [
+            {
+              "column": 28,
+              "endColumn": 29,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "y_nand",
+          "src": [
+            {
+              "column": 38,
+              "endColumn": 44,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "y_nor",
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 51,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "y_xnor",
+          "src": [
+            {
+              "column": 53,
+              "endColumn": 59,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 6,
+        "line": 2
+      }
+    }
+  },
+  "sourceUri": "inverted_gates.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "rtl"
+}

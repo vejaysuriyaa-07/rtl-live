@@ -1,0 +1,323 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:clk",
+            "pin": "clk"
+          },
+          "id": "net:clk",
+          "name": "clk",
+          "sinks": [
+            {
+              "node": "dff:dff:5d546605c6",
+              "pin": "CLK"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "mux:c17b599935",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 30,
+              "endColumn": 31,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:si",
+            "pin": "si"
+          },
+          "id": "net:si",
+          "name": "si",
+          "sinks": [
+            {
+              "node": "mux:c17b599935",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 33,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:se",
+            "pin": "se"
+          },
+          "id": "net:se",
+          "name": "se",
+          "sinks": [
+            {
+              "node": "mux:c17b599935",
+              "pin": "S"
+            }
+          ],
+          "src": [
+            {
+              "column": 37,
+              "endColumn": 39,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "dff:dff:5d546605c6",
+            "pin": "Q"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "port:q",
+              "pin": "q"
+            }
+          ],
+          "src": [
+            {
+              "column": 52,
+              "endColumn": 53,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "mux:c17b599935",
+            "pin": "Y"
+          },
+          "id": "net:mux:c17b599935.Y",
+          "sinks": [
+            {
+              "node": "dff:dff:5d546605c6",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 22,
+              "endLine": 4,
+              "line": 3
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "dff:dff:5d546605c6",
+          "info": {
+            "clock": "posedge"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "dff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:mux:c17b599935.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 22,
+              "endLine": 4,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "mux:c17b599935",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:d",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:si",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:se",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:mux:c17b599935.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 10,
+              "endColumn": 21,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "clk",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "src": [
+            {
+              "column": 30,
+              "endColumn": 31,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "si",
+          "src": [
+            {
+              "column": 33,
+              "endColumn": 35,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "se",
+          "src": [
+            {
+              "column": 37,
+              "endColumn": 39,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "q",
+          "src": [
+            {
+              "column": 52,
+              "endColumn": 53,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 2
+      }
+    }
+  },
+  "sourceUri": "scan_flop.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "rtl"
+}

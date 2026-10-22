@@ -1,6 +1,14 @@
 // Builds the Yosys script. Unit tested as a string.
+export type SynthView = "rtl" | "gate";
+
 export interface ScriptOptions {
   top: string;
+  /**
+   * rtl: shaped like the source (opt_dff folds enables and resets into the flops, no opt_expr so
+   * comparators and muxes the author wrote survive). gate: what synthesis builds (constant
+   * propagation, enables and resets as muxes in front of plain flops).
+   */
+  view: SynthView;
   /** A blackboxes.v file is provided and must be read */
   hasBlackboxes: boolean;
   /** Insert "opt -fast" before writing the netlist */
@@ -39,7 +47,8 @@ export function buildScript(opts: ScriptOptions): string {
   lines.push(`hierarchy -top ${sanitizeTop(opts.top)}`);
   lines.push(opts.procNorom ? "proc -norom" : "proc");
   lines.push("opt_clean");
-  lines.push("opt_expr -mux_undef");
+  if (opts.view === "rtl") lines.push("opt_dff");
+  else lines.push("opt_expr -mux_undef");
   lines.push("opt_clean");
   if (opts.optimize) lines.push("opt -fast");
   for (const p of sanitizeExtraPasses(opts.extraPasses)) lines.push(p);

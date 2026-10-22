@@ -16,7 +16,7 @@
     "assigns": 1
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "gate:not": 1
       },

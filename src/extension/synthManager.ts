@@ -8,6 +8,7 @@ import { findYosys, NativeYosysBackend } from "../synth/nativeBackend";
 import { WasmYosysBackend } from "../synth/wasmBackend";
 import { DEFAULT_FEATURES, synthesize, type BackendFeatures, type SynthesizeResult } from "../synth/synthesize";
 import type { StructuralFile } from "../structural/types";
+import type { SynthView } from "../synth/script";
 import { LruCache, sha256 } from "./cache";
 import { log, logOnce } from "./log";
 
@@ -137,11 +138,11 @@ export class SynthManager implements vscode.Disposable {
     return { mergeChains: true, dropBuffers: true, bubbles: this.settings.bubbles };
   }
 
-  cacheKey(text: string, top: string): string {
-    return sha256(text, top, this.settingsKey());
+  cacheKey(text: string, top: string, view: SynthView): string {
+    return sha256(text, top, view, this.settingsKey());
   }
 
-  async run(args: { text: string; file: StructuralFile; top: string; sourceUri: string; generation: number; signal: AbortSignal }): Promise<SynthesizeResult | undefined> {
+  async run(args: { view: SynthView; text: string; file: StructuralFile; top: string; sourceUri: string; generation: number; signal: AbortSignal }): Promise<SynthesizeResult | undefined> {
     const backend = await this.ensureBackend();
     if (!backend || args.signal.aborted) return undefined;
     this.stats.runs++;

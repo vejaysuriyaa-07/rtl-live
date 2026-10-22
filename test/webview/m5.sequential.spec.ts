@@ -36,7 +36,9 @@ test("M5: counter4 has a DFF with a clock triangle and the adder feedback", asyn
   await postRender(page, goldenDoc("counter4"));
   await expect(page.locator("g.node-dff .clk-tri")).toHaveCount(1);
   await expect(page.locator("g.node-arith.op-add")).toHaveCount(1);
-  await expect(page.locator("g.node-mux")).toHaveCount(1);
+  // RTL view: the synchronous reset is an R pin on the flop, not a mux in front of it.
+  await expect(page.locator("g.node-mux")).toHaveCount(0);
+  await expect(page.locator('g.node-dff circle.pin[data-pin="R"]')).toHaveCount(1);
 });
 
 test("M5: fsm_moore state register tooltip lists A and B", async ({ page }) => {

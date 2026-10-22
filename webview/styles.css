@@ -42,6 +42,32 @@ body {
 }
 
 .tb-btn,
+.tb-views {
+  display: inline-flex;
+  margin-left: 6px;
+}
+.tb-views .view-btn {
+  border-radius: 0;
+}
+.tb-views .view-btn:first-child {
+  border-radius: 3px 0 0 3px;
+}
+.tb-views .view-btn:last-child {
+  border-radius: 0 3px 3px 0;
+}
+.tb-views .view-btn.active {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #fff);
+}
+.schematic .warn-badge {
+  fill: var(--vscode-charts-yellow, #cca700);
+  stroke: none;
+}
+.schematic .warn-badge-text {
+  font-size: 8px;
+  font-weight: 700;
+  fill: var(--vscode-editor-background, #1e1e1e);
+}
 .tb-select {
   font: inherit;
   font-size: 11px;

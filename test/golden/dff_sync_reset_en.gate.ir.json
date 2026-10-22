@@ -1,0 +1,465 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:clk",
+            "pin": "clk"
+          },
+          "id": "net:clk",
+          "name": "clk",
+          "sinks": [
+            {
+              "node": "dff:dff:5d546605c6",
+              "pin": "CLK"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:rst",
+            "pin": "rst"
+          },
+          "id": "net:rst",
+          "name": "rst",
+          "sinks": [
+            {
+              "node": "mux:95aa6d6b7c",
+              "pin": "S"
+            }
+          ],
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 39,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:en",
+            "pin": "en"
+          },
+          "id": "net:en",
+          "name": "en",
+          "sinks": [
+            {
+              "node": "mux:4172595832",
+              "pin": "S"
+            }
+          ],
+          "src": [
+            {
+              "column": 47,
+              "endColumn": 49,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "mux:4172595832",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 63,
+              "endColumn": 64,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "dff:dff:5d546605c6",
+            "pin": "Q"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "mux:4172595832",
+              "pin": "A"
+            },
+            {
+              "node": "port:q",
+              "pin": "q"
+            }
+          ],
+          "src": [
+            {
+              "column": 83,
+              "endColumn": 84,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "mux:4172595832",
+            "pin": "Y"
+          },
+          "id": "net:mux:4172595832.Y",
+          "sinks": [
+            {
+              "node": "mux:95aa6d6b7c",
+              "pin": "A"
+            }
+          ],
+          "src": [],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "mux:95aa6d6b7c",
+            "pin": "Y"
+          },
+          "id": "net:mux:95aa6d6b7c.Y",
+          "sinks": [
+            {
+              "node": "dff:dff:5d546605c6",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 25,
+              "endLine": 4,
+              "line": 2
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "const:4'b0000:a227e82abb",
+            "pin": "Y"
+          },
+          "id": "net:const:4'b0000:a227e82abb.Y",
+          "sinks": [
+            {
+              "node": "mux:95aa6d6b7c",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 12,
+              "endLine": 3,
+              "line": 3
+            },
+            {
+              "column": 5,
+              "endColumn": 25,
+              "endLine": 4,
+              "line": 3
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "nodes": [
+        {
+          "id": "dff:dff:5d546605c6",
+          "info": {
+            "clock": "posedge"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "dff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:mux:95aa6d6b7c.Y",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 25,
+              "endLine": 4,
+              "line": 2
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "mux:4172595832",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:q",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:d",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:en",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:mux:4172595832.Y",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 16,
+              "endLine": 4,
+              "line": 4
+            },
+            {
+              "column": 10,
+              "endColumn": 25,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "const:4'b0000:a227e82abb",
+          "info": {
+            "value": "4'b0000"
+          },
+          "kind": "const",
+          "label": "4'b0000",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:4'b0000:a227e82abb.Y",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 12,
+              "endLine": 3,
+              "line": 3
+            },
+            {
+              "column": 5,
+              "endColumn": 25,
+              "endLine": 4,
+              "line": 3
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "mux:95aa6d6b7c",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:mux:4172595832.Y",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:const:4'b0000:a227e82abb.Y",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:rst",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:mux:95aa6d6b7c.Y",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 12,
+              "endLine": 3,
+              "line": 3
+            },
+            {
+              "column": 5,
+              "endColumn": 25,
+              "endLine": 4,
+              "line": 3
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "clk",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "rst",
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 39,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "en",
+          "src": [
+            {
+              "column": 47,
+              "endColumn": 49,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 63,
+              "endColumn": 64,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "output",
+          "name": "q",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 83,
+              "endColumn": 84,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "dff_sync_reset_en.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

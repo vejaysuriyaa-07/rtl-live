@@ -33,7 +33,7 @@
     }
   ],
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "gate:xor": 1,
         "split": 0

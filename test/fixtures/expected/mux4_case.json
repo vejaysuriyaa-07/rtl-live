@@ -1,0 +1,69 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "d0",
+      "direction": "input",
+      "width": 8
+    },
+    {
+      "name": "d1",
+      "direction": "input",
+      "width": 8
+    },
+    {
+      "name": "d2",
+      "direction": "input",
+      "width": 8
+    },
+    {
+      "name": "d3",
+      "direction": "input",
+      "width": 8
+    },
+    {
+      "name": "sel",
+      "direction": "input",
+      "width": 2
+    },
+    {
+      "name": "y",
+      "direction": "output",
+      "width": 8
+    }
+  ],
+  "structural": {
+    "always": 1,
+    "assigns": 0
+  },
+  "synth": {
+    "rtl": {
+      "count": {
+        "pmux": 1,
+        "mux": 0,
+        "compare:eq": 0,
+        "dff": 0
+      },
+      "nodes": [
+        {
+          "kind": "pmux",
+          "width": 8,
+          "pinLabels": [
+            "0",
+            "1",
+            "2",
+            "3"
+          ],
+          "pins": [
+            {
+              "id": "S",
+              "width": 2,
+              "net": "sel"
+            }
+          ]
+        }
+      ],
+      "noUnknown": true
+    }
+  }
+}

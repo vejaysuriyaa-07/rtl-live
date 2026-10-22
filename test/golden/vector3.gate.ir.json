@@ -1,0 +1,898 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "join:abfb639fe7",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "split:net:b",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "driver": {
+            "node": "port:c",
+            "pin": "c"
+          },
+          "id": "net:c",
+          "name": "c",
+          "sinks": [
+            {
+              "node": "join:a498386e03",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 37,
+              "endColumn": 38,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "split:net:d",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 41,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "driver": {
+            "node": "port:e",
+            "pin": "e"
+          },
+          "id": "net:e",
+          "name": "e",
+          "sinks": [
+            {
+              "node": "split:net:e",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 44,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "driver": {
+            "node": "port:f",
+            "pin": "f"
+          },
+          "id": "net:f",
+          "name": "f",
+          "sinks": [
+            {
+              "node": "join:3c4700029f",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 47,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[4:2]"
+          },
+          "id": "net:b[4:2]",
+          "name": "b[4:2]",
+          "sinks": [
+            {
+              "node": "join:abfb639fe7",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 3
+        },
+        {
+          "driver": {
+            "node": "join:abfb639fe7",
+            "pin": "out"
+          },
+          "id": "net:w",
+          "name": "w",
+          "sinks": [
+            {
+              "node": "port:w",
+              "pin": "w"
+            }
+          ],
+          "src": [
+            {
+              "column": 62,
+              "endColumn": 63,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "split:net:d",
+            "pin": "out[4]"
+          },
+          "id": "net:d[4]",
+          "name": "d[4]",
+          "sinks": [
+            {
+              "node": "join:a498386e03",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 41,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[1:0]"
+          },
+          "id": "net:b[1:0]",
+          "name": "b[1:0]",
+          "sinks": [
+            {
+              "node": "join:a498386e03",
+              "pin": "in2"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 2
+        },
+        {
+          "driver": {
+            "node": "join:a498386e03",
+            "pin": "out"
+          },
+          "id": "net:x",
+          "name": "x",
+          "sinks": [
+            {
+              "node": "port:x",
+              "pin": "x"
+            }
+          ],
+          "src": [
+            {
+              "column": 65,
+              "endColumn": 66,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "split:net:e",
+            "pin": "out[4:1]"
+          },
+          "id": "net:e[4:1]",
+          "name": "e[4:1]",
+          "sinks": [
+            {
+              "node": "join:8b86904449",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 44,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "split:net:d",
+            "pin": "out[3:0]"
+          },
+          "id": "net:d[3:0]",
+          "name": "d[3:0]",
+          "sinks": [
+            {
+              "node": "join:8b86904449",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 41,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "join:8b86904449",
+            "pin": "out"
+          },
+          "id": "net:y",
+          "name": "y",
+          "sinks": [
+            {
+              "node": "port:y",
+              "pin": "y"
+            }
+          ],
+          "src": [
+            {
+              "column": 68,
+              "endColumn": 69,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "const:2'b11:2cef81e107",
+            "pin": "Y"
+          },
+          "id": "net:const:2'b11:2cef81e107.Y",
+          "sinks": [
+            {
+              "node": "join:3c4700029f",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 2
+        },
+        {
+          "driver": {
+            "node": "split:net:e",
+            "pin": "out[0]"
+          },
+          "id": "net:e[0]",
+          "name": "e[0]",
+          "sinks": [
+            {
+              "node": "join:3c4700029f",
+              "pin": "in2"
+            }
+          ],
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 44,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "join:3c4700029f",
+            "pin": "out"
+          },
+          "id": "net:z",
+          "name": "z",
+          "sinks": [
+            {
+              "node": "port:z",
+              "pin": "z"
+            }
+          ],
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "nodes": [
+        {
+          "id": "split:net:b",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 5
+            },
+            {
+              "bits": "[4:2]",
+              "direction": "out",
+              "id": "out[4:2]",
+              "label": "",
+              "net": "net:b[4:2]",
+              "side": "east",
+              "width": 3
+            },
+            {
+              "bits": "[1:0]",
+              "direction": "out",
+              "id": "out[1:0]",
+              "label": "",
+              "net": "net:b[1:0]",
+              "side": "east",
+              "width": 2
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "id": "join:abfb639fe7",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[7:3]",
+              "direction": "in",
+              "id": "in1",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 5
+            },
+            {
+              "bits": "[2:0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "",
+              "net": "net:b[4:2]",
+              "side": "west",
+              "width": 3
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:w",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 62,
+              "endColumn": 63,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "id": "split:net:d",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:d",
+              "side": "west",
+              "width": 5
+            },
+            {
+              "bits": "[4]",
+              "direction": "out",
+              "id": "out[4]",
+              "label": "",
+              "net": "net:d[4]",
+              "side": "east",
+              "width": 1
+            },
+            {
+              "bits": "[3:0]",
+              "direction": "out",
+              "id": "out[3:0]",
+              "label": "",
+              "net": "net:d[3:0]",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 41,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "id": "join:a498386e03",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[7:6]",
+              "direction": "in",
+              "id": "in2",
+              "label": "",
+              "net": "net:b[1:0]",
+              "side": "west",
+              "width": 2
+            },
+            {
+              "bits": "[5:1]",
+              "direction": "in",
+              "id": "in1",
+              "label": "",
+              "net": "net:c",
+              "side": "west",
+              "width": 5
+            },
+            {
+              "bits": "[0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "",
+              "net": "net:d[4]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:x",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 65,
+              "endColumn": 66,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "id": "split:net:e",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:e",
+              "side": "west",
+              "width": 5
+            },
+            {
+              "bits": "[4:1]",
+              "direction": "out",
+              "id": "out[4:1]",
+              "label": "",
+              "net": "net:e[4:1]",
+              "side": "east",
+              "width": 4
+            },
+            {
+              "bits": "[0]",
+              "direction": "out",
+              "id": "out[0]",
+              "label": "",
+              "net": "net:e[0]",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 44,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "id": "join:8b86904449",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[7:4]",
+              "direction": "in",
+              "id": "in1",
+              "label": "",
+              "net": "net:d[3:0]",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "bits": "[3:0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "",
+              "net": "net:e[4:1]",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:y",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 68,
+              "endColumn": 69,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "id": "const:2'b11:2cef81e107",
+          "info": {
+            "value": "2'b11"
+          },
+          "kind": "const",
+          "label": "2'b11",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:2'b11:2cef81e107.Y",
+              "side": "east",
+              "width": 2
+            }
+          ],
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 2
+        },
+        {
+          "id": "join:3c4700029f",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[7]",
+              "direction": "in",
+              "id": "in2",
+              "label": "",
+              "net": "net:e[0]",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "bits": "[6:2]",
+              "direction": "in",
+              "id": "in1",
+              "label": "",
+              "net": "net:f",
+              "side": "west",
+              "width": 5
+            },
+            {
+              "bits": "[1:0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "",
+              "net": "net:const:2'b11:2cef81e107.Y",
+              "side": "west",
+              "width": 2
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:z",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "range": "[4:0]",
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "range": "[4:0]",
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "direction": "input",
+          "name": "c",
+          "range": "[4:0]",
+          "src": [
+            {
+              "column": 37,
+              "endColumn": 38,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "range": "[4:0]",
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 41,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "direction": "input",
+          "name": "e",
+          "range": "[4:0]",
+          "src": [
+            {
+              "column": 43,
+              "endColumn": 44,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "direction": "input",
+          "name": "f",
+          "range": "[4:0]",
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 47,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 5
+        },
+        {
+          "direction": "output",
+          "name": "w",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 62,
+              "endColumn": 63,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "direction": "output",
+          "name": "x",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 65,
+              "endColumn": 66,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "direction": "output",
+          "name": "y",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 68,
+              "endColumn": 69,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "direction": "output",
+          "name": "z",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 3,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "vector3.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

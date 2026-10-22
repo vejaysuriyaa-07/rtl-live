@@ -11,6 +11,7 @@ import { log } from "./log";
 import { Scheduler, type StructuralJob, type SynthJob } from "./scheduler";
 import type { SchematicViewProvider } from "./schematicView";
 import { readSynthSettings, SynthManager } from "./synthManager";
+import type { SynthView } from "../synth/script";
 import { findVerilator, verilatorLint } from "./verilatorLint";
 import { friendlyVerilatorMessage } from "../structural/errorMessages";
 
@@ -42,9 +43,8 @@ function schedulerSettings(): { structuralDebounceMs: number; synthDebounceMs: n
 interface DocState {
   /** Latest structural result */
   structural?: { generation: number; file: StructuralFile; top: string; text: string };
-  /** Last successful synthesized doc for this document */
-  lastGood?: SchematicDoc;
-  lastGoodKey?: string;
+  /** Last successful synthesized doc per view for this document */
+  lastGood: Partial<Record<SynthView, SchematicDoc>>;
 }
 
 export class Controller implements vscode.Disposable {
@@ -64,7 +64,9 @@ export class Controller implements vscode.Disposable {
   private readonly renderEmitter = new vscode.EventEmitter<RenderEvent>();
   readonly onDidRender = this.renderEmitter.event;
   private lastRender: RenderEvent | undefined;
-  private status: StatusInfo = { fidelity: "structural", backend: "none" };
+  private status: StatusInfo = { fidelity: "structural", backend: "none", view: "rtl" };
+  /** RTL view (shaped like the source) or gate view (what synthesis builds); remembered per workspace */
+  private activeView: SynthView = "rtl";
   stats = { structuralRuns: 0, synthRuns: 0, synthResults: 0 };
 
   constructor(
@@ -73,6 +75,9 @@ export class Controller implements vscode.Disposable {
   ) {
     const distDir = vscode.Uri.joinPath(context.extensionUri, "dist").fsPath;
     this.synth = new SynthManager(`${distDir}/yosysWorker.mjs`);
+    const savedView = context.workspaceState.get<string>("rtlLive.view");
+    if (savedView === "gate" || savedView === "rtl") this.activeView = savedView;
+    this.status.view = this.activeView;
     this.scheduler = new Scheduler(schedulerSettings(), {
       runStructural: (job) => this.runStructural(job),
       runSynth: (job) => this.runSynth(job),
@@ -158,6 +163,9 @@ export class Controller implements vscode.Disposable {
           case "setLanguage":
             void this.setLanguage(msg.language);
             break;
+          case "setView":
+            this.setView(msg.view);
+            break;
           case "export":
             void this.saveExport(msg.format, msg.data);
             break;
@@ -176,7 +184,7 @@ export class Controller implements vscode.Disposable {
   private state(key: string): DocState {
     let s = this.docs.get(key);
     if (!s) {
-      s = {};
+      s = { lastGood: {} };
       this.docs.set(key, s);
     }
     return s;
@@ -196,6 +204,29 @@ export class Controller implements vscode.Disposable {
 
   get currentStatus(): StatusInfo {
     return this.status;
+  }
+
+  get currentView(): SynthView {
+    return this.activeView;
+  }
+
+  /** Toolbar toggle: show the other synthesized view, from cache when it is already there. */
+  setView(view: SynthView): void {
+    if (view === this.activeView) return;
+    this.activeView = view;
+    void this.context.workspaceState.update("rtlLive.view", view);
+    log.info(`view: ${view}`);
+    const doc = this.activeDoc;
+    const st = doc ? this.docs.get(this.key(doc)) : undefined;
+    const good = st?.lastGood[view];
+    if (doc && st?.structural && good && !st.structural.file.hasErrors) {
+      const generation = this.scheduler.currentGeneration(this.key(doc));
+      this.postRender(generation, { ...good, generation });
+      this.provider.post({ type: "error", generation, error: null });
+      this.postStatus({ fidelity: "synthesized", editing: false, message: "cached" });
+      return;
+    }
+    this.rerunActive();
   }
 
   whenParserReady(): Promise<StructuralParser> {
@@ -275,6 +306,7 @@ export class Controller implements vscode.Disposable {
     this.status = {
       ...this.status,
       ...patch,
+      view: this.activeView,
       backend: this.synth.backendName,
       ...(this.synth.version !== undefined ? { backendVersion: this.synth.version } : {}),
       warmingUp: this.synth.warmingUp,
@@ -309,12 +341,13 @@ export class Controller implements vscode.Disposable {
       if (error) this.scheduleLint(job, top, error);
       else this.cancelLint();
       const synthOn = this.synth.backendName !== "off";
-      const keepLastGood = synthOn && st.lastGood !== undefined && st.lastGood.top === top && (top === "" || st.lastGood.modules[top] !== undefined);
+      const lastGood = st.lastGood[this.activeView];
+      const keepLastGood = synthOn && lastGood !== undefined && lastGood.top === top && (top === "" || lastGood.modules[top] !== undefined);
       const modCount = `${file.modules.length} module${file.modules.length === 1 ? "" : "s"}`;
       if (keepLastGood) {
         // Stale rule (bug 2): keep the last synthesized diagram, overlay the ports that changed in
         // the newer text, and say so in the badge text. The render and the badge move together.
-        const overlay = overlayStructural(st.lastGood!, ir, job.generation);
+        const overlay = overlayStructural(lastGood!, ir, job.generation);
         const changes = overlaySummaryText(overlay.summary);
         this.postRender(job.generation, overlay.doc);
         this.provider.post({ type: "error", generation: job.generation, error });
@@ -373,38 +406,40 @@ export class Controller implements vscode.Disposable {
     if (!st || !structural || structural.generation !== job.generation || structural.file.hasErrors || structural.top === "") return;
     const doc = this.activeDoc;
     if (!doc || this.key(doc) !== job.docKey) return;
-    const key = this.synth.cacheKey(job.text, structural.top);
-    const cached = this.synth.cache.get(key);
+    const view = this.activeView;
     const sourceUri = doc.uri.toString();
+    const moduleNames = structural.file.modules.map((m) => m.name);
+    const key = this.synth.cacheKey(job.text, structural.top, view);
+    const cached = this.synth.cache.get(key);
     if (cached) {
       this.synth.stats.cacheHits++;
-      const out: SchematicDoc = { ...cached.doc, generation: job.generation, sourceUri, moduleNames: structural.file.modules.map((m) => m.name) };
-      st.lastGood = out;
-      st.lastGoodKey = key;
+      const out: SchematicDoc = { ...cached.doc, generation: job.generation, sourceUri, moduleNames };
+      st.lastGood[view] = out;
       this.postRender(job.generation, out);
       this.provider.post({ type: "error", generation: job.generation, error: null });
-      this.postStatus({ fidelity: "synthesized", message: "cached" });
+      this.postStatus({ fidelity: "synthesized", editing: false, message: "cached" });
+      void this.prepareOtherView(job, structural, view);
       return;
     }
     this.stats.synthRuns++;
     try {
-      const res = await this.synth.run({ text: job.text, file: structural.file, top: structural.top, sourceUri, generation: job.generation, signal: job.signal });
+      const res = await this.synth.run({ view, text: job.text, file: structural.file, top: structural.top, sourceUri, generation: job.generation, signal: job.signal });
       if (!res || res.cancelled || job.signal.aborted) return;
       if (this.scheduler.currentGeneration(job.docKey) !== job.generation) return; // stale result
       this.stats.synthResults++;
       if (res.ok && res.doc) {
         if (res.doc.modules[structural.top] && res.doc.modules[structural.top]!.nodes.length > 2000) {
           log.warn(`synthesized netlist has ${res.doc.modules[structural.top]!.nodes.length} nodes; showing the structural view`);
-          this.postStatus({ fidelity: "structural", message: "netlist too large for the gate view (over 2,000 nodes)" });
+          this.postStatus({ fidelity: "structural", message: "netlist too large for the synthesized views (over 2,000 nodes)" });
           return;
         }
         this.synth.cache.set(key, { doc: res.doc, unknownCellTypes: res.unknownCellTypes });
-        st.lastGood = res.doc;
-        st.lastGoodKey = key;
+        st.lastGood[view] = res.doc;
         this.postRender(job.generation, res.doc);
         this.provider.post({ type: "error", generation: job.generation, error: null });
         this.postStatus({ fidelity: "synthesized", editing: false, message: `${res.elapsedMs.toFixed(0)} ms` });
         for (const d of res.diagnostics) log.warn(`synth: ${d.message}`);
+        void this.prepareOtherView(job, structural, view);
       } else {
         let err: BannerError = { message: res.error?.message ?? "synthesis failed", ...(res.error?.line !== undefined ? { line: res.error.line } : {}), ...(res.error?.column !== undefined ? { column: res.error.column } : {}), file: baseName(doc.fileName) };
         if (this.synth.currentSettings.lintWithVerilator) {
@@ -418,10 +453,31 @@ export class Controller implements vscode.Disposable {
         }
         log.warn(`synthesis failed: ${err.message}${res.stderr ? `\n${res.stderr.trim()}` : ""}`);
         this.provider.post({ type: "error", generation: job.generation, error: err });
-        this.postStatus({ fidelity: st.lastGood ? "stale" : "structural", message: res.timedOut ? "synthesis timed out" : "synthesis failed" });
+        this.postStatus({ fidelity: st.lastGood[view] ? "stale" : "structural", message: res.timedOut ? "synthesis timed out" : "synthesis failed" });
       }
     } catch (e) {
       log.error("synthesis crashed", e);
+    }
+  }
+
+  /** Build the other view in the background so the toolbar toggle is instant; nothing is posted. */
+  private async prepareOtherView(job: SynthJob, structural: NonNullable<DocState["structural"]>, shown: SynthView): Promise<void> {
+    const other: SynthView = shown === "rtl" ? "gate" : "rtl";
+    const key = this.synth.cacheKey(job.text, structural.top, other);
+    const st = this.docs.get(job.docKey);
+    if (!st) return;
+    const cached = this.synth.cache.get(key);
+    if (cached) {
+      st.lastGood[other] = { ...cached.doc, generation: job.generation, sourceUri: this.activeDoc?.uri.toString() ?? "", moduleNames: structural.file.modules.map((m) => m.name) };
+      return;
+    }
+    try {
+      const res = await this.synth.run({ view: other, text: job.text, file: structural.file, top: structural.top, sourceUri: this.activeDoc?.uri.toString() ?? "", generation: job.generation, signal: job.signal });
+      if (!res || !res.ok || !res.doc || job.signal.aborted) return;
+      this.synth.cache.set(key, { doc: res.doc, unknownCellTypes: res.unknownCellTypes });
+      if (this.scheduler.currentGeneration(job.docKey) === job.generation) st.lastGood[other] = res.doc;
+    } catch (e) {
+      log.warn(`${other} view synthesis failed in the background: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 

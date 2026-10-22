@@ -1,0 +1,134 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:in",
+            "pin": "in"
+          },
+          "id": "net:in",
+          "name": "in",
+          "sinks": [
+            {
+              "node": "gate:not:88d5da5374",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 27,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:not:88d5da5374",
+            "pin": "Y"
+          },
+          "id": "net:out",
+          "name": "out",
+          "sinks": [
+            {
+              "node": "port:out",
+              "pin": "out"
+            }
+          ],
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 39,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "gate:not:88d5da5374",
+          "kind": "gate",
+          "label": "NOT",
+          "op": "not",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:in",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:out",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 16,
+              "endColumn": 19,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "in",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 27,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "out",
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 39,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 3,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "notgate.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

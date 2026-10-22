@@ -1,0 +1,84 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "reset",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "q",
+      "direction": "output",
+      "width": 8
+    }
+  ],
+  "structural": {
+    "always": 1
+  },
+  "synth": {
+    "rtl": {
+      "count": {
+        "dff": 1,
+        "arith:add": 1,
+        "mux": 0
+      },
+      "nodes": [
+        {
+          "kind": "dff",
+          "op": "sdff",
+          "width": 8,
+          "pins": [
+            {
+              "id": "R",
+              "net": "reset"
+            },
+            {
+              "id": "Q",
+              "net": "q"
+            }
+          ],
+          "infoContains": {
+            "reset": "sync"
+          }
+        },
+        {
+          "kind": "arith",
+          "op": "add",
+          "width": 8,
+          "pins": [
+            {
+              "id": "A",
+              "net": "q"
+            }
+          ]
+        }
+      ],
+      "nets": [
+        "q"
+      ]
+    },
+    "gate": {
+      "count": {
+        "dff": 1,
+        "arith:add": 1,
+        "mux": 1
+      },
+      "nodes": [
+        {
+          "kind": "mux",
+          "pins": [
+            {
+              "id": "S",
+              "net": "reset"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

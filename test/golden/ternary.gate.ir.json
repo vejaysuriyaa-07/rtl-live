@@ -1,0 +1,224 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:s",
+            "pin": "s"
+          },
+          "id": "net:s",
+          "name": "s",
+          "sinks": [
+            {
+              "node": "mux:734a74e7a8",
+              "pin": "S"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "mux:734a74e7a8",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 41,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "mux:734a74e7a8",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 55,
+              "endColumn": 56,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "mux:734a74e7a8",
+            "pin": "Y"
+          },
+          "id": "net:y",
+          "name": "y",
+          "sinks": [
+            {
+              "node": "port:y",
+              "pin": "y"
+            }
+          ],
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "nodes": [
+        {
+          "id": "mux:734a74e7a8",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:a",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:b",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:s",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 23,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "s",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "a",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 40,
+              "endColumn": 41,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 55,
+              "endColumn": 56,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "direction": "output",
+          "name": "y",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 71,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 3,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "ternary.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

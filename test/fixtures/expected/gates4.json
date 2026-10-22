@@ -26,7 +26,7 @@
     "assigns": 3
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "reduce:and": 1,
         "reduce:or": 1,

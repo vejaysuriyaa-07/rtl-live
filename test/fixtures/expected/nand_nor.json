@@ -42,7 +42,7 @@
         "gate:not": 3
       }
     },
-    "simplified": {
+    "rtl": {
       "count": {
         "gate:nand": 1,
         "gate:nor": 1,

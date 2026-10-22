@@ -52,6 +52,7 @@ const chrome = new Chrome(app, {
   onHintAction: (command) => {
     if (command === "setLanguage") postToHost({ type: "setLanguage", generation: state.generation, language: "verilog" });
   },
+  onSetView: (view) => postToHost({ type: "setView", generation: state.generation, view }),
 });
 
 function fit(animate: boolean): void {

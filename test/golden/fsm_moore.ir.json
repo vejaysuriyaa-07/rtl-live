@@ -18,7 +18,7 @@
           "name": "clk",
           "sinks": [
             {
-              "node": "dff:dff:afc34668a3",
+              "node": "dff:sdff:5be333204f",
               "pin": "CLK"
             }
           ],
@@ -41,8 +41,8 @@
           "name": "reset",
           "sinks": [
             {
-              "node": "mux:04c1adf072",
-              "pin": "S"
+              "node": "dff:sdff:5be333204f",
+              "pin": "R"
             }
           ],
           "src": [
@@ -64,11 +64,11 @@
           "name": "in",
           "sinks": [
             {
-              "node": "mux:7eb9a7e3a9",
-              "pin": "B"
+              "node": "mux:43f601fb5e",
+              "pin": "S"
             },
             {
-              "node": "mux:43f601fb5e",
+              "node": "mux:8e150ffc25",
               "pin": "S"
             }
           ],
@@ -87,19 +87,19 @@
             "state"
           ],
           "driver": {
-            "node": "dff:dff:afc34668a3",
+            "node": "dff:sdff:5be333204f",
             "pin": "Q"
           },
           "id": "net:out",
           "name": "out",
           "sinks": [
             {
-              "node": "mux:7eb9a7e3a9",
-              "pin": "S"
-            },
-            {
               "node": "port:out",
               "pin": "out"
+            },
+            {
+              "node": "pmux:9406705d2d",
+              "pin": "S"
             }
           ],
           "src": [
@@ -114,37 +114,15 @@
         },
         {
           "driver": {
-            "node": "mux:04c1adf072",
-            "pin": "Y"
-          },
-          "id": "net:mux:04c1adf072.Y",
-          "sinks": [
-            {
-              "node": "dff:dff:afc34668a3",
-              "pin": "D"
-            }
-          ],
-          "src": [
-            {
-              "column": 3,
-              "endColumn": 6,
-              "endLine": 13,
-              "line": 10
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
-            "node": "mux:7eb9a7e3a9",
+            "node": "pmux:9406705d2d",
             "pin": "Y"
           },
           "id": "net:next_state",
           "name": "next_state",
           "sinks": [
             {
-              "node": "mux:04c1adf072",
-              "pin": "A"
+              "node": "dff:sdff:5be333204f",
+              "pin": "D"
             }
           ],
           "src": [
@@ -165,8 +143,8 @@
           "id": "net:mux:43f601fb5e.Y",
           "sinks": [
             {
-              "node": "mux:7eb9a7e3a9",
-              "pin": "A"
+              "node": "pmux:9406705d2d",
+              "pin": "B0"
             }
           ],
           "src": [
@@ -181,28 +159,22 @@
         },
         {
           "driver": {
-            "node": "const:1'b1:147d5852d9",
+            "node": "mux:8e150ffc25",
             "pin": "Y"
           },
-          "id": "net:const:1'b1:147d5852d9.Y",
+          "id": "net:mux:8e150ffc25.Y",
           "sinks": [
             {
-              "node": "mux:04c1adf072",
-              "pin": "B"
+              "node": "pmux:9406705d2d",
+              "pin": "B1"
             }
           ],
           "src": [
             {
-              "column": 9,
-              "endColumn": 14,
-              "endLine": 11,
-              "line": 11
-            },
-            {
-              "column": 5,
-              "endColumn": 36,
-              "endLine": 12,
-              "line": 11
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 7,
+              "line": 7
             }
           ],
           "width": 1
@@ -250,24 +222,69 @@
             }
           ],
           "width": 1
+        },
+        {
+          "driver": {
+            "node": "const:1'b0:6e49a1e8bb",
+            "pin": "Y"
+          },
+          "id": "net:const:1'b0:6e49a1e8bb.Y",
+          "sinks": [
+            {
+              "node": "mux:8e150ffc25",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "const:1'b1:a1a53101ca",
+            "pin": "Y"
+          },
+          "id": "net:const:1'b1:a1a53101ca.Y",
+          "sinks": [
+            {
+              "node": "mux:8e150ffc25",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
         }
       ],
       "nodes": [
         {
-          "id": "dff:dff:afc34668a3",
+          "id": "dff:sdff:5be333204f",
           "info": {
             "clock": "posedge",
+            "reset": "sync, value 1",
             "states": "A = 1'b0, B = 1'b1"
           },
           "kind": "dff",
           "label": "DFF",
-          "op": "dff",
+          "op": "sdff",
           "pins": [
             {
               "direction": "in",
               "id": "D",
               "label": "D",
-              "net": "net:mux:04c1adf072.Y",
+              "net": "net:next_state",
               "side": "west",
               "width": 1
             },
@@ -277,6 +294,14 @@
               "label": "",
               "net": "net:clk",
               "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "R",
+              "label": "R",
+              "net": "net:reset",
+              "side": "west",
               "width": 1
             },
             {
@@ -299,100 +324,17 @@
           "width": 1
         },
         {
-          "id": "const:1'b1:147d5852d9",
+          "id": "pmux:9406705d2d",
           "info": {
-            "value": "1'b1"
+            "select": "value",
+            "selector": "out"
           },
-          "kind": "const",
-          "label": "1'b1",
-          "pins": [
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:const:1'b1:147d5852d9.Y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 9,
-              "endColumn": 14,
-              "endLine": 11,
-              "line": 11
-            },
-            {
-              "column": 5,
-              "endColumn": 36,
-              "endLine": 12,
-              "line": 11
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "mux:04c1adf072",
-          "kind": "mux",
-          "label": "MUX",
+          "kind": "pmux",
+          "label": "PMUX",
           "pins": [
             {
               "direction": "in",
-              "id": "A",
-              "label": "0",
-              "net": "net:next_state",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "1",
-              "net": "net:const:1'b1:147d5852d9.Y",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "S",
-              "label": "",
-              "net": "net:reset",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:mux:04c1adf072.Y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 9,
-              "endColumn": 14,
-              "endLine": 11,
-              "line": 11
-            },
-            {
-              "column": 5,
-              "endColumn": 36,
-              "endLine": 12,
-              "line": 11
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "mux:7eb9a7e3a9",
-          "kind": "mux",
-          "label": "MUX",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
+              "id": "B0",
               "label": "0",
               "net": "net:mux:43f601fb5e.Y",
               "side": "west",
@@ -400,9 +342,9 @@
             },
             {
               "direction": "in",
-              "id": "B",
+              "id": "B1",
               "label": "1",
-              "net": "net:in",
+              "net": "net:mux:8e150ffc25.Y",
               "side": "west",
               "width": 1
             },
@@ -540,6 +482,108 @@
             }
           ],
           "width": 1
+        },
+        {
+          "id": "const:1'b0:6e49a1e8bb",
+          "info": {
+            "value": "1'b0"
+          },
+          "kind": "const",
+          "label": "1'b0",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:1'b0:6e49a1e8bb.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "const:1'b1:a1a53101ca",
+          "info": {
+            "value": "1'b1"
+          },
+          "kind": "const",
+          "label": "1'b1",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:1'b1:a1a53101ca.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "mux:8e150ffc25",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:const:1'b0:6e49a1e8bb.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:const:1'b1:a1a53101ca.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:in",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:mux:8e150ffc25.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
         }
       ],
       "ports": [
@@ -606,5 +650,6 @@
   },
   "sourceUri": "fsm_moore.v",
   "top": "top_module",
-  "version": 1
+  "version": 1,
+  "view": "rtl"
 }

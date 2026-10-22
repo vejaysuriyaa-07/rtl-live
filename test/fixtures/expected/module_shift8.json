@@ -60,7 +60,7 @@
     ]
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "blackbox": 3,
         "unknown": 0

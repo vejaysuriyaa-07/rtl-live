@@ -10,6 +10,7 @@ import { WasmYosysBackend } from "../../src/synth/wasmBackend";
 import { findYosys, NativeYosysBackend } from "../../src/synth/nativeBackend";
 import { selectTop } from "../../src/structural/topSelect";
 import type { StructuralParser } from "../../src/structural/types";
+import type { SynthView } from "../../src/synth/script";
 import { ROOT } from "./helpers";
 
 export const WORKER_PATH = join(ROOT, "dist", "yosysWorker.mjs");
@@ -33,11 +34,12 @@ export async function synthFixture(
   parser: StructuralParser,
   text: string,
   name: string,
-  opts?: { optimize?: boolean; simplify?: SimplifyOptions; top?: string },
+  opts?: { optimize?: boolean; simplify?: SimplifyOptions; top?: string; view?: SynthView },
 ): Promise<SynthesizeResult> {
   const file = parser.parse(text);
   const top = opts?.top ?? selectTop({ modules: file.modules });
   return synthesize(testBackend(), {
+    view: opts?.view ?? "rtl",
     text,
     file,
     top,
@@ -171,7 +173,7 @@ export function runChecks(doc: SchematicDoc, moduleName: string, checks: Checks,
 }
 
 /** Milestones whose synthesis expectations and golden files are complete. Bumped per milestone. */
-export const COMPLETED_MILESTONES = ["M2", "M3", "M4", "M5"];
+export const COMPLETED_MILESTONES = ["M2", "M3", "M4", "M5", "M8"];
 
 export function activeMilestones(): string[] {
   const env = process.env["SYNTH_MILESTONES"];
@@ -183,4 +185,16 @@ export const SYNTH_FIXTURES_BY_MILESTONE: Record<string, string[]> = {
   M3: ["vector0.v", "vector2.v", "vectorr.v", "vector3.v", "vector4.v", "vector5.v"],
   M4: ["module.v", "module_pos.v", "module_name.v", "module_shift.v", "module_add.v", "module_add_full.v", "multi_module.v"],
   M5: ["mux2_always.v", "module_shift8.v", "dff_async.v", "counter4.v", "shift4.v", "fsm_moore.v", "arith_compare.v"],
+  // v0.2: ACCURACY.md 5.2 datapath cases plus the feature variants added in Phase 2
+  M8: ["rca4.v", "mux4_case.v", "en_flop.v", "scan_flop.v", "latch_vs_flop.v", "counter8_reset.v", "compare4.v", "bitwise_vs_logical.v", "inverted_gates.v", "case_mux.v", "dff_enable.v", "dff_sync_reset_en.v", "latch_en.v", "logic_ops.v", "ternary.v", "nand_nor.v"],
 };
+
+/** The synth block of an expected file: per-view checks plus checks for other modules of the file. */
+export interface SynthExpectations {
+  module?: string;
+  raw?: Checks;
+  rtl?: Checks;
+  gate?: Checks;
+  rtlModules?: Record<string, Checks>;
+  gateModules?: Record<string, Checks>;
+}

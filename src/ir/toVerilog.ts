@@ -169,11 +169,25 @@ class ModuleWriter {
     const a = pins.get("A");
     const s = pins.get("S");
     const y = pins.get("Y");
-    if (!a || !s || !y) throw new ExportError("pmux pins missing", node.id);
+    if (!s || !y) throw new ExportError("pmux pins missing", node.id);
     if (node.label === "BMUX") throw new ExportError("bmux semantics not represented (select is an index, not one-hot)", node.id);
     const cases = node.pins.filter((p) => /^B\d+$/.test(p.id)).sort((p, q) => Number(p.id.slice(1)) - Number(q.id.slice(1)));
-    if (cases.length !== s.width) throw new ExportError(`pmux has ${cases.length} cases for a ${s.width}-bit select`, node.id);
     const sel = this.operand(s);
+    if (node.info?.["select"] === "value") {
+      // RTL view: inputs are labelled with the select value they answer to.
+      const aPin = node.pins.find((p) => p.id === "A");
+      let chain = aPin ? this.operand(aPin) : `${y.width}'bx`;
+      if (aPin && /^\d+$/.test(aPin.label)) chain = this.operand(aPin);
+      for (let i = cases.length - 1; i >= 0; i--) {
+        const c = cases[i]!;
+        if (!/^\d+$/.test(c.label)) throw new ExportError(`mux input ${c.id} has no select value`, node.id);
+        chain = `(${sel} == ${s.width}'d${c.label}) ? ${this.operand(c)} : (${chain})`;
+      }
+      this.assign(this.expr(y.net, y.width), chain);
+      return;
+    }
+    if (!a) throw new ExportError("pmux without an A input", node.id);
+    if (cases.length !== s.width) throw new ExportError(`pmux has ${cases.length} cases for a ${s.width}-bit select`, node.id);
     let rhs = this.operand(a);
     // Priority chain; equal to the one-hot semantics whenever at most one select bit is set.
     for (let i = cases.length - 1; i >= 0; i--) rhs = `${sel}[${i}] ? ${this.operand(cases[i]!)} : (${rhs})`;

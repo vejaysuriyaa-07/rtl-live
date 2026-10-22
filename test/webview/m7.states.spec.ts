@@ -46,3 +46,28 @@ test("M7: a structural status with editing shows the Editing badge", async ({ pa
   await post(page, { type: "status", generation: 2, status: { fidelity: "structural", editing: false, backend: "native" } });
   await expect(page.locator(".badge")).toHaveText("Structural");
 });
+
+test("M7: the view toggle posts setView and the badge names the view", async ({ page }) => {
+  await page.goto(`${harness.url}/`);
+  await post(page, { type: "status", generation: 1, status: { fidelity: "synthesized", view: "rtl", backend: "native" } });
+  await expect(page.locator(".badge")).toHaveText("RTL view");
+  await expect(page.locator(".view-btn.active")).toHaveText("RTL");
+  await page.locator(".view-btn", { hasText: "Gate" }).click();
+  const posted = await page.evaluate(() => (globalThis as unknown as { __rtlLiveTestHooks: { posted: unknown[] } }).__rtlLiveTestHooks.posted);
+  expect(JSON.stringify(posted)).toContain('"setView"');
+  await post(page, { type: "status", generation: 2, status: { fidelity: "synthesized", view: "gate", backend: "native" } });
+  await expect(page.locator(".badge")).toHaveText("Gate view");
+  await expect(page.locator(".view-btn.active")).toHaveText("Gate");
+});
+
+test("M7: a latch carries a warning badge and no clock triangle; a flop has the triangle", async ({ page }) => {
+  await page.goto(`${harness.url}/`);
+  const { readFileSync } = await import("node:fs");
+  const doc = JSON.parse(readFileSync(join(ROOT, "test", "golden", "latch_vs_flop.ir.json"), "utf8"));
+  await postRender(page, doc);
+  await expect(page.locator('g.node-dff.op-dlatch .warn-badge')).toHaveCount(1);
+  await expect(page.locator('g.node-dff.op-dlatch .clk-tri')).toHaveCount(0);
+  await expect(page.locator('g.node-dff.op-dff .clk-tri')).toHaveCount(1);
+  await expect(page.locator('g.node-dff.op-dff .warn-badge')).toHaveCount(0);
+  await page.screenshot({ path: join(ART, "m7-latch-vs-flop.png") });
+});

@@ -41,7 +41,7 @@
     "assigns": 4
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "logicNodes": 0,
       "fanout": {
         "b": 2,

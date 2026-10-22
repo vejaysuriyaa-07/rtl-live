@@ -1,0 +1,256 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "inv",
+    "top_module"
+  ],
+  "modules": {
+    "inv": {
+      "name": "inv",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:x",
+            "pin": "x"
+          },
+          "id": "net:x",
+          "name": "x",
+          "sinks": [
+            {
+              "node": "gate:not:984badb965",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 18,
+              "endColumn": 19,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:not:984badb965",
+            "pin": "Y"
+          },
+          "id": "net:y",
+          "name": "y",
+          "sinks": [
+            {
+              "node": "port:y",
+              "pin": "y"
+            }
+          ],
+          "src": [
+            {
+              "column": 28,
+              "endColumn": 29,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "gate:not:984badb965",
+          "kind": "gate",
+          "label": "NOT",
+          "op": "not",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:x",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 16,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "x",
+          "src": [
+            {
+              "column": 18,
+              "endColumn": 19,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "y",
+          "src": [
+            {
+              "column": 28,
+              "endColumn": 29,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 3,
+        "line": 1
+      }
+    },
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "inst:u0",
+              "pin": "x"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:u0",
+            "pin": "y"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "port:b",
+              "pin": "b"
+            }
+          ],
+          "src": [
+            {
+              "column": 35,
+              "endColumn": 36,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "drillTarget": "inv",
+          "id": "inst:u0",
+          "kind": "instance",
+          "label": "u0 : inv",
+          "moduleType": "inv",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "x",
+              "label": "x",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "y",
+              "label": "y",
+              "net": "net:b",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 7,
+              "endColumn": 23,
+              "endLine": 5,
+              "line": 5
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "b",
+          "src": [
+            {
+              "column": 35,
+              "endColumn": 36,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 6,
+        "line": 4
+      }
+    }
+  },
+  "sourceUri": "multi_module.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

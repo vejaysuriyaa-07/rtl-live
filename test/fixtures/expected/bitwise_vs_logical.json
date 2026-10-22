@@ -1,0 +1,94 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "bw",
+      "direction": "output",
+      "width": 3
+    },
+    {
+      "name": "lg",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "nb",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "nl",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "assigns": 4
+  },
+  "synth": {
+    "rtl": {
+      "nodes": [
+        {
+          "kind": "gate",
+          "op": "or",
+          "width": 3,
+          "pins": [
+            {
+              "id": "Y",
+              "net": "bw"
+            }
+          ]
+        },
+        {
+          "kind": "gate",
+          "op": "or",
+          "width": 1,
+          "info": {
+            "logical": "1"
+          },
+          "pins": [
+            {
+              "id": "Y",
+              "net": "lg"
+            }
+          ]
+        },
+        {
+          "kind": "gate",
+          "op": "not",
+          "width": 1,
+          "pins": [
+            {
+              "id": "Y",
+              "net": "nb"
+            }
+          ]
+        },
+        {
+          "kind": "gate",
+          "op": "not",
+          "width": 1,
+          "info": {
+            "logical": "1"
+          },
+          "pins": [
+            {
+              "id": "Y",
+              "net": "nl"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

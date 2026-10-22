@@ -1,0 +1,347 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "gate:and:70f9aa7b39",
+              "pin": "A"
+            },
+            {
+              "node": "gate:not:5aba802277",
+              "pin": "A"
+            },
+            {
+              "node": "gate:or:919d004b6d",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 3
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "gate:and:70f9aa7b39",
+              "pin": "B"
+            },
+            {
+              "node": "gate:or:919d004b6d",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 47,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 3
+        },
+        {
+          "driver": {
+            "node": "gate:and:70f9aa7b39",
+            "pin": "Y"
+          },
+          "id": "net:y_and",
+          "name": "y_and",
+          "sinks": [
+            {
+              "node": "port:y_and",
+              "pin": "y_and"
+            }
+          ],
+          "src": [
+            {
+              "column": 56,
+              "endColumn": 61,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:not:5aba802277",
+            "pin": "Y"
+          },
+          "id": "net:y_not",
+          "name": "y_not",
+          "sinks": [
+            {
+              "node": "port:y_not",
+              "pin": "y_not"
+            }
+          ],
+          "src": [
+            {
+              "column": 83,
+              "endColumn": 88,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:or:919d004b6d",
+            "pin": "Y"
+          },
+          "id": "net:y_or",
+          "name": "y_or",
+          "sinks": [
+            {
+              "node": "port:y_or",
+              "pin": "y_or"
+            }
+          ],
+          "src": [
+            {
+              "column": 70,
+              "endColumn": 74,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "gate:and:70f9aa7b39",
+          "info": {
+            "logical": "1"
+          },
+          "kind": "gate",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 3
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 3
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y_and",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 18,
+              "endColumn": 24,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:not:5aba802277",
+          "info": {
+            "logical": "1"
+          },
+          "kind": "gate",
+          "label": "NOT",
+          "op": "not",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 3
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y_not",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 18,
+              "endColumn": 20,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:or:919d004b6d",
+          "info": {
+            "logical": "1"
+          },
+          "kind": "gate",
+          "label": "OR",
+          "op": "or",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 3
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 3
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y_or",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 18,
+              "endColumn": 24,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "range": "[2:0]",
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 32,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 3
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "range": "[2:0]",
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 47,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 3
+        },
+        {
+          "direction": "output",
+          "name": "y_and",
+          "src": [
+            {
+              "column": 56,
+              "endColumn": 61,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "y_or",
+          "src": [
+            {
+              "column": 70,
+              "endColumn": 74,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "y_not",
+          "src": [
+            {
+              "column": 83,
+              "endColumn": 88,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "logic_ops.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "rtl"
+}

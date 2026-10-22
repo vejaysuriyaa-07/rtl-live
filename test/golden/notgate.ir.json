@@ -129,5 +129,6 @@
   },
   "sourceUri": "notgate.v",
   "top": "top_module",
-  "version": 1
+  "version": 1,
+  "view": "rtl"
 }

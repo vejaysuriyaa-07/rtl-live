@@ -13,12 +13,12 @@ import { structuralToIr } from "../../src/structural/toIr";
 import { selectTop } from "../../src/structural/topSelect";
 import type { StructuralFile, StructuralParser } from "../../src/structural/types";
 import { HDLBITS, ROOT, listFixtures, makeTreeSitterParser, readExpected, readFixture } from "../unit/helpers";
-import { disposeTestBackend, runChecks, synthFixture, testBackend, type Checks } from "../unit/synthHelpers";
+import { disposeTestBackend, runChecks, synthFixture, testBackend, type SynthExpectations } from "../unit/synthHelpers";
 import { checkEquivalence } from "./equivalence";
 import { checkLayout, layoutView, type LayoutReport } from "./layout";
 
-export type ViewName = "structural" | "gate";
-export const VIEWS: ViewName[] = ["structural", "gate"];
+export type ViewName = "structural" | "rtl" | "gate";
+export const VIEWS: ViewName[] = ["structural", "rtl", "gate"];
 
 export interface CheckResult {
   ok: boolean;
@@ -73,14 +73,21 @@ function structuralChecks(file: StructuralFile, top: string, expected: Record<st
   });
 }
 
-function gateChecks(raw: SchematicDoc, simplified: SchematicDoc, name: string, expected: Record<string, unknown> | undefined): CheckResult {
+function synthChecks(view: "rtl" | "gate", raw: SchematicDoc, doc: SchematicDoc, name: string, expected: Record<string, unknown> | undefined): CheckResult {
   if (!expected) return { ok: false, reason: "no expected JSON" };
-  const synth = expected["synth"] as { raw?: Checks; simplified?: Checks; module?: string } | undefined;
+  const synth = expected["synth"] as SynthExpectations | undefined;
   if (!synth) return { ok: false, reason: "no synth expectations" };
   const moduleName = synth.module ?? "top_module";
+  const checks = view === "rtl" ? synth.rtl : synth.gate;
+  const modules = view === "rtl" ? synth.rtlModules : synth.gateModules;
+  if (!checks && !modules && !(view === "gate" && synth.raw)) {
+    // ACCURACY.md 6.2: the gate view is asserted only where it differs from the RTL view.
+    return view === "gate" ? { ok: true, detail: { skipped: "no gate-specific assertions" } } : { ok: false, reason: `no ${view} expectations` };
+  }
   return tryChecks(() => {
-    if (synth.raw) runChecks(raw, moduleName, synth.raw, `${name} raw`);
-    if (synth.simplified) runChecks(simplified, moduleName, synth.simplified, `${name} simplified`);
+    if (view === "gate" && synth.raw) runChecks(raw, moduleName, synth.raw, `${name} raw`);
+    if (checks) runChecks(doc, moduleName, checks, `${name} ${view}`);
+    for (const [mod, c] of Object.entries(modules ?? {})) runChecks(doc, mod, c, `${name} ${view} ${mod}`);
   });
 }
 
@@ -128,22 +135,24 @@ describe("accuracy", () => {
         L3: sl.result,
         layout: sl.layout,
       };
-      // Gate view (synthesized, simplified).
-      const res = await synthFixture(parser, text, name);
-      if (!res.ok || !res.doc || !res.rawDoc) {
-        r.synthError = res.error?.message ?? "synthesis failed";
-        r.views.gate = { L1: { ok: false, reason: r.synthError }, L2: { ok: false, reason: r.synthError }, L3: { ok: false, reason: r.synthError }, layout: {} };
-        return;
+      // RTL view and gate view (two Yosys runs).
+      for (const view of ["rtl", "gate"] as const) {
+        const res = await synthFixture(parser, text, name, { view });
+        if (!res.ok || !res.doc || !res.rawDoc) {
+          r.synthError = res.error?.message ?? "synthesis failed";
+          r.views[view] = { L1: { ok: false, reason: r.synthError }, L2: { ok: false, reason: r.synthError }, L3: { ok: false, reason: r.synthError }, layout: {} };
+          continue;
+        }
+        const eq = checkEquivalence({ name, source: text, file, doc: res.doc });
+        const rawEq = checkEquivalence({ name, source: text, file, doc: res.rawDoc });
+        const l3 = await layoutChecks(res.doc);
+        r.views[view] = {
+          L1: eq.ok && rawEq.ok ? { ok: true, detail: { vectors: eq.vectors, maskedBits: eq.maskedBits, clocks: eq.clocks } } : { ok: false, reason: eq.ok ? `raw netlist: ${rawEq.reason}` : (eq.reason ?? "mismatch") },
+          L2: synthChecks(view, res.rawDoc, res.doc, name, expected),
+          L3: l3.result,
+          layout: l3.layout,
+        };
       }
-      const gEq = checkEquivalence({ name, source: text, file, doc: res.doc });
-      const rawEq = checkEquivalence({ name, source: text, file, doc: res.rawDoc });
-      const gl = await layoutChecks(res.doc);
-      r.views.gate = {
-        L1: gEq.ok && rawEq.ok ? { ok: true, detail: { vectors: gEq.vectors, maskedBits: gEq.maskedBits, clocks: gEq.clocks } } : { ok: false, reason: gEq.ok ? `raw netlist: ${rawEq.reason}` : (gEq.reason ?? "mismatch") },
-        L2: gateChecks(res.rawDoc, res.doc, name, expected),
-        L3: gl.result,
-        layout: gl.layout,
-      };
     }, 120_000);
   }
 

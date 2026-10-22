@@ -1,0 +1,119 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 4
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 4
+    },
+    {
+      "name": "cin",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "s",
+      "direction": "output",
+      "width": 4
+    },
+    {
+      "name": "cout",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "modules": [
+      "fa",
+      "top_module"
+    ],
+    "instances": [
+      {
+        "name": "f0",
+        "type": "fa",
+        "pins": [
+          "p0",
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      },
+      {
+        "name": "f1",
+        "type": "fa",
+        "pins": [
+          "p0",
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      },
+      {
+        "name": "f2",
+        "type": "fa",
+        "pins": [
+          "p0",
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      },
+      {
+        "name": "f3",
+        "type": "fa",
+        "pins": [
+          "p0",
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      }
+    ]
+  },
+  "synth": {
+    "rtl": {
+      "count": {
+        "instance": 4
+      },
+      "nets": [
+        "cin",
+        "c1",
+        "c2",
+        "c3",
+        "cout"
+      ],
+      "noUnknown": true
+    },
+    "rtlModules": {
+      "fa": {
+        "count": {
+          "gate:xor": 1,
+          "gate:and": 3,
+          "gate:or": 1
+        },
+        "gateInputs": {
+          "gate:xor": [
+            3
+          ],
+          "gate:or": [
+            3
+          ],
+          "gate:and": [
+            2,
+            2,
+            2
+          ]
+        }
+      }
+    }
+  }
+}

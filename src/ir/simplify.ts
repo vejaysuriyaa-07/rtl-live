@@ -182,6 +182,9 @@ export function bubbles(view: ModuleView): ModuleView {
 export function simplifyModule(view: ModuleView, opts: SimplifyOptions = DEFAULT_SIMPLIFY): ModuleView {
   let v = view;
   if (opts.dropBuffers) v = dropBuffers(v);
+  // Chains first, so ~(a & b & c) becomes one 3-input NAND instead of AND + NAND; once more
+  // afterwards because an output bubble can expose a new chain.
+  if (opts.mergeChains) v = mergeChains(v);
   if (opts.bubbles) v = bubbles(v);
   if (opts.mergeChains) v = mergeChains(v);
   return v;

@@ -18,7 +18,7 @@
     "instances": []
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "logicNodes": 0,
       "nets": [
         "in"

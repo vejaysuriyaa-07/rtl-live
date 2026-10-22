@@ -1,0 +1,375 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "gate:xnor:dd3bc21552",
+              "pin": "A"
+            },
+            {
+              "node": "gate:xor:d05cdfac44",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "gate:xnor:dd3bc21552",
+              "pin": "B"
+            },
+            {
+              "node": "gate:xor:d05cdfac44",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:v",
+            "pin": "v"
+          },
+          "id": "net:v",
+          "name": "v",
+          "sinks": [
+            {
+              "node": "reduce:xnor:bbd2f227f6",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 49,
+              "endColumn": 50,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "gate:xor:d05cdfac44",
+            "pin": "Y"
+          },
+          "id": "net:y1",
+          "name": "y1",
+          "sinks": [
+            {
+              "node": "port:y1",
+              "pin": "y1"
+            }
+          ],
+          "src": [
+            {
+              "column": 59,
+              "endColumn": 61,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "reduce:xnor:bbd2f227f6",
+            "pin": "Y"
+          },
+          "id": "net:y3",
+          "name": "y3",
+          "sinks": [
+            {
+              "node": "port:y3",
+              "pin": "y3"
+            }
+          ],
+          "src": [
+            {
+              "column": 81,
+              "endColumn": 83,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:xnor:dd3bc21552",
+            "pin": "Y"
+          },
+          "id": "net:y2",
+          "name": "y2",
+          "sinks": [
+            {
+              "node": "port:y2",
+              "pin": "y2"
+            }
+          ],
+          "src": [
+            {
+              "column": 70,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "reduce:xnor:bbd2f227f6",
+          "kind": "reduce",
+          "label": "XNOR",
+          "op": "xnor",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:v",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y3",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 15,
+              "endColumn": 18,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:xnor:dd3bc21552",
+          "kind": "gate",
+          "label": "XNOR",
+          "op": "xnor",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y2",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 15,
+              "endColumn": 21,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:xor:d05cdfac44",
+          "kind": "gate",
+          "label": "XNOR",
+          "op": "xnor",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y1",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 17,
+              "endColumn": 22,
+              "endLine": 2,
+              "line": 2
+            },
+            {
+              "column": 15,
+              "endColumn": 23,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "v",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 49,
+              "endColumn": 50,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "output",
+          "name": "y1",
+          "src": [
+            {
+              "column": 59,
+              "endColumn": 61,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "y2",
+          "src": [
+            {
+              "column": 70,
+              "endColumn": 72,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "y3",
+          "src": [
+            {
+              "column": 81,
+              "endColumn": 83,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "xnor_misc.v",
+  "top": "top_module",
+  "version": 1,
+  "view": "gate"
+}

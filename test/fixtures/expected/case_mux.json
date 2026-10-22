@@ -37,7 +37,7 @@
     "assigns": 0
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "compare:eq": 0,
         "pmux": 1,

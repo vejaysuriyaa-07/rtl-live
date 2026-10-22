@@ -29,7 +29,7 @@
     ]
   },
   "synth": {
-    "simplified": {
+    "rtl": {
       "count": {
         "instance": 1
       },
