@@ -6,7 +6,7 @@ Screenshots are in `media/screenshots/` (vsce cannot embed images without a publ
 
 ## First run
 
-1. Run `code --install-extension rtl-live-0.1.0.vsix --force`, then Cmd+Shift+P, "Developer: Reload Window".
+1. Run `code --install-extension rtl-live-0.2.0.vsix --force`, then Cmd+Shift+P, "Developer: Reload Window".
 2. Optional, faster synthesis: `brew install yosys`. Without it the bundled wasm engine is used, and its first run takes a few seconds.
 3. Click the RTL Live icon in the Activity Bar to open the "Schematic" view. You can drag it to the secondary side bar.
 4. 10-minute manual check using `test/fixtures/hdlbits/`:
@@ -27,10 +27,15 @@ If `code` is not on your PATH, run "Shell Command: Install 'code' command in PAT
 ## Features
 
 - Structural view while typing: module box, ports with widths, wires, instances, and dashed "logic clouds" for `assign` and `always` blocks. Half-typed or broken code never blanks the view.
-- Synthesized view: IEEE/ANSI gate symbols (AND, OR, XOR, XNOR, NAND, NOR, NOT, BUF), reduction gates, muxes, flip-flops with clock triangle and reset/enable pins, arithmetic and comparator boxes, constants, split/join rippers for bit-selects, part-selects, concatenation and replication.
+- Two synthesized views, switched with the RTL / Gate toggle in the toolbar. RTL view is shaped like the source: a `case` is one N:1 mux with inputs labelled by select value, `cond ? x : y` a 2:1 mux with `0` and `1`, `if (en)` on a flop an EN pin, a synchronous reset an R pin, word-level `+`, `==`, `<` single boxes. Gate view is what synthesis builds: enables and resets become muxes in front of plain flops.
+- IEEE/ANSI gate symbols (AND, OR, XOR, NOT, BUF; NAND, NOR, XNOR with an output bubble, N inputs on one symbol), reduction gates, logical `&&` `||` `!` marked on the gate, flip-flops with a clock triangle, latches without one and with a warning badge, arithmetic and comparator boxes, constants, split/join rippers for bit-selects, part-selects, concatenation and replication.
+- Warnings on the wire: multiply driven nets and combinational loops carry a badge; the banner names the offending signal.
+- Every fixture is checked for functional equivalence against its source with Icarus Verilog in both views (`docs/ACCURACY_REPORT.md`).
 - Hierarchy: instances of modules in the same file are boxes you can double-click to drill into, with a breadcrumb to go back. Modules that are not in the file (HDLBits' `mod_a`, `my_dff`, `add16`) are drawn as dashed black boxes with pin directions inferred from how they are connected.
 - Linking: the editor cursor highlights the matching nodes and nets; clicking a node jumps to its source; the error banner jumps to the error line.
-- Status badge: Structural (grey), Synthesized (green), Stale (amber), plus the backend name and version.
+- Status badge: Structural or Editing (the text does not parse yet), RTL view / Gate view (green), Stale (amber: the last good diagram with the changed ports overlaid), plus the backend name and version.
+- Syntax errors say what is missing and where, including at the end of the file (`missing ';'`, `missing ')' to close the port list`, `missing endmodule`); Verilator sharpens the message when it is installed. Ports recovered from a broken header stay visible, greyed.
+- Untitled files in Verilog mode render; untitled Plain Text that looks like Verilog gets a one-click "Set language to Verilog".
 - Export SVG (self-contained, theme colours inlined) and PNG (2x). "Open in editor panel" shows the same diagram in a full editor tab.
 - Keys inside the view: `f` fit, `+`/`-` zoom, `Backspace` drill up.
 - Fully offline: no network, no telemetry.
@@ -46,7 +51,7 @@ If `code` is not on your PATH, run "Shell Command: Install 'code' command in PAT
 | `rtlLive.bubbles` | `true` | Draw a NOT that feeds a single gate as an inversion bubble on that gate. |
 | `rtlLive.structuralDebounceMs` | `60` | Delay between a keystroke and the structural update. |
 | `rtlLive.synthDebounceMs` | `300` | Delay after the last keystroke before synthesis runs. |
-| `rtlLive.lintWithVerilator` | `false` | When synthesis fails and `verilator` is on PATH, run `verilator --lint-only` for a friendlier message. |
+| `rtlLive.lintWithVerilator` | `true` | When the file does not parse or synthesis fails and `verilator` is on PATH, run `verilator --lint-only` to sharpen the error message. |
 
 Settings apply live.
 
@@ -66,14 +71,14 @@ Settings apply live.
 editor text --(60 ms)--> structural layer (web-tree-sitter + tree-sitter-verilog wasm,
                           fallback scanner) --> IR (structural) --> webview
             --(300 ms, clean tree only)--> synthesis layer (native yosys or @yowasp/yosys
-                          in a worker_threads worker) --> write_json --> fromYosys --> simplify
-                          --> IR (synthesized) --> webview
+                          in a worker_threads worker, one script per view) --> write_json --> fromYosys
+                          --> rtlView (RTL view only) --> simplify --> semantics --> IR --> webview
 webview: IR --> ELK (layered, Web Worker from a Blob URL) --> SVG symbols, d3-zoom
 ```
 
 - `src/structural/`: error-tolerant parsers that share one `StructuralFile` model; `toIr.ts` builds the structural IR.
 - `src/synth/`: Yosys script, black-box stubs, native and wasm backends, the worker entry.
-- `src/ir/`: shared IR types, `fromYosys.ts` (bit-level net reconstruction with split/join/const nodes), `simplify.ts` (gate chain merging, buffer removal, inversion bubbles), stable ids.
+- `src/ir/`: shared IR types, `fromYosys.ts` (bit-level net reconstruction with split/join/const nodes), `rtlView.ts` (case muxes by select value), `simplify.ts` (gate chain merging, buffer removal, inversion bubbles), `semantics.ts` (multiple drivers, combinational loops), `overlay.ts` (stale port overlay), `toVerilog.ts` (netlist export for the equivalence check), stable ids.
 - `src/extension/`: scheduler with per-document generations, synthesis manager with an LRU cache, controller, webview provider with a strict CSP.
 - `webview/`: layout (`toElk.ts`), SVG renderer and symbols, zoom, cursor highlight, export, toolbar/status/banner/breadcrumb.
 
@@ -89,6 +94,7 @@ npm test               # vitest unit + golden (uses the wasm yosys)
 npm run test:integration
 npm run test:webview
 npm run test:packaged  # packages a vsix and runs the integration suite against the unzipped copy
+npm run test:accuracy:update  # rewrite the accuracy baseline after an intended change (review the diff)
 npm run bench
 npm run package        # rtl-live-<version>.vsix
 ```
