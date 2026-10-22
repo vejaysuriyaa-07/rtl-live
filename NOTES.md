@@ -173,3 +173,86 @@ Verified:
 - Integration (8 passing): cursor on `assign out = ~in` highlights `gate:not:...`; moving to line 1 clears it; `revealSource` moves the selection to line 9 columns 16..23 of 7458.v; deleting `endmodule` gives status stale while the last render message still holds the synthesized 6-node diagram, and undo returns to synthesized.
 - Playwright (47 passing in all): theme screenshots, export SVG XML check (`artifacts/m6-7458-export.svg`), cursor highlight of the OR gate on line 9, keyboard zoom and fit.
 - `npm test`: 272 tests.
+
+
+## M7: performance, packaging, docs
+
+Status: done
+
+### Bench (`npm run bench`, `artifacts/bench.json`, 2026-10-22, Node v23.1.0, wasm backend only)
+
+Columns: structural = parse + structural IR p95 over 30 runs (ms); wasm warm = synthesis p50 / p95 over 7 warm runs (ms); ELK = elkjs layout in node p50 / max over 5 runs (ms).
+
+| fixture | nodes | structural tree-sitter p95 | structural fallback p95 | wasm warm p50 / p95 | ELK p50 / max |
+| --- | --- | --- | --- | --- | --- |
+| 7458.v | 6 | 5.0 | 1.4 | 33 / 55 | 20.3 / 115.2 |
+| arith_compare.v | 4 | 2.1 | 0.3 | 12 / 17 | 10.0 / 17.8 |
+| counter4.v | 5 | 1.3 | 0.2 | 13 / 16 | 15.4 / 22.1 |
+| dff_async.v | 1 | 0.6 | 0.0 | 14 / 23 | 8.0 / 12.5 |
+| fsm_moore.v | 7 | 1.1 | 0.1 | 15 / 18 | 16.5 / 28.8 |
+| gates4.v | 3 | 0.4 | 0.0 | 10 / 14 | 5.7 / 6.5 |
+| module.v | 1 | 0.5 | 0.1 | 31 / 331 | 8.1 / 9.3 |
+| module_add.v | 6 | 2.0 | 0.1 | 17 / 21 | 9.4 / 14.5 |
+| module_add_full.v | 6 | 2.5 | 0.3 | 13 / 18 | 9.8 / 10.1 |
+| module_name.v | 1 | 0.5 | 0.0 | 11 / 14 | 7.1 / 8.6 |
+| module_pos.v | 1 | 0.6 | 0.0 | 12 / 14 | 6.4 / 6.8 |
+| module_shift.v | 3 | 1.4 | 0.0 | 12 / 16 | 5.8 / 6.4 |
+| module_shift8.v | 11 | 1.8 | 0.1 | 27 / 373 | 30.6 / 35.0 |
+| multi_module.v | 1 | 0.7 | 0.0 | 13 / 17 | 4.9 / 6.6 |
+| mux2_always.v | 4 | 0.6 | 0.0 | 15 / 19 | 14.9 / 22.4 |
+| notgate.v | 1 | 0.1 | 0.0 | 22 / 36 | 5.0 / 5.5 |
+| shift4.v | 3 | 0.6 | 0.0 | 12 / 18 | 7.8 / 8.0 |
+| vector0.v | 1 | 0.6 | 0.0 | 10 / 11 | 5.0 / 6.7 |
+| vector2.v | 2 | 1.0 | 0.0 | 11 / 261 | 6.4 / 7.8 |
+| vector3.v | 8 | 0.5 | 0.0 | 13 / 16 | 9.6 / 10.3 |
+| vector4.v | 2 | 0.4 | 0.0 | 10 / 12 | 5.2 / 7.3 |
+| vector5.v | 3 | 0.8 | 0.0 | 14 / 16 | 14.1 / 28.2 |
+| vectorgates.v | 5 | 0.7 | 0.0 | 17 / 27 | 8.5 / 9.1 |
+| vectorr.v | 2 | 1.2 | 0.1 | 11 / 12 | 6.4 / 7.0 |
+| wire.v | 0 | 0.1 | 0.0 | 10 / 12 | 4.1 / 4.7 |
+| wire4.v | 0 | 0.4 | 0.0 | 21 / 28 | 5.6 / 6.2 |
+| xnor_misc.v | 3 | 0.6 | 0.0 | 13 / 17 | 7.2 / 8.7 |
+
+Worst cases: structural tree-sitter p95 5.0 ms, fallback 1.4 ms, wasm warm p95 373 ms, ELK max 115 ms, wasm cold start 230 ms (preload of a fresh worker).
+
+Budgets (section 9):
+- Structural, keystroke to render under 100 ms p95: met in the parser (5 ms p95). End to end inside VS Code the integration test measured 412 to 416 ms for one edit, which includes the 60 ms debounce, the extension host round trip and the test's own event plumbing; the structural pass itself logs a warning above 100 ms and never did.
+- Native yosys under 300 ms p95: not measurable here (no native yosys installed). The native backend is exercised only by its code path; try it after `brew install yosys` and rerun `npm run bench`.
+- Wasm warm under 800 ms p95: met (373 ms). The outliers (module.v 331 ms, module_shift8.v 373 ms, vector2.v 261 ms) are the runs right after a worker recycle (every 50 runs; the bench does 216 runs), which pay the cold start again. Typical warm runs are 11 to 55 ms.
+- Wasm cold start under 8 s with a warm-up indicator: met (230 ms here; the "Warming up" badge shows until the preload resolves).
+- ELK under 100 ms for the largest fixture: met for warm runs (max p50 30.6 ms for module_shift8; 7458 at 20 ms). The 115 ms max for 7458 is the very first layout in a fresh node process (JIT warm-up); inside the webview the worker is warmed with a probe layout at start.
+- Activation under 300 ms: met (2.7 ms inside `activate()`; the grammar and the wasm engine load afterwards in the background).
+
+### Packaging
+
+- `npm run package` runs the production esbuild (minified, no sourcemaps) and `vsce package --no-dependencies`.
+- `npx vsce ls --no-dependencies` lists 21 files: package.json, README.md, CHANGELOG.md, LICENSE, THIRD_PARTY_NOTICES.md, media/icon.png, media/activity-icon.svg, dist/extension.js, dist/webview.js, dist/webview.css, dist/elkWorker.js, dist/yosysWorker.mjs, dist/web-tree-sitter.wasm, dist/tree-sitter-verilog.wasm, dist/yosys.core.wasm, dist/yosys.core2.wasm, dist/yosys.core3.wasm, dist/yosys.core4.wasm, dist/yosys-resources.0.tar. No node_modules entries.
+- `rtl-live-0.1.0.vsix`: 18,260,732 bytes on disk (vsce reports 17.41 MB packed; the two big wasm files compress well).
+- vsce refuses relative images in README without a repository URL, so the README points at `media/screenshots/` instead of embedding them.
+- `code --install-extension rtl-live-0.1.0.vsix --force` succeeded with the CLI inside `~/Applications/Visual Studio Code.app` (not on PATH); `code --list-extensions --show-versions` shows `vejaysuriyaa.rtl-live@0.1.0`.
+- Icon: `scripts/render-icon.mjs` renders `media/icon.svg` to the 128x128 PNG vsce requires.
+
+### Final verification checklist (section 12)
+
+1. `npm ci && npm run build && npm run typecheck && npm run lint`: clean (npm ci worked with npm 10.9.0 once the lockfile existed; the initial install needed npm 12, see M0).
+2. `npm test`: 272 passing; golden snapshots unchanged since the M5 commit.
+3. `npm run test:integration`: 8 passing (M0 sidebar, M1 render timing and ELK worker under CSP, M2 synthesis and cancellation, M6 cursor linking, revealSource, stale banner).
+4. `npm run test:webview`: 47 passing, light, dark and high-contrast screenshots in `artifacts/`.
+5. Bench table above, compared against the budgets.
+6. `.vsix` built, `vsce ls` output and size recorded above.
+7. `git log --oneline` shows one commit per milestone (M0 to M7); `git remote -v` prints nothing.
+8. `grep -o "https\?:[^\"' )]*" dist/webview.js` finds only XML namespace and EMF metadata constants inside elkjs (`http://www.w3.org/2000/svg`, `http://www.w3.org/1999/xlink`, `http://www.eclipse.org/elk/ElkGraph`, `http://www.w3.org/2001/XMLSchema#...`); none is fetched at runtime.
+9. README contains the morning checklist under "First run".
+
+### Could not verify headlessly
+
+Visual quality at real DPI and with the real VS Code font, typing feel and the 150 ms tween, the editor panel side by side with the sidebar, the native yosys path, the save dialogs for export.
+
+### Known issues and next steps
+
+- Structural boxes are not overlaid on a stale synthesized diagram; the last good diagram stays until the file synthesizes again.
+- Replicated groups (`{5{a,b,c,d,e}}`) expand to one join input per bit.
+- `$logic_and`/`$logic_or` draw as AND/OR symbols with bus inputs; a distinct glyph would help.
+- Bus width labels can touch the port chevron on very short first segments.
+- The yowasp wasm needs the `exnref` flag on Node below 24; the worker sets it. If a future VS Code ships an older V8, the wasm backend will fail to compile and the extension falls back to the structural view (logged).
+- Next: cursor highlight for nets by name (only declaration ranges today), a "logic" glyph for logical operators, an outline of module ports when the file has several modules, and native yosys measurements.

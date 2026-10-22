@@ -4,6 +4,7 @@
   "description": "Live Verilog schematic viewer in the sidebar. Structural view updates as you type; gate-level view via Yosys.",
   "version": "0.1.0",
   "publisher": "vejaysuriyaa",
+  "icon": "media/icon.png",
   "license": "MIT",
   "private": true,
   "engines": {
@@ -184,6 +185,7 @@
   },
   "scripts": {
     "build": "node esbuild.mjs",
+    "build:prod": "node esbuild.mjs --production",
     "watch": "node esbuild.mjs --watch",
     "build:grammar": "node scripts/build-grammar.mjs",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.webview.json",
@@ -194,8 +196,8 @@
     "test:integration": "npm run build && vscode-test",
     "test:webview": "npm run build && playwright test",
     "bench": "node scripts/bench.mjs",
-    "package": "npm run build && vsce package --no-dependencies",
-    "vscode:prepublish": "npm run build"
+    "package": "npm run build:prod && vsce package --no-dependencies",
+    "vscode:prepublish": "npm run build:prod"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

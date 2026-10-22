@@ -13,6 +13,8 @@ export interface RtlLiveTestApi {
   whenReady(): Promise<void>;
   /** Resolves with the next render event matching the predicate (or the next one). */
   nextRender(predicate?: (ev: RenderEvent) => boolean, timeoutMs?: number): Promise<RenderEvent>;
+  /** Milliseconds spent inside activate() */
+  activationMs: number;
 }
 
 export function activate(context: vscode.ExtensionContext): RtlLiveTestApi {
@@ -41,11 +43,13 @@ export function activate(context: vscode.ExtensionContext): RtlLiveTestApi {
     vscode.commands.registerCommand("rtlLive.selectTop", () => void ctl.selectTopInteractively()),
   );
 
-  log.info(`RTL Live activated in ${(performance.now() - t0).toFixed(1)} ms`);
+  const activationMs = performance.now() - t0;
+  log.info(`RTL Live activated in ${activationMs.toFixed(1)} ms`);
 
   return {
     provider,
     controller: ctl,
+    activationMs,
     whenResolved: () =>
       provider.resolvedCount > 0
         ? Promise.resolve()

@@ -10,5 +10,7 @@ suite("M0 sidebar", () => {
     assert.ok(api.provider.resolvedCount >= 1, "resolveWebviewView did not run");
     await withTimeout(api.whenReady(), 10_000, "webview ready");
     assert.ok(api.provider.isAnyReady, "webview never posted ready");
+    console.log(`activation: ${api.activationMs.toFixed(1)} ms`);
+    assert.ok(api.activationMs < 300, `activation took ${api.activationMs} ms`);
   });
 });

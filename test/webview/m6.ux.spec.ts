@@ -25,7 +25,10 @@ for (const theme of ["light", "dark", "hc"]) {
       await page.goto(`${harness.url}/?theme=${theme}`);
       await postRender(page, goldenDoc(name));
       await page.screenshot({ path: join(ART, `m6-${name}-${theme}.png`) });
-      const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+      const bg = await page.evaluate(() => {
+        const g = globalThis as unknown as { document: { body: unknown }; getComputedStyle(el: unknown): { backgroundColor: string } };
+        return g.getComputedStyle(g.document.body).backgroundColor;
+      });
       expect(bg).toBe(theme === "light" ? "rgb(255, 255, 255)" : theme === "dark" ? "rgb(30, 30, 30)" : "rgb(0, 0, 0)");
     });
   }
