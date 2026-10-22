@@ -13,7 +13,7 @@ Levels:
 | view | L1 | L2 | L3 |
 | --- | --- | --- | --- |
 | structural | 4/34 | 34/34 | 0/34 |
-| gate | 32/34 | 29/34 | 0/34 |
+| gate | 34/34 | 30/34 | 0/34 |
 
 ## Per fixture
 
@@ -40,7 +40,7 @@ Levels:
 | latch_en.v | structural | FAIL | pass | FAIL |
 | latch_en.v | gate | pass | pass | FAIL |
 | logic_ops.v | structural | FAIL | pass | FAIL |
-| logic_ops.v | gate | FAIL | FAIL | FAIL |
+| logic_ops.v | gate | pass | pass | FAIL |
 | module_add_full.v | structural | FAIL | pass | FAIL |
 | module_add_full.v | gate | pass | pass | FAIL |
 | module_add.v | structural | FAIL | pass | FAIL |
@@ -78,7 +78,7 @@ Levels:
 | vector5.v | structural | FAIL | pass | FAIL |
 | vector5.v | gate | pass | pass | FAIL |
 | vectorgates.v | structural | FAIL | pass | FAIL |
-| vectorgates.v | gate | FAIL | pass | FAIL |
+| vectorgates.v | gate | pass | pass | FAIL |
 | vectorr.v | structural | FAIL | pass | FAIL |
 | vectorr.v | gate | pass | pass | FAIL |
 | wire.v | structural | FAIL | pass | FAIL |
@@ -125,8 +125,6 @@ Levels:
 - latch_en.v, gate view, L3: noOverlap: "LATCH" (label title) overlaps "EN" (pin-label) near 140,59; fit: fit would zoom to 200% (cap is 200%)
 - logic_ops.v, structural view, L1: not exportable: logic cloud "y_and = a && b" has no netlist semantics (cloud:assign:y_and)
 - logic_ops.v, structural view, L3: fit: fit would zoom to 200% (cap is 200%)
-- logic_ops.v, gate view, L1: not exportable: gate and with 3/3-bit inputs and a 1-bit output is ambiguous (bitwise or logical) (gate:and:70f9aa7b39)
-- logic_ops.v, gate view, L2: logic_ops.v simplified: nodes=gate:and(1) gate:not(1) gate:or(1) expected node {"kind":"gate","op":"and","info":{"logical":"1"}}: expected false to be true // Object.is equality
 - logic_ops.v, gate view, L3: fit: fit would zoom to 200% (cap is 200%)
 - module_add_full.v, structural view, L1: not exportable: logic cloud "{cout, sum} = a + b + cin" has no netlist semantics (cloud:assign:cout,sum)
 - module_add_full.v, structural view, L3: noOverlap: "hi : add16" (label title) overlaps "a" (pin-label) near 393,54 (+1); fit: fit would zoom to 135% (cap is 200%)
@@ -181,7 +179,6 @@ Levels:
 - vector5.v, gate view, L3: fit: fit would zoom to 113% (cap is 200%)
 - vectorgates.v, structural view, L1: not exportable: logic cloud "out_or_bitwise = a | b" has no netlist semantics (cloud:assign:out_or_bitwise)
 - vectorgates.v, structural view, L3: fit: fit would zoom to 167% (cap is 200%)
-- vectorgates.v, gate view, L1: not exportable: gate or with 3/3-bit inputs and a 1-bit output is ambiguous (bitwise or logical) (gate:or:f898e4de6a)
 - vectorgates.v, gate view, L3: noOverlap: "3" (bus-width) overlaps "[5:3]" (ripper-label) near 201,87; fit: fit would zoom to 193% (cap is 200%)
 - vectorr.v, structural view, L1: not exportable: logic cloud "out = {in[0], in[1], in[2],…" has no netlist semantics (cloud:assign:out)
 - vectorr.v, structural view, L3: fit: fit would zoom to 180% (cap is 200%)

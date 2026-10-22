@@ -188,6 +188,9 @@
       "nodes": [
         {
           "id": "gate:or:f898e4de6a",
+          "info": {
+            "logical": "1"
+          },
           "kind": "gate",
           "label": "OR",
           "op": "or",

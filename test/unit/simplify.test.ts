@@ -84,4 +84,28 @@ describe("simplify rules", () => {
     const v = view([gate("n1", "not", ["net:a"], "net:y")], [net("net:a", ["port:a", "a"], [["n1", "A"]], "a"), net("net:y", ["n1", "Y"], [["port:y", "y"]], "y")]);
     expect(bubbles(v).nodes.length).toBe(1);
   });
+
+  it("logical operators never merge with or bubble into bitwise gates", () => {
+    const logical = (n: Node): Node => ({ ...n, info: { logical: "1" } });
+    // !a feeding a bitwise AND stays a separate NOT.
+    const v1 = view(
+      [logical(gate("n1", "not", ["net:a"], "net:t")), gate("g1", "and", ["net:t", "net:b"], "net:y")],
+      [net("net:a", ["port:a", "a"], [["n1", "A"]], "a"), net("net:t", ["n1", "Y"], [["g1", "A"]]), net("net:b", ["port:b", "b"], [["g1", "B"]], "b"), net("net:y", ["g1", "Y"], [["port:y", "y"]], "y")],
+    );
+    expect(bubbles(v1).nodes.map((n) => n.id).sort()).toEqual(["g1", "n1"]);
+    // (a && b) feeding a bitwise NOT keeps both nodes.
+    const v2 = view(
+      [logical(gate("g1", "and", ["net:a", "net:b"], "net:t")), gate("n1", "not", ["net:t"], "net:y")],
+      [net("net:a", ["port:a", "a"], [["g1", "A"]], "a"), net("net:b", ["port:b", "b"], [["g1", "B"]], "b"), net("net:t", ["g1", "Y"], [["n1", "A"]]), net("net:y", ["n1", "Y"], [["port:y", "y"]], "y")],
+    );
+    expect(bubbles(v2).nodes.map((n) => n.id).sort()).toEqual(["g1", "n1"]);
+    // (a && b) & c does not fold into one gate; a && b && c does.
+    const v3 = view(
+      [logical(gate("g1", "and", ["net:a", "net:b"], "net:t")), gate("g2", "and", ["net:t", "net:c"], "net:y")],
+      [net("net:a", ["port:a", "a"], [["g1", "A"]], "a"), net("net:b", ["port:b", "b"], [["g1", "B"]], "b"), net("net:t", ["g1", "Y"], [["g2", "A"]]), net("net:c", ["port:c", "c"], [["g2", "B"]], "c"), net("net:y", ["g2", "Y"], [["port:y", "y"]], "y")],
+    );
+    expect(mergeChains(v3).nodes).toHaveLength(2);
+    const v4 = view([logical(v3.nodes[0]!), logical(v3.nodes[1]!)], v3.nets);
+    expect(mergeChains(v4).nodes).toHaveLength(1);
+  });
 });

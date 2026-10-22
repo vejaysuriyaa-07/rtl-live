@@ -36,6 +36,9 @@ const GATE_OPS: Record<string, string> = {
   $pos: "buf",
 };
 
+/** Logical operators (&&, ||, !) reduce each operand to one bit; they are drawn and exported differently from bitwise ones. */
+const LOGICAL_TYPES = new Set(["$logic_and", "$logic_or", "$logic_not"]);
+
 const REDUCE_OPS: Record<string, string> = {
   $reduce_and: "and",
   $reduce_or: "or",
@@ -83,6 +86,7 @@ export function cellSpec(cell: YosysCell): CellSpec {
   const p = cell.parameters ?? {};
   if (GATE_OPS[t] !== undefined) {
     const op = GATE_OPS[t]!;
+    const logical = LOGICAL_TYPES.has(t) ? { info: { logical: "1" } } : {};
     if (op === "not" || op === "buf") {
       return {
         kind: "gate",
@@ -92,9 +96,10 @@ export function cellSpec(cell: YosysCell): CellSpec {
           { conn: "A", id: "A", label: "", direction: "in", side: "west" },
           { conn: "Y", id: "Y", label: "", direction: "out", side: "east" },
         ],
+        ...logical,
       };
     }
-    return { kind: "gate", op, label: op.toUpperCase(), pins: ab() };
+    return { kind: "gate", op, label: op.toUpperCase(), pins: ab(), ...logical };
   }
   if (REDUCE_OPS[t] !== undefined) {
     const op = REDUCE_OPS[t]!;

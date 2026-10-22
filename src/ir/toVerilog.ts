@@ -91,7 +91,19 @@ class ModuleWriter {
     const y = this.expr(out.net, out.width);
     const ops = ins.map((p) => this.operand(p));
     const op = node.op ?? "";
-    if (node.info?.["logical"] !== undefined) throw new ExportError(`logical ${op} not supported yet`, node.id);
+    if (node.info?.["logical"] !== undefined) {
+      // && || ! reduce each operand to one bit.
+      const sym: Record<string, string> = { and: "&&", or: "||" };
+      if (op === "not") {
+        if (ops.length !== 1) throw new ExportError(`logical not with ${ops.length} inputs`, node.id);
+        this.assign(y, `!${ops[0]}`);
+        return;
+      }
+      const s = sym[op];
+      if (!s || ops.length < 2) throw new ExportError(`logical ${op} with ${ops.length} inputs`, node.id);
+      this.assign(y, ops.join(` ${s} `));
+      return;
+    }
     // A 1-bit output fed by wider inputs cannot be told apart from a logical operator.
     if (out.width === 1 && ins.some((p) => p.width > 1) && op !== "not" && op !== "buf") {
       throw new ExportError(`gate ${op} with ${ins.map((p) => p.width).join("/")}-bit inputs and a 1-bit output is ambiguous (bitwise or logical)`, node.id);

@@ -47,6 +47,11 @@ class Graph {
   }
 }
 
+/** Logical operators (&&, ||, !) never merge with or bubble into bitwise gates. */
+function isLogical(n: Node): boolean {
+  return n.info?.["logical"] !== undefined;
+}
+
 function isUnnamedSingleSink(net: Net | undefined): net is Net {
   return net !== undefined && net.name === undefined && net.sinks.length === 1 && !net.sinks[0]!.node.startsWith("port:");
 }
@@ -66,6 +71,7 @@ export function mergeChains(view: ModuleView): ModuleView {
       const sinkEnd = net.sinks[0]!;
       const sink = g.nodes.get(sinkEnd.node);
       if (!sink || sink.kind !== "gate" || sink.op !== n.op || sink.width !== 1) continue;
+      if (isLogical(sink) !== isLogical(n)) continue;
       const sinkPin = sink.pins.find((p) => p.id === sinkEnd.pin);
       if (!sinkPin || sinkPin.inverted) continue;
       // Replace sinkPin with n's input pins (keeping order: n's inputs where the pin was).
@@ -129,13 +135,13 @@ export function bubbles(view: ModuleView): ModuleView {
   const g = new Graph(view);
   // Output bubbles first (gate whose only sink is a NOT).
   for (const n of [...g.nodes.values()]) {
-    if (n.kind !== "gate" || !n.op || OUTPUT_INVERSION[n.op] === undefined) continue;
+    if (n.kind !== "gate" || !n.op || OUTPUT_INVERSION[n.op] === undefined || isLogical(n)) continue;
     const out = g.outPin(n);
     if (!out) continue;
     const net = g.netOf(out);
     if (!isUnnamedSingleSink(net)) continue;
     const notNode = g.nodes.get(net.sinks[0]!.node);
-    if (!notNode || notNode.kind !== "gate" || notNode.op !== "not" || notNode.width !== n.width) continue;
+    if (!notNode || notNode.kind !== "gate" || notNode.op !== "not" || notNode.width !== n.width || isLogical(notNode)) continue;
     const notOut = g.outPin(notNode);
     const notOutNet = notOut ? g.netOf(notOut) : undefined;
     if (!notOutNet) continue;
@@ -150,7 +156,7 @@ export function bubbles(view: ModuleView): ModuleView {
   }
   // Input bubbles (NOT whose only sink is a gate input, or a dff/mux/arith input).
   for (const n of [...g.nodes.values()]) {
-    if (n.kind !== "gate" || n.op !== "not") continue;
+    if (n.kind !== "gate" || n.op !== "not" || isLogical(n)) continue;
     const inPin = g.inPins(n)[0];
     const out = g.outPin(n);
     if (!inPin || !out) continue;
@@ -159,7 +165,7 @@ export function bubbles(view: ModuleView): ModuleView {
     if (!inNet || !isUnnamedSingleSink(outNet)) continue;
     const sinkEnd = outNet.sinks[0]!;
     const sink = g.nodes.get(sinkEnd.node);
-    if (!sink || !(sink.kind === "gate" || sink.kind === "reduce")) continue;
+    if (!sink || !(sink.kind === "gate" || sink.kind === "reduce") || isLogical(sink)) continue;
     const sp = sink.pins.find((p) => p.id === sinkEnd.pin);
     if (!sp || sp.inverted) continue;
     sp.inverted = true;
