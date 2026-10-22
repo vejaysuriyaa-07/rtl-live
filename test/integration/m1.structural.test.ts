@@ -8,7 +8,9 @@ suite("M1 structural", () => {
     const api = await getApi();
     await vscode.commands.executeCommand("workbench.view.extension.rtlLive");
     await api.whenReady();
-    await api.controller.whenParserReady();
+    const parser = await api.controller.whenParserReady();
+    // The bundled web-tree-sitter must load; the regex scanner is only a fallback for broken installs.
+    assert.strictEqual(parser.name, "tree-sitter", "structural parser is not tree-sitter (grammar failed to load from the bundle)");
 
     const folder = vscode.workspace.workspaceFolders?.[0];
     assert.ok(folder, "workspace folder missing");
