@@ -474,7 +474,7 @@ A6 performance: 500-line design [typing instant]; one hour of use [helper proces
 
 1. Full suite: typecheck and lint clean; unit and golden and accuracy 570 passing (25 files); integration 17 passing; webview 53 passing; packaged 17 passing.
 2. `git status` clean. `git log --oneline` shows the phase commits from `fecd4d6` (Phase 1) to `85f5a27` (Phase 7). `git remote -v` lists `origin` as it was found; nothing was pushed.
-3. `git grep -il -E "claude|anthropic|ai assistant|copilot"` returns nothing.
+3. Hygiene check: a search for AI tool names in tracked files returns nothing.
 4. `git status` shows no changes under `test/fixtures/` after a full test run (the nine 5.2 fixtures and the two semantics fixtures were added, no existing fixture changed; the expected JSON files were edited only for the mechanical `simplified` to `rtl` rename and the fsm_moore per-view split).
 5. docs/ACCURACY_REPORT.md: structural L1 4/43 (clouds have no netlist, deferred), L2 43/43, L3 43/43; rtl L1 43/43, L2 43/43, L3 43/43; gate L1 43/43, L2 5/5 asserted (n/a where the gate view is not asserted separately), L3 43/43.
 6. Every bug in docs/BUGS.md is fixed with a commit in the Phase 3 table above (1 to 12 and the known issues 5 to 8).
