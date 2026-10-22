@@ -1,0 +1,226 @@
+{
+  "name": "rtl-live",
+  "displayName": "RTL Live",
+  "description": "Live Verilog schematic viewer in the sidebar. Structural view updates as you type; gate-level view via Yosys.",
+  "version": "0.1.0",
+  "publisher": "vejaysuriyaa",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.100.0",
+    "node": ">=22"
+  },
+  "categories": [
+    "Visualization",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "verilog",
+    "schematic",
+    "rtl",
+    "yosys",
+    "hdl"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:verilog",
+    "onLanguage:systemverilog",
+    "onView:rtlLive.schematic"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "rtlLive",
+          "title": "RTL Live",
+          "icon": "media/activity-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "rtlLive": [
+        {
+          "type": "webview",
+          "id": "rtlLive.schematic",
+          "name": "Schematic",
+          "icon": "media/activity-icon.svg",
+          "contextualTitle": "RTL Live"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "rtlLive.openInPanel",
+        "title": "Open in Editor Panel",
+        "category": "RTL Live",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "rtlLive.fit",
+        "title": "Fit to View",
+        "category": "RTL Live",
+        "icon": "$(screen-full)"
+      },
+      {
+        "command": "rtlLive.exportSvg",
+        "title": "Export SVG",
+        "category": "RTL Live"
+      },
+      {
+        "command": "rtlLive.exportPng",
+        "title": "Export PNG",
+        "category": "RTL Live"
+      },
+      {
+        "command": "rtlLive.selectTop",
+        "title": "Select Top Module",
+        "category": "RTL Live"
+      },
+      {
+        "command": "rtlLive.showLog",
+        "title": "Show Log",
+        "category": "RTL Live"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "rtlLive.fit",
+          "when": "view == rtlLive.schematic",
+          "group": "navigation@1"
+        },
+        {
+          "command": "rtlLive.openInPanel",
+          "when": "view == rtlLive.schematic",
+          "group": "navigation@2"
+        },
+        {
+          "command": "rtlLive.selectTop",
+          "when": "view == rtlLive.schematic",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "rtlLive.exportSvg",
+          "when": "view == rtlLive.schematic",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "rtlLive.exportPng",
+          "when": "view == rtlLive.schematic",
+          "group": "1_actions@3"
+        },
+        {
+          "command": "rtlLive.showLog",
+          "when": "view == rtlLive.schematic",
+          "group": "2_debug@1"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "verilog",
+        "aliases": [
+          "Verilog"
+        ],
+        "extensions": [
+          ".v",
+          ".vh"
+        ]
+      }
+    ],
+    "configuration": {
+      "title": "RTL Live",
+      "properties": {
+        "rtlLive.synthesisBackend": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "native",
+            "wasm",
+            "off"
+          ],
+          "default": "auto",
+          "description": "Which Yosys to use for the synthesized view. auto picks native yosys when it runs, else the bundled wasm engine."
+        },
+        "rtlLive.yosysPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a native yosys binary. Empty means search /opt/homebrew/bin, /usr/local/bin and PATH."
+        },
+        "rtlLive.yosysExtraPasses": {
+          "type": "string",
+          "default": "",
+          "description": "Extra Yosys passes inserted before write_json, separated by semicolons."
+        },
+        "rtlLive.optimize": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run opt -fast before writing the netlist. Produces a smaller diagram that is further from the source text."
+        },
+        "rtlLive.bubbles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Draw a NOT that feeds a single gate as an inversion bubble on that gate's input."
+        },
+        "rtlLive.structuralDebounceMs": {
+          "type": "number",
+          "default": 60,
+          "minimum": 0,
+          "description": "Delay in milliseconds between a keystroke and the structural view update."
+        },
+        "rtlLive.synthDebounceMs": {
+          "type": "number",
+          "default": 300,
+          "minimum": 0,
+          "description": "Delay in milliseconds between the last keystroke and a synthesis run."
+        },
+        "rtlLive.lintWithVerilator": {
+          "type": "boolean",
+          "default": false,
+          "description": "When synthesis fails and verilator is on PATH, run verilator --lint-only for a friendlier error message."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "build:grammar": "node scripts/build-grammar.mjs",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.webview.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:golden:update": "UPDATE_GOLDEN=1 vitest run test/golden",
+    "test:integration": "npm run build && vscode-test",
+    "test:webview": "npm run build && playwright test",
+    "bench": "node scripts/bench.mjs",
+    "package": "npm run build && vsce package --no-dependencies",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/d3-selection": "3.0.12",
+    "@types/d3-zoom": "3.0.9",
+    "@types/mocha": "10.0.10",
+    "@types/node": "22.20.5",
+    "@types/vscode": "1.100.0",
+    "@vscode/test-cli": "0.0.15",
+    "@vscode/test-electron": "3.1.0",
+    "@eslint/js": "9.39.5",
+    "@vscode/vsce": "4.0.0",
+    "@yowasp/yosys": "0.70.1258",
+    "d3-selection": "3.0.0",
+    "d3-zoom": "3.0.0",
+    "elkjs": "0.12.0",
+    "esbuild": "0.28.2",
+    "eslint": "9.39.5",
+    "mocha": "12.0.3",
+    "prettier": "3.9.10",
+    "tree-sitter-cli": "0.27.1",
+    "tree-sitter-verilog": "1.0.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "4.1.12",
+    "web-tree-sitter": "0.27.1"
+  }
+}
