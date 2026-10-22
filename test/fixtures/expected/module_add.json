@@ -45,5 +45,69 @@
     "decls": [
       "cout_lo"
     ]
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "blackbox": 2,
+        "const": 1,
+        "split": 2,
+        "join": 1
+      },
+      "fanout": {
+        "cout_lo": 1
+      },
+      "nodes": [
+        {
+          "kind": "blackbox",
+          "moduleType": "add16",
+          "label": "lo : add16",
+          "pins": [
+            {
+              "id": "a",
+              "direction": "in",
+              "width": 16,
+              "net": "a[15:0]"
+            },
+            {
+              "id": "b",
+              "direction": "in",
+              "width": 16
+            },
+            {
+              "id": "cin",
+              "direction": "in",
+              "width": 1
+            },
+            {
+              "id": "sum",
+              "direction": "out",
+              "width": 16
+            },
+            {
+              "id": "cout",
+              "direction": "out",
+              "width": 1,
+              "net": "cout_lo"
+            }
+          ]
+        },
+        {
+          "kind": "blackbox",
+          "label": "hi : add16",
+          "pins": [
+            {
+              "id": "cin",
+              "direction": "in",
+              "net": "cout_lo"
+            }
+          ]
+        },
+        {
+          "kind": "const",
+          "label": "1'b0"
+        }
+      ]
+    }
   }
 }

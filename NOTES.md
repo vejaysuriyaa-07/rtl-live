@@ -128,3 +128,15 @@ Verified:
 - `npm test`: 223 tests. vector0, vector2, vectorr, vector3, vector4, vector5 pass their expectations; golden files added.
 - `test/unit/svgBus.test.ts` lays out every golden with elkjs in node and asserts that every net wider than 1 bit has a `bus-width` label in the `svg.ts` string output, that vector2's rippers read [7:0], [15:8], [23:16], [31:24], and that the largest golden lays out in under 100 ms (7458 at 68 ms cold, well under 20 ms warm).
 - Playwright: `artifacts/m3-vector{0,2,r,3,4,5}.png`; bus edges and width labels present in the DOM.
+
+## M4: instantiation, hierarchy, black boxes, drill-down
+
+Status: done
+
+- Black-box stubs (`src/synth/blackboxStubs.ts`): directions are decided in passes: definite (constant or top input -> input; empty or an undriven top output -> output; a wire driven by assign/always -> input), merged per module type across instances, then propagated along wires (a wire with a known output pin on the other side makes this pin an input and vice versa), then the weak rule "wire read by logic and driven nowhere -> output", else inout. The earlier single-pass version marked `my_dff.d` as output in module_shift8 because `q1` is read by the always block; the pass ordering fixes that.
+- Yosys keeps user instance names, so instance nodes are `inst:<name>` and labelled `u1 : mod_a`. Instances of modules defined in the file get `drillTarget`; their module views come from the same Yosys JSON (no flatten), so drill-down needs no second run.
+- Unconnected pins (`.cout()`) are detached (pin net null) instead of pointing at an orphan net.
+
+Verified:
+- `npm test`: 244 tests. module, module_pos, module_name, module_shift, module_add, module_add_full and multi_module pass, including black-box pin directions (module_pos: p0, p1 output, p2..p5 input; module_add: a, b 16-bit in, cin in, sum 16-bit out, cout out; cout_lo links lo.cout to hi.cin; `1'b0` constant on lo.cin).
+- Playwright (23 passing): double-clicking `add16` in module_add_full shows the add16 module with its adder, the breadcrumb has two crumbs and clicking the first returns to top_module (this found an off-by-one in the breadcrumb handler); black boxes are dashed with the "not defined in this file" tooltip; the dropdown for multi_module lists `inv` and `top_module`. Screenshots `artifacts/m4-*.png`.

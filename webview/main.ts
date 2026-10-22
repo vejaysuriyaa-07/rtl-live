@@ -38,7 +38,8 @@ const chrome = new Chrome(app, {
   onExport: (format) => void exportDiagram(format),
   onOpenInPanel: () => postToHost({ type: "openInPanel", generation: state.generation }),
   onDrillTo: (depth) => {
-    state.stack = state.stack.slice(0, depth + 1);
+    // Breadcrumb index 0 is the top module, which is not part of the stack.
+    state.stack = state.stack.slice(0, depth);
     void render(true);
   },
   onErrorClick: (err) => {

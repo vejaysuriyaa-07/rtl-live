@@ -464,16 +464,22 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
   for (const ep of sinkEps) {
     connectSink({ node: ep.node, pin: ep.pin }, ep.bits, ep.src, ep.pin);
   }
-  // Driver nets must be registered as nets even if unused; drop nets with no sinks and no named driver? keep named.
-  const netList = [...nets.values()].filter((n) => n.sinks.length > 0 || n.name !== undefined);
-  // Fix driver nets' driver references for cell outputs (ids rewritten above).
+  // Drop unnamed nets nothing listens to (e.g. an unconnected .cout()) and detach their pins.
+  const kept = new Set<string>();
+  const netList = [...nets.values()].filter((n) => {
+    const keep = n.sinks.length > 0 || n.name !== undefined;
+    if (keep) kept.add(n.id);
+    return keep;
+  });
+  for (const n of nodes.values()) for (const p of n.pins) if (p.net !== null && !kept.has(p.net)) p.net = null;
   const src = parseSrc(ym.attributes?.["src"]);
   return { name, ports, nodes: [...nodes.values()], nets: netList, ...(src[0] ? { src: src[0] } : {}) };
 }
 
 function widthOfCell(c: { kind: Node["kind"]; cell: YosysCell; pins: { spec: PinSpec; bits: YosysBit[] }[] }): number {
+  if (c.kind === "instance" || c.kind === "blackbox") return 1;
   const y = c.pins.find((p) => p.spec.direction === "out");
-  if (y) return y.bits.length;
+  if (y && y.bits.length > 0) return y.bits.length;
   return paramInt(c.cell.parameters?.["WIDTH"], 1);
 }
 

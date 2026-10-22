@@ -46,5 +46,26 @@
         ]
       }
     ]
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "instance": 2,
+        "blackbox": 0
+      },
+      "nodes": [
+        {
+          "kind": "instance",
+          "moduleType": "add16",
+          "drillTarget": "add16",
+          "label": "lo : add16"
+        },
+        {
+          "kind": "instance",
+          "drillTarget": "add16",
+          "label": "hi : add16"
+        }
+      ]
+    }
   }
 }

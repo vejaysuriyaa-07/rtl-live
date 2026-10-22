@@ -27,5 +27,20 @@
         ]
       }
     ]
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "instance": 1
+      },
+      "nodes": [
+        {
+          "kind": "instance",
+          "moduleType": "inv",
+          "drillTarget": "inv",
+          "label": "u0 : inv"
+        }
+      ]
+    }
   }
 }

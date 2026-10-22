@@ -29,5 +29,37 @@
         ]
       }
     ]
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "blackbox": 1
+      },
+      "logicNodes": 0,
+      "nodes": [
+        {
+          "kind": "blackbox",
+          "moduleType": "mod_a",
+          "label": "instance1 : mod_a",
+          "pins": [
+            {
+              "id": "in1",
+              "direction": "in",
+              "net": "a"
+            },
+            {
+              "id": "in2",
+              "direction": "in",
+              "net": "b"
+            },
+            {
+              "id": "out",
+              "direction": "out",
+              "net": "out"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

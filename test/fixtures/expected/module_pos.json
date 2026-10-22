@@ -47,5 +47,48 @@
         ]
       }
     ]
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "blackbox": 1
+      },
+      "nodes": [
+        {
+          "kind": "blackbox",
+          "moduleType": "mod_a",
+          "pins": [
+            {
+              "id": "p0",
+              "direction": "out",
+              "net": "out1"
+            },
+            {
+              "id": "p1",
+              "direction": "out",
+              "net": "out2"
+            },
+            {
+              "id": "p2",
+              "direction": "in",
+              "net": "a"
+            },
+            {
+              "id": "p3",
+              "direction": "in"
+            },
+            {
+              "id": "p4",
+              "direction": "in"
+            },
+            {
+              "id": "p5",
+              "direction": "in",
+              "net": "d"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

@@ -1,0 +1,177 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:a",
+            "pin": "a"
+          },
+          "id": "net:a",
+          "name": "a",
+          "sinks": [
+            {
+              "node": "inst:instance1",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:b",
+            "pin": "b"
+          },
+          "id": "net:b",
+          "name": "b",
+          "sinks": [
+            {
+              "node": "inst:instance1",
+              "pin": "in2"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "inst:instance1",
+            "pin": "out"
+          },
+          "id": "net:out",
+          "name": "out",
+          "sinks": [
+            {
+              "node": "port:out",
+              "pin": "out"
+            }
+          ],
+          "src": [
+            {
+              "column": 44,
+              "endColumn": 47,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "inst:instance1",
+          "kind": "blackbox",
+          "label": "instance1 : mod_a",
+          "moduleType": "mod_a",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in1",
+              "label": "in1",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "in2",
+              "label": "in2",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "out",
+              "net": "net:out",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 47,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "a",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 26,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "b",
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 35,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "out",
+          "src": [
+            {
+              "column": 44,
+              "endColumn": 47,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 3,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "module.v",
+  "top": "top_module",
+  "version": 1
+}

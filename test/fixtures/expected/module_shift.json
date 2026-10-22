@@ -51,5 +51,64 @@
       "q1",
       "q2"
     ]
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "blackbox": 3
+      },
+      "fanout": {
+        "clk": 3,
+        "q1": 1,
+        "q2": 1
+      },
+      "nodes": [
+        {
+          "kind": "blackbox",
+          "moduleType": "my_dff",
+          "label": "d1 : my_dff",
+          "pins": [
+            {
+              "id": "d",
+              "direction": "in",
+              "net": "d"
+            },
+            {
+              "id": "q",
+              "direction": "out",
+              "net": "q1"
+            }
+          ]
+        },
+        {
+          "kind": "blackbox",
+          "label": "d2 : my_dff",
+          "pins": [
+            {
+              "id": "d",
+              "net": "q1"
+            },
+            {
+              "id": "q",
+              "net": "q2"
+            }
+          ]
+        },
+        {
+          "kind": "blackbox",
+          "label": "d3 : my_dff",
+          "pins": [
+            {
+              "id": "d",
+              "net": "q2"
+            },
+            {
+              "id": "q",
+              "net": "q"
+            }
+          ]
+        }
+      ]
+    }
   }
 }
