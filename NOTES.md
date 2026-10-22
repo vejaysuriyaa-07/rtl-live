@@ -256,3 +256,42 @@ Visual quality at real DPI and with the real VS Code font, typing feel and the 1
 - Bus width labels can touch the port chevron on very short first segments.
 - The yowasp wasm needs the `exnref` flag on Node below 24; the worker sets it. If a future VS Code ships an older V8, the wasm backend will fail to compile and the extension falls back to the structural view (logged).
 - Next: cursor highlight for nets by name (only declaration ranges today), a "logic" glyph for logical operators, an outline of module ports when the file has several modules, and native yosys measurements.
+
+
+## Addendum: native yosys measured (2026-10-22)
+
+`brew install yosys` installed Yosys 0.70+post (`/opt/homebrew/bin/yosys`). Rerun of `npm run bench`:
+
+| fixture | nodes | native warm p50 / p95 (ms) | wasm warm p50 / p95 (ms) |
+| --- | --- | --- | --- |
+| 7458.v | 6 | 12 / 14 | 33 / 39 |
+| arith_compare.v | 4 | 10 / 11 | 12 / 12 |
+| counter4.v | 5 | 12 / 13 | 11 / 12 |
+| dff_async.v | 1 | 11 / 11 | 11 / 12 |
+| fsm_moore.v | 7 | 11 / 11 | 11 / 14 |
+| gates4.v | 3 | 10 / 11 | 9 / 11 |
+| module.v | 1 | 13 / 13 | 19 / 303 |
+| module_add.v | 6 | 12 / 13 | 15 / 28 |
+| module_add_full.v | 6 | 12 / 12 | 13 / 17 |
+| module_name.v | 1 | 12 / 13 | 11 / 12 |
+| module_pos.v | 1 | 10 / 13 | 11 / 12 |
+| module_shift.v | 3 | 11 / 11 | 10 / 13 |
+| module_shift8.v | 11 | 19 / 21 | 25 / 358 |
+| multi_module.v | 1 | 11 / 14 | 14 / 18 |
+| mux2_always.v | 4 | 11 / 11 | 13 / 14 |
+| notgate.v | 1 | 11 / 12 | 10 / 13 |
+| shift4.v | 3 | 10 / 11 | 13 / 17 |
+| vector0.v | 1 | 11 / 12 | 11 / 12 |
+| vector2.v | 2 | 12 / 12 | 10 / 277 |
+| vector3.v | 8 | 11 / 11 | 13 / 16 |
+| vector4.v | 2 | 12 / 13 | 10 / 12 |
+| vector5.v | 3 | 14 / 16 | 13 / 15 |
+| vectorgates.v | 5 | 10 / 12 | 13 / 15 |
+| vectorr.v | 2 | 10 / 11 | 10 / 11 |
+| wire.v | 0 | 10 / 10 | 9 / 11 |
+| wire4.v | 0 | 10 / 12 | 17 / 34 |
+| xnor_misc.v | 3 | 13 / 14 | 13 / 18 |
+
+- Native warm p95 worst case 20.6 ms (module_shift8), typical 11 to 14 ms including temp-dir setup and process spawn; budget of 300 ms met.
+- Wasm warm p95 358 ms, same recycle outliers as before; structural p95 4.7 ms; ELK max 73 ms; wasm cold start 226 ms.
+- With native yosys present, `npm test` (272) and the golden files pass unchanged: the native and wasm builds of Yosys 0.70 produce identical IR for every fixture. `npm run test:integration` (8 passing) reports `backend: native 0.70+post`.
