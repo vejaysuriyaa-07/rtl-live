@@ -11,5 +11,22 @@
       "direction": "output",
       "width": 8
     }
-  ]
+  ],
+  "synth": {
+    "simplified": {
+      "logicNodes": 0,
+      "count": {
+        "split": 1,
+        "join": 1
+      },
+      "splitLabels": [
+        "[0]",
+        "[7]"
+      ],
+      "joinInputs": 8,
+      "netWidth": {
+        "out": 8
+      }
+    }
+  }
 }

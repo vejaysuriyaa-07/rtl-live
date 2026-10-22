@@ -208,11 +208,14 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
     const key = `${ep.node}.${ep.pin}`;
     const sig = ep.bits.map(bitKey).join(",");
     const named = namesBySig.get(sig);
+    // A net driven by an input port is named after that port even when an output
+    // port shares the same bits (assign outv = vec).
+    const portName = ep.node.startsWith("port:") ? ep.pin : undefined;
     const net: DriverNet = {
       key,
       ep,
       bits: ep.bits,
-      name: named?.name,
+      name: portName ?? named?.name,
       id: "",
       src: named?.src ?? srcBySig.get(sig) ?? ep.src,
       sinks: [],
@@ -327,6 +330,8 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
 
   const splitNodes = new Map<string, Node>(); // by driver net id
   const sliceNet = (r: Extract<Run, { kind: "slice" | "repeat" }>): Net => {
+    // A single-bit net needs no ripper.
+    if (r.net.bits.length === 1) return ensureNet(r.net);
     const from = r.kind === "slice" ? r.from : r.idx;
     const to = r.kind === "slice" ? r.to : r.idx;
     const label = from === to ? `[${from}]` : `[${to}:${from}]`;

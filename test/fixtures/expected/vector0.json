@@ -26,5 +26,27 @@
       "direction": "output",
       "width": 1
     }
-  ]
+  ],
+  "synth": {
+    "simplified": {
+      "logicNodes": 0,
+      "minCount": {
+        "split": 1
+      },
+      "netWidth": {
+        "vec": 3
+      },
+      "nets": [
+        "vec"
+      ],
+      "splitLabels": [
+        "[2]",
+        "[1]",
+        "[0]"
+      ],
+      "fanout": {
+        "vec": 2
+      }
+    }
+  }
 }

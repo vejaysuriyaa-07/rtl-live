@@ -54,5 +54,31 @@
   ],
   "structural": {
     "assigns": 1
+  },
+  "synth": {
+    "simplified": {
+      "logicNodes": 0,
+      "count": {
+        "const": 1,
+        "join": 4
+      },
+      "nodes": [
+        {
+          "kind": "const",
+          "label": "2'b11",
+          "width": 2
+        }
+      ],
+      "portWidth": {
+        "w": 8,
+        "x": 8,
+        "y": 8,
+        "z": 8
+      },
+      "netWidth": {
+        "w": 8,
+        "z": 8
+      }
+    }
   }
 }

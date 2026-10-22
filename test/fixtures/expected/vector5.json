@@ -31,5 +31,33 @@
       "direction": "output",
       "width": 25
     }
-  ]
+  ],
+  "synth": {
+    "simplified": {
+      "count": {
+        "gate:xor": 1,
+        "split": 0
+      },
+      "nodes": [
+        {
+          "kind": "gate",
+          "op": "xor",
+          "width": 25,
+          "pins": [
+            {
+              "id": "Y",
+              "net": "out",
+              "width": 25
+            }
+          ]
+        }
+      ],
+      "netWidth": {
+        "out": 25
+      },
+      "portWidth": {
+        "out": 25
+      }
+    }
+  }
 }

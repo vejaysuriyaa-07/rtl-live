@@ -1,0 +1,314 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:in",
+            "pin": "in"
+          },
+          "id": "net:in",
+          "name": "in",
+          "sinks": [
+            {
+              "node": "split:net:in",
+              "pin": "in"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 34,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 32
+        },
+        {
+          "driver": {
+            "node": "split:net:in",
+            "pin": "out[31:24]"
+          },
+          "id": "net:in[31:24]",
+          "name": "in[31:24]",
+          "sinks": [
+            {
+              "node": "join:eb0957d717",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 34,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "split:net:in",
+            "pin": "out[23:16]"
+          },
+          "id": "net:in[23:16]",
+          "name": "in[23:16]",
+          "sinks": [
+            {
+              "node": "join:eb0957d717",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 34,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "split:net:in",
+            "pin": "out[15:8]"
+          },
+          "id": "net:in[15:8]",
+          "name": "in[15:8]",
+          "sinks": [
+            {
+              "node": "join:eb0957d717",
+              "pin": "in2"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 34,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "split:net:in",
+            "pin": "out[7:0]"
+          },
+          "id": "net:in[7:0]",
+          "name": "in[7:0]",
+          "sinks": [
+            {
+              "node": "join:eb0957d717",
+              "pin": "in3"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 34,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "join:eb0957d717",
+            "pin": "out"
+          },
+          "id": "net:out",
+          "name": "out",
+          "sinks": [
+            {
+              "node": "port:out",
+              "pin": "out"
+            }
+          ],
+          "src": [
+            {
+              "column": 50,
+              "endColumn": 53,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 32
+        }
+      ],
+      "nodes": [
+        {
+          "id": "split:net:in",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:in",
+              "side": "west",
+              "width": 32
+            },
+            {
+              "bits": "[31:24]",
+              "direction": "out",
+              "id": "out[31:24]",
+              "label": "",
+              "net": "net:in[31:24]",
+              "side": "east",
+              "width": 8
+            },
+            {
+              "bits": "[23:16]",
+              "direction": "out",
+              "id": "out[23:16]",
+              "label": "",
+              "net": "net:in[23:16]",
+              "side": "east",
+              "width": 8
+            },
+            {
+              "bits": "[15:8]",
+              "direction": "out",
+              "id": "out[15:8]",
+              "label": "",
+              "net": "net:in[15:8]",
+              "side": "east",
+              "width": 8
+            },
+            {
+              "bits": "[7:0]",
+              "direction": "out",
+              "id": "out[7:0]",
+              "label": "",
+              "net": "net:in[7:0]",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 34,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 32
+        },
+        {
+          "id": "join:eb0957d717",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[31:24]",
+              "direction": "in",
+              "id": "in3",
+              "label": "",
+              "net": "net:in[7:0]",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "bits": "[23:16]",
+              "direction": "in",
+              "id": "in2",
+              "label": "",
+              "net": "net:in[15:8]",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "bits": "[15:8]",
+              "direction": "in",
+              "id": "in1",
+              "label": "",
+              "net": "net:in[23:16]",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "bits": "[7:0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "",
+              "net": "net:in[31:24]",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:out",
+              "side": "east",
+              "width": 32
+            }
+          ],
+          "src": [
+            {
+              "column": 50,
+              "endColumn": 53,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 32
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "in",
+          "range": "[31:0]",
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 34,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 32
+        },
+        {
+          "direction": "output",
+          "name": "out",
+          "range": "[31:0]",
+          "src": [
+            {
+              "column": 50,
+              "endColumn": 53,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 32
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 3,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "vector2.v",
+  "top": "top_module",
+  "version": 1
+}

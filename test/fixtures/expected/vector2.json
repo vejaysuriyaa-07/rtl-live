@@ -11,5 +11,27 @@
       "direction": "output",
       "width": 32
     }
-  ]
+  ],
+  "synth": {
+    "simplified": {
+      "logicNodes": 0,
+      "count": {
+        "split": 1,
+        "join": 1
+      },
+      "splitLabels": [
+        "[7:0]",
+        "[15:8]",
+        "[23:16]",
+        "[31:24]"
+      ],
+      "netWidth": {
+        "out": 32,
+        "in": 32
+      },
+      "portWidth": {
+        "out": 32
+      }
+    }
+  }
 }

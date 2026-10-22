@@ -11,5 +11,44 @@
       "direction": "output",
       "width": 32
     }
-  ]
+  ],
+  "synth": {
+    "simplified": {
+      "logicNodes": 0,
+      "count": {
+        "split": 1,
+        "join": 1
+      },
+      "splitLabels": [
+        "[7]"
+      ],
+      "nodes": [
+        {
+          "kind": "join",
+          "width": 32,
+          "pins": [
+            {
+              "id": "in1",
+              "width": 1
+            },
+            {
+              "id": "in0",
+              "width": 8
+            },
+            {
+              "id": "out",
+              "width": 32
+            }
+          ]
+        }
+      ],
+      "netWidth": {
+        "out": 32,
+        "in[7]": 1
+      },
+      "fanout": {
+        "in[7]": 1
+      }
+    }
+  }
 }

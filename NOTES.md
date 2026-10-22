@@ -115,3 +115,16 @@ Decisions:
 Known issues:
 - Structural boxes are not overlaid on a stale synthesized diagram.
 - Bus width labels are drawn once per net near the driver; for very short first segments they can touch the port chevron.
+
+## M3: vectors, buses, selects, concatenation, replication
+
+Status: done
+
+- Net naming: a net driven by an input port is named after that port even when an output port shares its bits (`assign outv = vec` previously named the net `outv`). Single-bit nets never get a split node.
+- Replication `{24{in[7]}}` becomes one split output `[7]` feeding a join input labelled `[31:8] x24`; `{5{a,b,c,d,e}}` becomes a 25-input join (each bit is its own run; repeated groups are not detected).
+- `~{...} ^ {...}` renders as one 25-bit XOR with an inverted A input (bubble rule).
+
+Verified:
+- `npm test`: 223 tests. vector0, vector2, vectorr, vector3, vector4, vector5 pass their expectations; golden files added.
+- `test/unit/svgBus.test.ts` lays out every golden with elkjs in node and asserts that every net wider than 1 bit has a `bus-width` label in the `svg.ts` string output, that vector2's rippers read [7:0], [15:8], [23:16], [31:24], and that the largest golden lays out in under 100 ms (7458 at 68 ms cold, well under 20 ms warm).
+- Playwright: `artifacts/m3-vector{0,2,r,3,4,5}.png`; bus edges and width labels present in the DOM.

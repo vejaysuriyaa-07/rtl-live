@@ -162,7 +162,7 @@ export function runChecks(doc: SchematicDoc, moduleName: string, checks: Checks,
 }
 
 /** Milestones whose synthesis expectations and golden files are complete. Bumped per milestone. */
-export const COMPLETED_MILESTONES = ["M2"];
+export const COMPLETED_MILESTONES = ["M2", "M3"];
 
 export function activeMilestones(): string[] {
   const env = process.env["SYNTH_MILESTONES"];
