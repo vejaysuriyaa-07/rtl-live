@@ -10,6 +10,8 @@ export interface VsCodeApi {
 declare global {
   interface Window {
     acquireVsCodeApi?: () => VsCodeApi;
+    /** Set by the inline boot script in webviewHtml.ts, which calls acquireVsCodeApi() first */
+    __rtlLiveVsCodeApi?: VsCodeApi;
     __rtlLiveTestHooks?: Record<string, unknown>;
   }
 }
@@ -18,7 +20,9 @@ let api: VsCodeApi | undefined;
 
 export function vscodeApi(): VsCodeApi {
   if (api) return api;
-  if (typeof window.acquireVsCodeApi === "function") {
+  if (window.__rtlLiveVsCodeApi) {
+    api = window.__rtlLiveVsCodeApi;
+  } else if (typeof window.acquireVsCodeApi === "function") {
     api = window.acquireVsCodeApi();
   } else {
     // Standalone (Playwright) fallback: messages go to a window-level array.

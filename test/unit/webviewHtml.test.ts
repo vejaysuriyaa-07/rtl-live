@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCsp, buildWebviewHtml, makeNonce } from "../../src/extension/webviewHtml";
+import { BOOT_SCRIPT, buildCsp, buildWebviewHtml, makeNonce } from "../../src/extension/webviewHtml";
 
 describe("webview html", () => {
   const cspSource = "vscode-webview://abc123";
@@ -29,6 +29,21 @@ describe("webview html", () => {
 
   it("contains no http or https URLs", () => {
     expect(html).not.toMatch(/https?:/);
+  });
+
+  it("runs the boot script before the bundle and the bundle last", () => {
+    const scripts = html.match(/<script[^>]*>/g) ?? [];
+    expect(scripts).toHaveLength(2);
+    expect(html.indexOf(BOOT_SCRIPT)).toBeLessThan(html.indexOf("dist/webview.js"));
+    expect(html).toContain(`<script nonce="${nonce}">${BOOT_SCRIPT}</script>`);
+  });
+
+  it("boot script reports load failures and errors through postMessage only", () => {
+    expect(BOOT_SCRIPT).toContain('type: "log"');
+    expect(BOOT_SCRIPT).toContain("failed to load");
+    expect(BOOT_SCRIPT).toContain("unhandledrejection");
+    expect(BOOT_SCRIPT).not.toMatch(/https?:/);
+    expect(BOOT_SCRIPT).not.toContain("eval(");
   });
 
   it("generates 32-char alphanumeric nonces", () => {

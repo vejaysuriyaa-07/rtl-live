@@ -37,6 +37,34 @@ function escapeAttr(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
+/**
+ * Inline bootstrap that runs before dist/webview.js. It owns the single
+ * acquireVsCodeApi() call (webview/vscodeApi.ts picks it up from
+ * window.__rtlLiveVsCodeApi) and reports script/style load failures, uncaught
+ * errors and unhandled rejections to the host as "log" messages, so a blank
+ * view explains itself in the RTL Live output channel.
+ */
+export const BOOT_SCRIPT = `(function () {
+  var api = typeof acquireVsCodeApi === "function" ? acquireVsCodeApi() : undefined;
+  window.__rtlLiveVsCodeApi = api;
+  function report(level, text) {
+    if (api) api.postMessage({ type: "log", generation: 0, level: level, text: text });
+  }
+  window.addEventListener("error", function (ev) {
+    var t = ev.target;
+    if (t && t !== window && (t.tagName === "SCRIPT" || t.tagName === "LINK")) {
+      report("error", "failed to load " + (t.src || t.href));
+      return;
+    }
+    report("error", "uncaught " + (ev.message || String(ev.error)) + " at " + ev.filename + ":" + ev.lineno);
+  }, true);
+  window.addEventListener("unhandledrejection", function (ev) {
+    var r = ev.reason;
+    report("error", "unhandled rejection: " + (r && r.stack ? r.stack : String(r)));
+  });
+  report("info", "webview booting " + (api ? "(vscode api)" : "(no vscode api)"));
+})();`;
+
 export function buildWebviewHtml(input: WebviewHtmlInput): string {
   const csp = buildCsp(input.cspSource, input.nonce);
   const n = input.nonce;
@@ -47,6 +75,7 @@ export function buildWebviewHtml(input: WebviewHtmlInput): string {
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RTL Live</title>
+<script nonce="${n}">${BOOT_SCRIPT}</script>
 <link rel="stylesheet" nonce="${n}" href="${escapeAttr(input.styleUri)}">
 </head>
 <body data-initial-state="${escapeAttr(input.initialState ?? "")}" data-elk-worker-uri="${escapeAttr(input.elkWorkerUri ?? "")}">

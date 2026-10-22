@@ -60,6 +60,7 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
       }),
     );
     this.resolvedCount++;
+    log.info(`sidebar webview resolved (visible: ${view.visible})`);
     this.resolvedEmitter.fire();
   }
 
@@ -101,6 +102,7 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
     const elkWorkerUri = webview
       .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "elkWorker.js"))
       .toString();
+    log.info(`${target.kind} webview script ${scriptUri}`);
     webview.html = buildWebviewHtml({
       cspSource: webview.cspSource,
       nonce,
@@ -139,6 +141,7 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
         }
         if (raw.type === "ready") {
           target.ready = true;
+          log.info(`${target.kind} webview ready, replaying ${this.lastMessages.size} message(s)`);
           for (const m of this.lastMessages.values()) {
             void webview.postMessage(m);
           }
