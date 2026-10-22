@@ -463,6 +463,23 @@ A6 performance: 500-line design [typing instant]; one hour of use [helper proces
 - Part C: search, trace drivers and loads, cones, path view, stats, simulation values.
 - Yosys front-end folding of `state == 1'b1` (fsm_moore keeps no comparator).
 
+### Phase 7: package and report (done 2026-10-22)
+
+- Version 0.2.0 (`85f5a27`), CHANGELOG and README updated (views, badges, error messages, settings, test commands).
+- `npm run package`: `rtl-live-0.2.0.vsix`, 21 files, 17.43 MB. `npm run test:packaged`: 17 passing against the unzipped vsix.
+- Installed with `"$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" --install-extension rtl-live-0.2.0.vsix --force`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.2.0` (the 0.1.0 folder stays under `~/.vscode/extensions` until VS Code cleans it up). Running windows need "Developer: Reload Window".
+- Screenshots: `npm run test:webview` wrote the Phase 7 set to `artifacts/` (m1 to m7 PNGs, three themes for 7458, counter4, module_add and vector2, the stale overlay, the latch versus flop pair, the loop badge). No golden screenshot comparison yet (deferred).
+
+### Final checklist
+
+1. Full suite: typecheck and lint clean; unit and golden and accuracy 570 passing (25 files); integration 17 passing; webview 53 passing; packaged 17 passing.
+2. `git status` clean. `git log --oneline` shows the phase commits from `fecd4d6` (Phase 1) to `85f5a27` (Phase 7). `git remote -v` lists `origin` as it was found; nothing was pushed.
+3. `git grep -il -E "claude|anthropic|ai assistant|copilot"` returns nothing.
+4. `git status` shows no changes under `test/fixtures/` after a full test run (the nine 5.2 fixtures and the two semantics fixtures were added, no existing fixture changed; the expected JSON files were edited only for the mechanical `simplified` to `rtl` rename and the fsm_moore per-view split).
+5. docs/ACCURACY_REPORT.md: structural L1 4/43 (clouds have no netlist, deferred), L2 43/43, L3 43/43; rtl L1 43/43, L2 43/43, L3 43/43; gate L1 43/43, L2 5/5 asserted (n/a where the gate view is not asserted separately), L3 43/43.
+6. Every bug in docs/BUGS.md is fixed with a commit in the Phase 3 table above (1 to 12 and the known issues 5 to 8).
+7. vsix 0.2.0 built, installed, verified with `--list-extensions --show-versions`.
+
 #### Phase 3 log (as it happened)
 
 Done and committed:
