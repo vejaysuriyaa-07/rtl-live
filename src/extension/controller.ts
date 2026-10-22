@@ -2,6 +2,7 @@
 import * as vscode from "vscode";
 import type { SchematicDoc } from "../ir/types";
 import { createStructuralParser, type StructuralParser } from "../structural";
+import { overlayStructural, overlaySummaryText } from "../ir/overlay";
 import { structuralToIr } from "../structural/toIr";
 import { selectTop } from "../structural/topSelect";
 import type { StructuralFile } from "../structural/types";
@@ -20,7 +21,13 @@ export interface RenderEvent {
 export function isVerilogDocument(doc: vscode.TextDocument): boolean {
   if (doc.uri.scheme !== "file" && doc.uri.scheme !== "untitled") return false;
   if (doc.languageId === "verilog" || doc.languageId === "systemverilog") return true;
+  if (doc.uri.scheme === "untitled") return false; // "Untitled-1" has no extension; the language mode decides
   return /\.(v|vh|sv|svh)$/i.test(doc.fileName);
+}
+
+/** Plain Text that is probably Verilog: a module header plus one more Verilog keyword. */
+export function looksLikeVerilog(text: string): boolean {
+  return /\bmodule\s+[A-Za-z_][\w$]*/.test(text) && /\b(endmodule|input|output|inout|assign|always|wire|reg|logic)\b/.test(text);
 }
 
 function schedulerSettings(): { structuralDebounceMs: number; synthDebounceMs: number } {
@@ -46,6 +53,8 @@ export class Controller implements vscode.Disposable {
   private parser: StructuralParser | undefined;
   private readonly parserPromise: Promise<StructuralParser>;
   private activeDoc: vscode.TextDocument | undefined;
+  /** Untitled Plain Text document currently offered the "Set language to Verilog" hint */
+  private hintDoc: vscode.TextDocument | undefined;
   private readonly topOverride = new Map<string, string>();
   private readonly docs = new Map<string, DocState>();
   private readonly renderEmitter = new vscode.EventEmitter<RenderEvent>();
@@ -86,6 +95,8 @@ export class Controller implements vscode.Disposable {
       vscode.workspace.onDidChangeTextDocument((ev) => {
         if (this.activeDoc && ev.document === this.activeDoc) {
           this.scheduler.textChanged(this.key(ev.document), ev.document.getText(), { synth: false });
+        } else if (ev.document === vscode.window.activeTextEditor?.document) {
+          this.updateHint(ev.document);
         }
       }),
       vscode.workspace.onDidCloseTextDocument((doc) => {
@@ -139,6 +150,9 @@ export class Controller implements vscode.Disposable {
             break;
           case "openInPanel":
             this.provider.openInPanel();
+            break;
+          case "setLanguage":
+            void this.setLanguage(msg.language);
             break;
           case "export":
             void this.saveExport(msg.format, msg.data);
@@ -200,9 +214,43 @@ export class Controller implements vscode.Disposable {
   }
 
   private setActive(doc: vscode.TextDocument | undefined): void {
-    if (doc && !isVerilogDocument(doc)) return; // keep showing the last Verilog document
+    if (doc && !isVerilogDocument(doc)) {
+      this.updateHint(doc);
+      return; // keep showing the last Verilog document
+    }
+    this.updateHint(undefined);
     this.activeDoc = doc;
     if (doc) this.scheduler.textChanged(this.key(doc), doc.getText(), { immediate: true, synth: false });
+  }
+
+  /** Offer "Set language to Verilog" for an untitled Plain Text document that looks like Verilog (bug 9). */
+  private updateHint(doc: vscode.TextDocument | undefined): void {
+    const offer = doc !== undefined && doc.uri.scheme === "untitled" && doc.languageId === "plaintext" && looksLikeVerilog(doc.getText());
+    const next = offer ? doc : undefined;
+    if (next === this.hintDoc) return;
+    this.hintDoc = next;
+    this.provider.post({
+      type: "hint",
+      generation: 0,
+      hint: next ? { message: `${next.fileName.replace(/^.*[\\/]/, "")} is Plain Text but looks like Verilog.`, action: { label: "Set language to Verilog", command: "setLanguage" } } : null,
+    });
+  }
+
+  get currentHintDocument(): vscode.TextDocument | undefined {
+    return this.hintDoc;
+  }
+
+  private async setLanguage(language: "verilog" | "systemverilog"): Promise<void> {
+    const doc = this.hintDoc;
+    if (!doc) return;
+    try {
+      const changed = await vscode.languages.setTextDocumentLanguage(doc, language);
+      log.info(`language of ${changed.fileName} set to ${language}`);
+      this.updateHint(undefined);
+      this.setActive(changed);
+    } catch (e) {
+      log.error("could not change the document language", e);
+    }
   }
 
   async selectTopInteractively(): Promise<void> {
@@ -258,12 +306,15 @@ export class Controller implements vscode.Disposable {
       const keepLastGood = synthOn && st.lastGood !== undefined && st.lastGood.top === top && (top === "" || st.lastGood.modules[top] !== undefined);
       const modCount = `${file.modules.length} module${file.modules.length === 1 ? "" : "s"}`;
       if (keepLastGood) {
-        // Keep the last synthesized diagram on screen; it is stale until synthesis catches up.
+        // Stale rule (bug 2): keep the last synthesized diagram, overlay the ports that changed in
+        // the newer text, and say so in the badge text. The render and the badge move together.
+        const overlay = overlayStructural(st.lastGood!, ir, job.generation);
+        const changes = overlaySummaryText(overlay.summary);
+        this.postRender(job.generation, overlay.doc);
         this.provider.post({ type: "error", generation: job.generation, error });
-        this.postStatus({ fidelity: "stale", message: file.hasErrors ? "fix the error to resynthesize" : synthOn ? "synthesizing" : modCount });
+        const base = file.hasErrors ? "last good diagram, fix the error to resynthesize" : synthOn ? "last good diagram, synthesizing" : modCount;
+        this.postStatus({ fidelity: "stale", message: changes ? `${base}; ${changes}` : base });
         if (!file.hasErrors) this.scheduler.requestSynth(job.docKey, job.generation, job.text);
-        this.lastRender = { generation: job.generation, doc: ir };
-        this.renderEmitter.fire(this.lastRender);
       } else {
         this.postRender(job.generation, ir);
         this.provider.post({ type: "error", generation: job.generation, error });

@@ -58,12 +58,13 @@ function renderPortNode(port: Port, n: ElkNodeOut): string {
   const shape = isInput
     ? `M0,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H0 Z`
     : `M8,0 H${fmt(w)} V${fmt(h)} H8 L0,${fmt(h / 2)} Z`;
-  const cls = `port port-${port.direction}${port.width > 1 ? " bus" : ""}`;
+  const cls = `port port-${port.direction}${port.width > 1 ? " bus" : ""}${port.ghost ? ` ghost ghost-${port.ghost}` : ""}${port.tentative ? " tentative" : ""}`;
+  const note = port.ghost === "added" ? " (added in the newer text, not synthesized yet)" : port.ghost === "removed" ? " (removed in the newer text)" : port.ghost === "changed" ? " (changed in the newer text)" : port.tentative ? " (recovered from broken text)" : "";
   return (
-    `<g class="${cls}" data-port="${esc(port.name)}" data-id="${esc(portNodeId(port.name))}"${srcAttr(port.src)} transform="translate(${fmt(n.x)},${fmt(n.y)})">` +
+    `<g class="${cls}" data-port="${esc(port.name)}" data-id="${esc(portNodeId(port.name))}"${port.ghost ? ` data-ghost="${port.ghost}"` : ""}${srcAttr(port.src)} transform="translate(${fmt(n.x)},${fmt(n.y)})">` +
     `<path class="port-shape" d="${shape}"/>` +
     `<text class="port-label" x="${fmt(isInput ? 6 : w - 6)}" y="${fmt(h / 2)}" text-anchor="${isInput ? "start" : "end"}" dominant-baseline="central">${esc(label)}</text>` +
-    `<title>${esc(`${port.direction} ${label} (${port.width > 0 ? port.width : "?"} bit${port.width === 1 ? "" : "s"})`)}</title>` +
+    `<title>${esc(`${port.direction} ${label} (${port.width > 0 ? port.width : "?"} bit${port.width === 1 ? "" : "s"})${note}`)}</title>` +
     `</g>`
   );
 }

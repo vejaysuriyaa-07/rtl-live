@@ -3,7 +3,7 @@
 // generations are attached consistently.
 import * as vscode from "vscode";
 import { buildFallbackHtml, buildWebviewHtml, makeNonce } from "./webviewHtml";
-import { isWebviewToHost, type HostToWebview, type WebviewToHost } from "../shared/protocol";
+import { isWebviewToHost, type HintInfo, type HostToWebview, type WebviewToHost } from "../shared/protocol";
 import { DEFAULT_LIFECYCLE, WebviewLifecycle, type LifecycleOptions } from "./lifecycle";
 import { log } from "./log";
 
@@ -201,6 +201,12 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
     const t = this.sidebar ?? this.panel?.target;
     if (!t) throw new Error("no webview to simulate on");
     this.dispatch(raw, t, t.webview);
+  }
+
+  /** The last hint posted (null when cleared, undefined when never posted). */
+  get lastHint(): HintInfo | null | undefined {
+    const m = this.lastMessages.get("hint");
+    return m && m.type === "hint" ? m.hint : undefined;
   }
 
   /** The last render message posted (or queued for a late webview). */

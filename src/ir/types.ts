@@ -25,6 +25,10 @@ export interface Port {
   /** Range text as written, e.g. "[7:0]" or "[N-1:0]"; absent for scalars */
   range?: string;
   src: SrcRange[];
+  /** Overlay marker on a stale diagram: the port exists only in the newer (unparsed) text, or only in the old one */
+  ghost?: "added" | "removed" | "changed";
+  /** Recovered from broken text (drawn greyed out) */
+  tentative?: boolean;
 }
 
 export type NodeKind =

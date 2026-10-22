@@ -234,6 +234,23 @@ svg.schematic:active {
   cursor: pointer;
 }
 .schematic .node:hover .body,
+.schematic .port.ghost .port-shape,
+.schematic .port.tentative .port-shape {
+  stroke-dasharray: 3 2;
+  fill-opacity: 0.25;
+  opacity: 0.6;
+}
+.schematic .port.ghost-removed .port-label,
+.schematic .port.tentative .port-label {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.schematic .port.tentative .port-label {
+  text-decoration: none;
+}
+.schematic .port.ghost-added .port-shape {
+  stroke: var(--vscode-charts-yellow, #cca700);
+}
 .schematic .port:hover .port-shape {
   stroke: var(--rl-focus);
   stroke-width: 2;
