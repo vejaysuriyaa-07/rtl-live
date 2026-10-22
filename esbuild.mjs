@@ -40,7 +40,7 @@ const yosysWorker = {
   format: "esm",
   platform: "node",
   mainFields: ["module", "main"],
-  // @yowasp/yosys resolves its wasm via import.meta.url; we copy the gen/ dir next to the bundle.
+  // @yowasp/yosys resolves its wasm via import.meta.url; copyAssets puts the files next to the bundle.
   banner: { js: "import { createRequire as __rtlCreateRequire } from 'node:module'; const require = __rtlCreateRequire(import.meta.url);" },
 };
 
@@ -70,10 +70,13 @@ function copyAssets() {
       if (f.endsWith(".wasm")) cpSync(join("assets/wasm", f), join("dist", f));
     }
   }
-  // @yowasp/yosys resources (wasm + resource bundles)
+  // @yowasp/yosys resources (wasm + resource tar) must sit next to dist/yosysWorker.mjs,
+  // because the bundle resolves them with new URL("./x", import.meta.url).
   const yowasp = "node_modules/@yowasp/yosys/gen";
   if (existsSync(yowasp) && statSync(yowasp).isDirectory()) {
-    cpSync(yowasp, "dist/gen", { recursive: true });
+    for (const f of readdirSync(yowasp)) {
+      if (f.endsWith(".wasm") || f.endsWith(".tar")) cpSync(join(yowasp, f), join("dist", f));
+    }
   }
 }
 

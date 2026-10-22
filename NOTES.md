@@ -82,3 +82,36 @@ Decisions:
 - Webview bundles `elkjs/lib/elk.bundled.js` (main-thread fallback) and fetches `dist/elkWorker.js` as text for the Blob worker. Dev bundles carry inline sourcemaps (9 MB); the production build is minified without them.
 
 Could not verify headlessly: typing feel in the real editor, font metrics of labels (sizes are estimated at 6.6 px per character).
+
+## M2: synthesis for assign-based combinational logic with gate symbols
+
+Status: done
+
+Backend findings:
+- Native yosys is not installed on this machine, so every synthesis check ran on `@yowasp/yosys` 0.70.1258 (wasm). The `auto` setting picks native when `yosys -V` answers; the native backend code path (`src/synth/nativeBackend.ts`) is unit-level only on this machine and should be tried once `brew install yosys` is done.
+- The 0.70 yosys wasm uses the WebAssembly exception-handling proposal (`exnref`). Node 23.1 (used for vitest) rejects it with `CompileError: invalid value type 'exn'` unless `--experimental-wasm-exnref` is set; the worker sets it with `v8.setFlagsFromString` before loading the bundle. VS Code 1.143 ships Electron 43 / Chrome 150 where it is on by default, verified by the integration run (`backend: wasm 0.70`).
+- The yowasp bundle resolves its wasm and resource tar with `new URL("./x", import.meta.url)`, so esbuild copies `yosys.core*.wasm` and `yosys-resources.0.tar` (about 80 MB) next to `dist/yosysWorker.mjs`.
+- Measured on this machine: wasm cold start 173 to 201 ms after the first fetch (the files are read from disk, not compiled eagerly), warm runs 15 to 150 ms for the fixtures, 7458.v at 146 ms.
+- Worker recycling: every 50 runs (setting not exposed; constructor option), when the reported process RSS exceeds 1.5 GB (`process.memoryUsage().rss` inside the worker, which is process wide and therefore a conservative proxy), on any timeout (10 s) and on cancellation. Each worker owns its pending-request map so a terminated worker cannot fail requests on its replacement (bug found by the N=3 recycle test).
+
+IR:
+- `src/ir/fromYosys.ts` rebuilds bus-level nets from bit ids: every driving endpoint defines one net; sinks whose bit vectors are slices, repeats or concatenations go through split/join/const nodes. This follows netlistsvg's splitter/joiner idea (MIT) but the code is original, so nothing was ported.
+- Stable ids: `kind:op:sha256(kind|op|sorted named nets|ordinal)[0:10]`; ordinal is by source order among nodes with the same key. Instances keep `inst:<user name>`. The "comment line at the top" test passes for 7458, notgate, vectorgates and xnor_misc. A gate whose op is rewritten by the output-bubble rule keeps the id computed from its original op (`gate:xor:...` for an XNOR made from `~(a ^ b)`); ids only need to be stable, not descriptive.
+- Simplify rules (`src/ir/simplify.ts`, each unit tested): mergeChains (1-bit associative chains over unnamed single-sink nets), dropBuffers, bubbles (input bubble for a NOT feeding one gate; output bubble turning and/or/xor into nand/nor/xnor when the only sink is a NOT). `~(a ^ b)` therefore renders as an XNOR symbol.
+- `a || b` becomes a `$logic_or` cell, mapped to `gate` op `or` with 3-bit inputs and a 1-bit output.
+
+Verified:
+- `npm test`: 196 unit and golden tests. M2 fixtures (wire, wire4, notgate, 7458, gates4, xnor_misc, vectorgates) pass the expectations in `test/fixtures/expected/*.json` (`synth.raw` and `synth.simplified` blocks, checked by `test/unit/synthHelpers.ts`). Golden files `test/golden/<fixture>.ir.json` written with sorted keys and generation 0.
+- 7458 raw: 6 AND + 2 OR; simplified: 4 AND (two 2-input, two 3-input) + 2 OR, nets w1..w4 named.
+- Wasm backend tests: N=3 recycle with 7 runs all succeed; cancel then run; timeout (1 ms) then run; broken input reports an ERROR line.
+- Integration (`npm run test:integration`, 5 passing): 7458.v reaches fidelity synthesized with 4 ANDs and 2 ORs; 20 edits 10 ms apart on notgate.v caused 1 synthesis run and 1 posted result (final generation 22), with no unhandled rejection.
+- Playwright: `artifacts/m2-{7458,gates4,xnor_misc,vectorgates,notgate}.png`; two 3-input ANDs found in the DOM.
+
+Decisions:
+- Stale handling: once a document has a synthesized diagram, structural renders are not sent any more; the webview keeps the last good diagram while the status badge turns amber ("Stale", message "synthesizing" or "fix the error to resynthesize") and the banner shows the first error. The spec's "overlay newer structural boxes" is not implemented (see Known issues); a document without a synthesized diagram yet always shows the structural view.
+- `npm test` builds first so the worker bundle under `dist/` is current.
+- Synthesis expectations and golden files are gated by `COMPLETED_MILESTONES` in `test/unit/synthHelpers.ts`; the M3 to M5 fixtures are added as those milestones complete (`SYNTH_MILESTONES=M3 npx vitest run` runs one ahead of time).
+
+Known issues:
+- Structural boxes are not overlaid on a stale synthesized diagram.
+- Bus width labels are drawn once per net near the driver; for very short first segments they can touch the port chevron.

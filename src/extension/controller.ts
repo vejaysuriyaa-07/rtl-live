@@ -1,13 +1,16 @@
-// Glue between VS Code documents, the scheduler, the parsers and the webview.
+// Glue between VS Code documents, the scheduler, the parsers, synthesis and the webview.
 import * as vscode from "vscode";
 import type { SchematicDoc } from "../ir/types";
 import { createStructuralParser, type StructuralParser } from "../structural";
 import { structuralToIr } from "../structural/toIr";
 import { selectTop } from "../structural/topSelect";
+import type { StructuralFile } from "../structural/types";
 import type { BannerError, StatusInfo, ThemeKind } from "../shared/protocol";
 import { log } from "./log";
 import { Scheduler, type StructuralJob, type SynthJob } from "./scheduler";
 import type { SchematicViewProvider } from "./schematicView";
+import { readSynthSettings, SynthManager } from "./synthManager";
+import { findVerilator, verilatorLint } from "./verilatorLint";
 
 export interface RenderEvent {
   generation: number;
@@ -20,7 +23,7 @@ export function isVerilogDocument(doc: vscode.TextDocument): boolean {
   return /\.(v|vh|sv|svh)$/i.test(doc.fileName);
 }
 
-function settings(): { structuralDebounceMs: number; synthDebounceMs: number } {
+function schedulerSettings(): { structuralDebounceMs: number; synthDebounceMs: number } {
   const c = vscode.workspace.getConfiguration("rtlLive");
   return {
     structuralDebounceMs: Math.max(0, c.get<number>("structuralDebounceMs", 60)),
@@ -28,39 +31,57 @@ function settings(): { structuralDebounceMs: number; synthDebounceMs: number } {
   };
 }
 
+interface DocState {
+  /** Latest structural result */
+  structural?: { generation: number; file: StructuralFile; top: string; text: string };
+  /** Last successful synthesized doc for this document */
+  lastGood?: SchematicDoc;
+  lastGoodKey?: string;
+}
+
 export class Controller implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private readonly scheduler: Scheduler;
+  readonly synth: SynthManager;
   private parser: StructuralParser | undefined;
-  private parserPromise: Promise<StructuralParser>;
+  private readonly parserPromise: Promise<StructuralParser>;
   private activeDoc: vscode.TextDocument | undefined;
   private readonly topOverride = new Map<string, string>();
+  private readonly docs = new Map<string, DocState>();
   private readonly renderEmitter = new vscode.EventEmitter<RenderEvent>();
   readonly onDidRender = this.renderEmitter.event;
   private lastRender: RenderEvent | undefined;
   private status: StatusInfo = { fidelity: "structural", backend: "none" };
+  stats = { structuralRuns: 0, synthRuns: 0, synthResults: 0 };
 
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly provider: SchematicViewProvider,
   ) {
-    this.scheduler = new Scheduler(settings(), {
+    const distDir = vscode.Uri.joinPath(context.extensionUri, "dist").fsPath;
+    this.synth = new SynthManager(`${distDir}/yosysWorker.mjs`);
+    this.scheduler = new Scheduler(schedulerSettings(), {
       runStructural: (job) => this.runStructural(job),
       runSynth: (job) => this.runSynth(job),
     });
-    const distDir = vscode.Uri.joinPath(context.extensionUri, "dist").fsPath;
     this.parserPromise = createStructuralParser(
       { runtimeDir: distDir, grammarPath: `${distDir}/tree-sitter-verilog.wasm` },
       (reason) => log.warn(`tree-sitter grammar unavailable (${reason}); using fallback scanner`),
     ).then((p) => {
       this.parser = p;
       log.info(`structural parser: ${p.name}`);
-      // Re-run for the active document now that the parser is ready.
-      if (this.activeDoc) this.scheduler.textChanged(this.key(this.activeDoc), this.activeDoc.getText(), { immediate: true, synth: false });
+      this.rerunActive();
       return p;
     });
+    // Warm the synthesis engine in the background.
+    this.synth.onDidChangeState(() => {
+      this.postStatus();
+      if (this.synth.backendName !== "none" && !this.synth.warmingUp) this.rerunActive();
+    });
+    void this.synth.ensureBackend();
 
     this.disposables.push(
+      this.synth,
       vscode.window.onDidChangeActiveTextEditor((ed) => this.setActive(ed?.document)),
       vscode.workspace.onDidChangeTextDocument((ev) => {
         if (this.activeDoc && ev.document === this.activeDoc) {
@@ -69,6 +90,7 @@ export class Controller implements vscode.Disposable {
       }),
       vscode.workspace.onDidCloseTextDocument((doc) => {
         if (doc === this.activeDoc) this.setActive(undefined);
+        this.docs.delete(this.key(doc));
       }),
       vscode.window.onDidChangeTextEditorSelection((ev) => {
         if (this.activeDoc && ev.textEditor.document === this.activeDoc) {
@@ -78,16 +100,17 @@ export class Controller implements vscode.Disposable {
       }),
       vscode.workspace.onDidChangeConfiguration((ev) => {
         if (ev.affectsConfiguration("rtlLive")) {
-          this.scheduler.updateOptions(settings());
+          this.scheduler.updateOptions(schedulerSettings());
+          this.synth.applySettings(readSynthSettings());
           log.info("settings updated");
-          if (this.activeDoc) this.scheduler.textChanged(this.key(this.activeDoc), this.activeDoc.getText(), { immediate: true, synth: false });
+          this.rerunActive();
         }
       }),
       vscode.window.onDidChangeActiveColorTheme((t) => this.provider.post({ type: "theme", generation: 0, theme: themeKind(t.kind) })),
       provider.onDidBecomeReady(() => {
         this.provider.post({ type: "theme", generation: 0, theme: themeKind(vscode.window.activeColorTheme.kind) });
-        this.provider.post({ type: "status", generation: 0, status: this.status });
-        if (this.activeDoc) this.scheduler.textChanged(this.key(this.activeDoc), this.activeDoc.getText(), { immediate: true, synth: false });
+        this.postStatus();
+        this.rerunActive();
       }),
       provider.onMessage((msg) => {
         switch (msg.type) {
@@ -100,7 +123,7 @@ export class Controller implements vscode.Disposable {
           case "selectTop":
             if (this.activeDoc) {
               this.topOverride.set(this.key(this.activeDoc), msg.top);
-              this.scheduler.textChanged(this.key(this.activeDoc), this.activeDoc.getText(), { immediate: true, synth: false });
+              this.rerunActive();
             }
             break;
           case "openInPanel":
@@ -121,6 +144,15 @@ export class Controller implements vscode.Disposable {
     return doc.uri.toString();
   }
 
+  private state(key: string): DocState {
+    let s = this.docs.get(key);
+    if (!s) {
+      s = {};
+      this.docs.set(key, s);
+    }
+    return s;
+  }
+
   get currentDocument(): vscode.TextDocument | undefined {
     return this.activeDoc;
   }
@@ -133,15 +165,20 @@ export class Controller implements vscode.Disposable {
     return this.parser?.name;
   }
 
+  get currentStatus(): StatusInfo {
+    return this.status;
+  }
+
   whenParserReady(): Promise<StructuralParser> {
     return this.parserPromise;
   }
 
+  private rerunActive(): void {
+    if (this.activeDoc) this.scheduler.textChanged(this.key(this.activeDoc), this.activeDoc.getText(), { immediate: true, synth: false });
+  }
+
   private setActive(doc: vscode.TextDocument | undefined): void {
-    if (doc && !isVerilogDocument(doc)) {
-      // Keep showing the last Verilog document when switching to e.g. the output panel.
-      return;
-    }
+    if (doc && !isVerilogDocument(doc)) return; // keep showing the last Verilog document
     this.activeDoc = doc;
     if (doc) this.scheduler.textChanged(this.key(doc), doc.getText(), { immediate: true, synth: false });
   }
@@ -155,8 +192,26 @@ export class Controller implements vscode.Disposable {
     const pick = await vscode.window.showQuickPick(names, { placeHolder: "Top module" });
     if (pick && this.activeDoc) {
       this.topOverride.set(this.key(this.activeDoc), pick);
-      this.scheduler.textChanged(this.key(this.activeDoc), this.activeDoc.getText(), { immediate: true, synth: false });
+      this.rerunActive();
     }
+  }
+
+  private postStatus(patch?: Partial<StatusInfo>): void {
+    const gen = this.activeDoc ? this.scheduler.currentGeneration(this.key(this.activeDoc)) : 0;
+    this.status = {
+      ...this.status,
+      ...patch,
+      backend: this.synth.backendName,
+      ...(this.synth.version !== undefined ? { backendVersion: this.synth.version } : {}),
+      warmingUp: this.synth.warmingUp,
+    };
+    this.provider.post({ type: "status", generation: gen, status: this.status });
+  }
+
+  private postRender(generation: number, doc: SchematicDoc): void {
+    this.provider.post({ type: "render", generation, doc, fitOnRender: false });
+    this.lastRender = { generation, doc };
+    this.renderEmitter.fire(this.lastRender);
   }
 
   private runStructural(job: StructuralJob): void {
@@ -172,23 +227,89 @@ export class Controller implements vscode.Disposable {
       const ir = structuralToIr(file, { sourceUri: doc.uri.toString(), generation: job.generation, top });
       const t1 = performance.now();
       if (this.scheduler.currentGeneration(job.docKey) !== job.generation) return;
+      this.stats.structuralRuns++;
+      const st = this.state(job.docKey);
+      st.structural = { generation: job.generation, file, top, text: job.text };
       const first = file.errors[0];
       const error: BannerError | null = first ? { line: first.line, column: first.column, message: first.message, file: baseName(doc.fileName) } : null;
-      this.provider.post({ type: "render", generation: job.generation, doc: ir, fitOnRender: false });
-      this.provider.post({ type: "error", generation: job.generation, error });
-      this.status = { ...this.status, fidelity: "structural", message: `${file.modules.length} module${file.modules.length === 1 ? "" : "s"}` };
-      this.provider.post({ type: "status", generation: job.generation, status: this.status });
-      this.lastRender = { generation: job.generation, doc: ir };
-      this.renderEmitter.fire(this.lastRender);
+      const synthOn = this.synth.backendName !== "off";
+      const keepLastGood = synthOn && st.lastGood !== undefined && st.lastGood.top === top && (top === "" || st.lastGood.modules[top] !== undefined);
+      const modCount = `${file.modules.length} module${file.modules.length === 1 ? "" : "s"}`;
+      if (keepLastGood) {
+        // Keep the last synthesized diagram on screen; it is stale until synthesis catches up.
+        this.provider.post({ type: "error", generation: job.generation, error });
+        this.postStatus({ fidelity: "stale", message: file.hasErrors ? "fix the error to resynthesize" : synthOn ? "synthesizing" : modCount });
+        if (!file.hasErrors) this.scheduler.requestSynth(job.docKey, job.generation, job.text);
+        this.lastRender = { generation: job.generation, doc: ir };
+        this.renderEmitter.fire(this.lastRender);
+      } else {
+        this.postRender(job.generation, ir);
+        this.provider.post({ type: "error", generation: job.generation, error });
+        this.postStatus({ fidelity: "structural", message: file.hasErrors ? modCount : synthOn && top !== "" ? "synthesizing" : modCount });
+        if (!file.hasErrors && synthOn && top !== "") this.scheduler.requestSynth(job.docKey, job.generation, job.text);
+      }
       if (t1 - t0 > 100) log.warn(`structural pass took ${(t1 - t0).toFixed(1)} ms`);
     } catch (e) {
       log.error("structural pass failed", e);
     }
   }
 
-  private runSynth(job: SynthJob): Promise<void> {
-    void job;
-    return Promise.resolve();
+  private async runSynth(job: SynthJob): Promise<void> {
+    const st = this.docs.get(job.docKey);
+    const structural = st?.structural;
+    if (!st || !structural || structural.generation !== job.generation || structural.file.hasErrors || structural.top === "") return;
+    const doc = this.activeDoc;
+    if (!doc || this.key(doc) !== job.docKey) return;
+    const key = this.synth.cacheKey(job.text, structural.top);
+    const cached = this.synth.cache.get(key);
+    const sourceUri = doc.uri.toString();
+    if (cached) {
+      this.synth.stats.cacheHits++;
+      const out: SchematicDoc = { ...cached.doc, generation: job.generation, sourceUri, moduleNames: structural.file.modules.map((m) => m.name) };
+      st.lastGood = out;
+      st.lastGoodKey = key;
+      this.postRender(job.generation, out);
+      this.provider.post({ type: "error", generation: job.generation, error: null });
+      this.postStatus({ fidelity: "synthesized", message: "cached" });
+      return;
+    }
+    this.stats.synthRuns++;
+    try {
+      const res = await this.synth.run({ text: job.text, file: structural.file, top: structural.top, sourceUri, generation: job.generation, signal: job.signal });
+      if (!res || res.cancelled || job.signal.aborted) return;
+      if (this.scheduler.currentGeneration(job.docKey) !== job.generation) return; // stale result
+      this.stats.synthResults++;
+      if (res.ok && res.doc) {
+        if (res.doc.modules[structural.top] && res.doc.modules[structural.top]!.nodes.length > 2000) {
+          log.warn(`synthesized netlist has ${res.doc.modules[structural.top]!.nodes.length} nodes; showing the structural view`);
+          this.postStatus({ fidelity: "structural", message: "netlist too large for the gate view (over 2,000 nodes)" });
+          return;
+        }
+        this.synth.cache.set(key, { doc: res.doc, unknownCellTypes: res.unknownCellTypes });
+        st.lastGood = res.doc;
+        st.lastGoodKey = key;
+        this.postRender(job.generation, res.doc);
+        this.provider.post({ type: "error", generation: job.generation, error: null });
+        this.postStatus({ fidelity: "synthesized", message: `${res.elapsedMs.toFixed(0)} ms` });
+        for (const d of res.diagnostics) log.warn(`synth: ${d.message}`);
+      } else {
+        let err: BannerError = { message: res.error?.message ?? "synthesis failed", ...(res.error?.line !== undefined ? { line: res.error.line } : {}), ...(res.error?.column !== undefined ? { column: res.error.column } : {}), file: baseName(doc.fileName) };
+        if (this.synth.currentSettings.lintWithVerilator) {
+          const v = findVerilator();
+          if (v) {
+            const lint = await verilatorLint(v, job.text, res.stubs, structural.top).catch(() => undefined);
+            if (lint && this.scheduler.currentGeneration(job.docKey) === job.generation) {
+              err = { ...err, message: lint.message, ...(lint.line !== undefined ? { line: lint.line } : {}), ...(lint.column !== undefined ? { column: lint.column } : {}) };
+            }
+          }
+        }
+        log.warn(`synthesis failed: ${err.message}${res.stderr ? `\n${res.stderr.trim()}` : ""}`);
+        this.provider.post({ type: "error", generation: job.generation, error: err });
+        this.postStatus({ fidelity: st.lastGood ? "stale" : "structural", message: res.timedOut ? "synthesis timed out" : "synthesis failed" });
+      }
+    } catch (e) {
+      log.error("synthesis crashed", e);
+    }
   }
 
   private async reveal(line: number, column: number, endLine: number, endColumn: number): Promise<void> {

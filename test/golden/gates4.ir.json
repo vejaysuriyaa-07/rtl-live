@@ -1,0 +1,280 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:in",
+            "pin": "in"
+          },
+          "id": "net:in",
+          "name": "in",
+          "sinks": [
+            {
+              "node": "reduce:and:4338d57e81",
+              "pin": "A"
+            },
+            {
+              "node": "reduce:or:bf4c80bc2b",
+              "pin": "A"
+            },
+            {
+              "node": "reduce:xor:e089c016f1",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 33,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "reduce:and:4338d57e81",
+            "pin": "Y"
+          },
+          "id": "net:out_and",
+          "name": "out_and",
+          "sinks": [
+            {
+              "node": "port:out_and",
+              "pin": "out_and"
+            }
+          ],
+          "src": [
+            {
+              "column": 42,
+              "endColumn": 49,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "reduce:or:bf4c80bc2b",
+            "pin": "Y"
+          },
+          "id": "net:out_or",
+          "name": "out_or",
+          "sinks": [
+            {
+              "node": "port:out_or",
+              "pin": "out_or"
+            }
+          ],
+          "src": [
+            {
+              "column": 58,
+              "endColumn": 64,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "reduce:xor:e089c016f1",
+            "pin": "Y"
+          },
+          "id": "net:out_xor",
+          "name": "out_xor",
+          "sinks": [
+            {
+              "node": "port:out_xor",
+              "pin": "out_xor"
+            }
+          ],
+          "src": [
+            {
+              "column": 73,
+              "endColumn": 80,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "reduce:and:4338d57e81",
+          "kind": "reduce",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:in",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:out_and",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 23,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "reduce:or:bf4c80bc2b",
+          "kind": "reduce",
+          "label": "OR",
+          "op": "or",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:in",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:out_or",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 23,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "reduce:xor:e089c016f1",
+          "kind": "reduce",
+          "label": "XOR",
+          "op": "xor",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:in",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:out_xor",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 23,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "in",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 33,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "direction": "output",
+          "name": "out_and",
+          "src": [
+            {
+              "column": 42,
+              "endColumn": 49,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "out_or",
+          "src": [
+            {
+              "column": 58,
+              "endColumn": 64,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "out_xor",
+          "src": [
+            {
+              "column": 73,
+              "endColumn": 80,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "gates4.v",
+  "top": "top_module",
+  "version": 1
+}

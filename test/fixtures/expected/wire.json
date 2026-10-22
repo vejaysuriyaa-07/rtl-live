@@ -16,5 +16,20 @@
     "assigns": 1,
     "always": 0,
     "instances": []
+  },
+  "synth": {
+    "simplified": {
+      "logicNodes": 0,
+      "nets": [
+        "in"
+      ],
+      "fanout": {
+        "in": 1
+      },
+      "count": {
+        "split": 0,
+        "join": 0
+      }
+    }
   }
 }

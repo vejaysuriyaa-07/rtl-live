@@ -72,5 +72,38 @@
       "w3",
       "w4"
     ]
+  },
+  "synth": {
+    "raw": {
+      "count": {
+        "gate:and": 6,
+        "gate:or": 2
+      }
+    },
+    "simplified": {
+      "count": {
+        "gate:and": 4,
+        "gate:or": 2
+      },
+      "gateInputs": {
+        "gate:and": [
+          2,
+          2,
+          3,
+          3
+        ],
+        "gate:or": [
+          2,
+          2
+        ]
+      },
+      "nets": [
+        "w1",
+        "w2",
+        "w3",
+        "w4"
+      ],
+      "logicNodes": 6
+    }
   }
 }

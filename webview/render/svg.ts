@@ -126,13 +126,13 @@ function busLabelPos(e: ElkEdgeOut): { x: number; y: number } | undefined {
   return { x: a.x + (dx / len) * t, y: a.y + (dy / len) * t };
 }
 
-function renderEdge(e: ElkEdgeOut, net: Net | undefined): string {
+function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean): string {
   const d = edgePath(e);
   const width = net?.width ?? 1;
   const cls = `net${width > 1 ? " bus" : ""}`;
   const netId = net?.id ?? e.id;
   let label = "";
-  if (width > 1) {
+  if (width > 1 && showWidth) {
     const p = busLabelPos(e);
     if (p) {
       label =
@@ -160,9 +160,13 @@ export function renderModule(view: ModuleView, layout: ElkGraphOut, opts: Render
   }
   // Edges below nodes.
   const edges: string[] = [];
+  const labelled = new Set<string>();
   for (const e of layout.edges) {
     const netId = e.id.replace(/^edge:/, "").replace(/:\d+$/, "");
-    edges.push(renderEdge(e, netById.get(netId)));
+    // One width label per net: all edges of a net leave the same driver pin.
+    const first = !labelled.has(netId);
+    labelled.add(netId);
+    edges.push(renderEdge(e, netById.get(netId), first));
   }
   parts.push(`<g class="nets">${edges.join("")}</g>`);
   const nodes: string[] = [];

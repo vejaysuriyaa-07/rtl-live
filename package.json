@@ -189,7 +189,7 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.webview.json",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "vitest run",
+    "test": "npm run build && vitest run",
     "test:golden:update": "UPDATE_GOLDEN=1 vitest run test/golden",
     "test:integration": "npm run build && vscode-test",
     "test:webview": "npm run build && playwright test",

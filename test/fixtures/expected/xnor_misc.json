@@ -34,5 +34,15 @@
   ],
   "structural": {
     "assigns": 3
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "gate:xnor": 2,
+        "reduce:xnor": 1,
+        "gate:not": 0
+      },
+      "logicNodes": 3
+    }
   }
 }

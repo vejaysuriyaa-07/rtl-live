@@ -14,5 +14,16 @@
   ],
   "structural": {
     "assigns": 1
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "gate:not": 1
+      },
+      "logicNodes": 1,
+      "srcLine": {
+        "gate:not": 2
+      }
+    }
   }
 }

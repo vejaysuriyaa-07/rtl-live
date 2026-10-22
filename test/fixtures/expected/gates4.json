@@ -24,5 +24,31 @@
   ],
   "structural": {
     "assigns": 3
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "reduce:and": 1,
+        "reduce:or": 1,
+        "reduce:xor": 1
+      },
+      "logicNodes": 3,
+      "nodes": [
+        {
+          "kind": "reduce",
+          "op": "and",
+          "pins": [
+            {
+              "id": "A",
+              "width": 4
+            },
+            {
+              "id": "Y",
+              "width": 1
+            }
+          ]
+        }
+      ]
+    }
   }
 }

@@ -26,5 +26,46 @@
       "direction": "output",
       "width": 6
     }
-  ]
+  ],
+  "synth": {
+    "simplified": {
+      "count": {
+        "gate:or": 2,
+        "gate:not": 2,
+        "join": 1
+      },
+      "nodes": [
+        {
+          "kind": "gate",
+          "op": "or",
+          "width": 3
+        },
+        {
+          "kind": "gate",
+          "op": "or",
+          "width": 1,
+          "pins": [
+            {
+              "id": "A",
+              "width": 3
+            },
+            {
+              "id": "Y",
+              "width": 1
+            }
+          ]
+        },
+        {
+          "kind": "gate",
+          "op": "not",
+          "width": 3
+        }
+      ],
+      "netWidth": {
+        "out_not": 6,
+        "out_or_bitwise": 3
+      },
+      "logicNodes": 4
+    }
+  }
 }

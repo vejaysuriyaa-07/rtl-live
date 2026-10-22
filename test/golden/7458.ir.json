@@ -1,0 +1,814 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:p1a",
+            "pin": "p1a"
+          },
+          "id": "net:p1a",
+          "name": "p1a",
+          "sinks": [
+            {
+              "node": "gate:and:b9f77c3ddc",
+              "pin": "I0"
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 12,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p1b",
+            "pin": "p1b"
+          },
+          "id": "net:p1b",
+          "name": "p1b",
+          "sinks": [
+            {
+              "node": "gate:and:b9f77c3ddc",
+              "pin": "I1"
+            }
+          ],
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 17,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p1c",
+            "pin": "p1c"
+          },
+          "id": "net:p1c",
+          "name": "p1c",
+          "sinks": [
+            {
+              "node": "gate:and:b9f77c3ddc",
+              "pin": "I2"
+            }
+          ],
+          "src": [
+            {
+              "column": 19,
+              "endColumn": 22,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p1d",
+            "pin": "p1d"
+          },
+          "id": "net:p1d",
+          "name": "p1d",
+          "sinks": [
+            {
+              "node": "gate:and:f119501a92",
+              "pin": "I0"
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 27,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p1e",
+            "pin": "p1e"
+          },
+          "id": "net:p1e",
+          "name": "p1e",
+          "sinks": [
+            {
+              "node": "gate:and:f119501a92",
+              "pin": "I1"
+            }
+          ],
+          "src": [
+            {
+              "column": 29,
+              "endColumn": 32,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p1f",
+            "pin": "p1f"
+          },
+          "id": "net:p1f",
+          "name": "p1f",
+          "sinks": [
+            {
+              "node": "gate:and:f119501a92",
+              "pin": "I2"
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 37,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p2a",
+            "pin": "p2a"
+          },
+          "id": "net:p2a",
+          "name": "p2a",
+          "sinks": [
+            {
+              "node": "gate:and:6895cc73e4",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 12,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p2b",
+            "pin": "p2b"
+          },
+          "id": "net:p2b",
+          "name": "p2b",
+          "sinks": [
+            {
+              "node": "gate:and:6895cc73e4",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 17,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p2c",
+            "pin": "p2c"
+          },
+          "id": "net:p2c",
+          "name": "p2c",
+          "sinks": [
+            {
+              "node": "gate:and:fbca3ba750",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 19,
+              "endColumn": 22,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:p2d",
+            "pin": "p2d"
+          },
+          "id": "net:p2d",
+          "name": "p2d",
+          "sinks": [
+            {
+              "node": "gate:and:fbca3ba750",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 27,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:and:6895cc73e4",
+            "pin": "Y"
+          },
+          "id": "net:w1",
+          "name": "w1",
+          "sinks": [
+            {
+              "node": "gate:or:774f1d8d73",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 8,
+              "endColumn": 10,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:and:b9f77c3ddc",
+            "pin": "Y"
+          },
+          "id": "net:w2",
+          "name": "w2",
+          "sinks": [
+            {
+              "node": "gate:or:47e9cfb809",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 12,
+              "endColumn": 14,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:and:fbca3ba750",
+            "pin": "Y"
+          },
+          "id": "net:w3",
+          "name": "w3",
+          "sinks": [
+            {
+              "node": "gate:or:774f1d8d73",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 16,
+              "endColumn": 18,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:and:f119501a92",
+            "pin": "Y"
+          },
+          "id": "net:w4",
+          "name": "w4",
+          "sinks": [
+            {
+              "node": "gate:or:47e9cfb809",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 22,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:or:47e9cfb809",
+            "pin": "Y"
+          },
+          "id": "net:p1y",
+          "name": "p1y",
+          "sinks": [
+            {
+              "node": "port:p1y",
+              "pin": "p1y"
+            }
+          ],
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 49,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:or:774f1d8d73",
+            "pin": "Y"
+          },
+          "id": "net:p2y",
+          "name": "p2y",
+          "sinks": [
+            {
+              "node": "port:p2y",
+              "pin": "p2y"
+            }
+          ],
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 39,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "nodes": [
+        {
+          "id": "gate:and:6895cc73e4",
+          "kind": "gate",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:p2a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:p2b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:w1",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 15,
+              "endColumn": 24,
+              "endLine": 5,
+              "line": 5
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:and:b9f77c3ddc",
+          "kind": "gate",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "I0",
+              "label": "",
+              "net": "net:p1a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "I1",
+              "label": "",
+              "net": "net:p1b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "I2",
+              "label": "",
+              "net": "net:p1c",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:w2",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 15,
+              "endColumn": 30,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:and:fbca3ba750",
+          "kind": "gate",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:p2c",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:p2d",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:w3",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 15,
+              "endColumn": 24,
+              "endLine": 7,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:and:f119501a92",
+          "kind": "gate",
+          "label": "AND",
+          "op": "and",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "I0",
+              "label": "",
+              "net": "net:p1d",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "I1",
+              "label": "",
+              "net": "net:p1e",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "I2",
+              "label": "",
+              "net": "net:p1f",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:w4",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 15,
+              "endColumn": 30,
+              "endLine": 8,
+              "line": 8
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:or:47e9cfb809",
+          "kind": "gate",
+          "label": "OR",
+          "op": "or",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:w2",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:w4",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:p1y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 16,
+              "endColumn": 23,
+              "endLine": 10,
+              "line": 10
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:or:774f1d8d73",
+          "kind": "gate",
+          "label": "OR",
+          "op": "or",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:w1",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:w3",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:p2y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 16,
+              "endColumn": 23,
+              "endLine": 9,
+              "line": 9
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "p1a",
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 12,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p1b",
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 17,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p1c",
+          "src": [
+            {
+              "column": 19,
+              "endColumn": 22,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p1d",
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 27,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p1e",
+          "src": [
+            {
+              "column": 29,
+              "endColumn": 32,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p1f",
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 37,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "p1y",
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 49,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p2a",
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 12,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p2b",
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 17,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p2c",
+          "src": [
+            {
+              "column": 19,
+              "endColumn": 22,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "p2d",
+          "src": [
+            {
+              "column": 24,
+              "endColumn": 27,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "p2y",
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 39,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 11,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "7458.v",
+  "top": "top_module",
+  "version": 1
+}

@@ -39,5 +39,15 @@
   ],
   "structural": {
     "assigns": 4
+  },
+  "synth": {
+    "simplified": {
+      "logicNodes": 0,
+      "fanout": {
+        "b": 2,
+        "a": 1,
+        "c": 1
+      }
+    }
   }
 }
