@@ -55,6 +55,8 @@ Settings apply live.
 - "Warming up synthesis engine" stays for a long time: the wasm engine loads about 80 MB on first use. Check "RTL Live: Show Log". `brew install yosys` makes synthesis native and faster.
 - The badge says Stale: the file has a syntax error (banner shows the first one) or synthesis has not caught up yet. The last good diagram stays on screen.
 - Nothing appears: the file must end in `.v`, `.vh`, `.sv` or `.svh`, or have the Verilog or SystemVerilog language mode. Files above 2,000 synthesized nodes show the structural view only.
+- The view is blank (no toolbar): run "RTL Live: Show Log". A healthy start logs `sidebar webview script ...`, `[webview] webview booting (vscode api)` and `sidebar webview ready`. A missing `webview booting` line means the HTML never ran; a `failed to load ...` or `uncaught ...` line names the broken resource. "Developer: Open Webview Developer Tools" shows the same errors in a console.
+- The log says `tree-sitter grammar unavailable ... using fallback scanner`: the bundled parser did not load and the regex scanner is drawing the structural view. The first 0.1.0 vsix had this bug (fixed; `npm run test:packaged` guards it).
 - A dashed box labelled with a `$...` cell type: a Yosys cell this version does not know how to draw yet; it is logged once in the output channel.
 - Layout looks wrong after a theme change: run "RTL Live: Fit to View" (or press `f` in the view).
 
@@ -86,6 +88,7 @@ npm run build
 npm test               # vitest unit + golden (uses the wasm yosys)
 npm run test:integration
 npm run test:webview
+npm run test:packaged  # packages a vsix and runs the integration suite against the unzipped copy
 npm run bench
 npm run package        # rtl-live-<version>.vsix
 ```

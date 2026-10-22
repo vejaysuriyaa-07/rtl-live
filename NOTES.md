@@ -295,3 +295,54 @@ Visual quality at real DPI and with the real VS Code font, typing feel and the 1
 - Native warm p95 worst case 20.6 ms (module_shift8), typical 11 to 14 ms including temp-dir setup and process spawn; budget of 300 ms met.
 - Wasm warm p95 358 ms, same recycle outliers as before; structural p95 4.7 ms; ELK max 73 ms; wasm cold start 226 ms.
 - With native yosys present, `npm test` (272) and the golden files pass unchanged: the native and wasm builds of Yosys 0.70 produce identical IR for every fixture. `npm run test:integration` (8 passing) reports `backend: native 0.70+post`.
+
+
+## Addendum: installed vsix bugs (2026-10-22)
+
+Report: the installed `rtl-live-0.1.0.vsix` (1) logs `tree-sitter grammar unavailable (The argument 'filename' must be a file URL object, file URL string, or absolute path string. Received undefined); using fallback scanner` on activation and (2) shows a blank "RTL Live: Schematic" view with `7458.v` open.
+
+### Reproduction against the production build
+
+- `npm run build:prod`, then `npx playwright test` (47 passing) and `npx vscode-test` (8 passing) against the minified bundles in dev mode.
+- New `npm run test:packaged` (`scripts/test-packaged.mjs` + `.vscode-test.packaged.mjs`): `build:prod`, `vsce package` into a temp dir, unzip, and run the integration suite with `extensionDevelopmentPath` pointing at the unzipped `extension/` folder. Env knobs: `RTL_LIVE_VSCODE_VERSION` (default stable), `RTL_LIVE_VSCODE_PATH` (use an installed app binary instead of a download), `RTL_LIVE_EXTENSIONS_DIR` (enable an existing extensions folder instead of `--disable-extensions`).
+
+### Bug 1: grammar never loaded (fixed)
+
+Root cause: `web-tree-sitter` 0.27.1 has `exports` with an `import` condition (ESM `web-tree-sitter.js`) and a `require` condition (cjs `web-tree-sitter.cjs`). The extension source uses `import`, so esbuild picked the ESM file and inlined it into the cjs bundle, where `import.meta` becomes `{}`. The ESM file runs `createRequire(import.meta.url)` under Node, which throws the error above. `createStructuralParser` caught it and returned the fallback scanner. This affected the dev bundle as well; the integration suite passed because no test asserted which parser was active, and the unit tests import the TypeScript sources through vitest, where `import.meta.url` is real.
+
+Fix: `esbuild.config.mjs` (options shared by `esbuild.mjs` and the tests) adds `treeSitterCjsPlugin`, an `onResolve` plugin that maps the bare `web-tree-sitter` specifier to `node_modules/web-tree-sitter/web-tree-sitter.cjs` for the extension bundle. The cjs build locates itself with `__filename`/`__dirname`, which esbuild leaves as runtime references. `grammar.ts` still passes `locateFile`, so the wasm comes from `dist/`.
+
+Regression tests: `test/unit/bundle.test.ts` builds the extension-host bundle (dev and production options) with a stdin entry that re-exports `createStructuralParser`, loads it with `require()` and asserts the parser is `tree-sitter` with no fallback reason (this failed with the exact reported message before the fix). `test/integration/m1.structural.test.ts` now asserts `parser.name === "tree-sitter"`.
+
+### Bug 2: blank sidebar (not reproduced)
+
+Every configuration below rendered 7458.v and posted `ready` (`layout engine: worker`, fidelity synthesized), using the unchanged 0.1.0 vsix bytes:
+
+| VS Code | extension loaded as | other extensions | launch |
+| --- | --- | --- | --- |
+| 1.143.0 (test download) | unzipped vsix, dev mode | disabled | vscode-test |
+| 1.106.3 (download) | unzipped vsix, dev mode | disabled | vscode-test |
+| 1.106.3 `~/Applications` binary | unzipped vsix, dev mode | `~/.vscode/extensions` enabled | vscode-test |
+| 1.143.0 | unzipped vsix, dev mode | `~/.vscode/extensions` enabled | vscode-test |
+| 1.106.3 `~/Applications` app | installed with `code --install-extension` into a temp extensions dir | none | `open -a` (translocated, like the real app) with a probe `extensionTestsPath` |
+| 1.106.3 `~/Applications` app | installed by the CLI into the running window, no reload | none | `open -a` |
+
+Findings from `~/Library/Application Support/Code/logs`:
+- Two VS Codes share the profile: 1.106.3 from `~/Applications` (quarantined, runs App-Translocated from `/private/var/folders/.../AppTranslocation/...`) and the 1.143.0 copy that `@vscode/test-electron` downloaded into `.vscode-test/`, which was launched from Finder at 02:03 and is where `rtl-live` activated at 02:09 and 02:11 (after a window reload) with the pasted log. That window had `mshr-h.veriloghdl`, `lramseyer.vaporview`, Copilot and Claude Code active.
+- Neither main process logged a `Refused to load`/`Blocked vscode-webview request` for the extension, and the webview never posted a `log` message, so the host cannot tell whether the HTML loaded. `ready` was not logged by the host at all, so "the log never shows the webview posting ready" was true even in working sessions.
+- Running the integration suite with the user's extensions enabled saves the test edits into `test/fixtures/hdlbits/*.v` (an autosave extension) and shifts generation counts (`25 !== 23` in the M2 cancellation test). `test:packaged` keeps `--disable-extensions` unless `RTL_LIVE_EXTENSIONS_DIR` is set. The two dirty fixtures were reverted with `git checkout`.
+
+Diagnostics added so the next blank view explains itself in "RTL Live: Show Log":
+- Host: `sidebar webview script <uri>` when the HTML is set, `sidebar webview resolved (visible: ...)`, `<kind> webview ready, replaying N message(s)`.
+- Webview: an inline nonce'd boot script (`BOOT_SCRIPT` in `webviewHtml.ts`) runs before `dist/webview.js`. It owns the single `acquireVsCodeApi()` call (`webview/vscodeApi.ts` reuses it via `window.__rtlLiveVsCodeApi`), posts `webview booting (vscode api)`, and reports `failed to load <uri>` for a script or stylesheet that does not load, `uncaught <message> at <file>:<line>` and `unhandled rejection: ...`. Unit tests check the boot script is nonce'd, precedes the bundle and has no http URLs; the CSP string is unchanged.
+
+Next time it happens: open the view, run "RTL Live: Show Log", and copy the lines after `sidebar webview script`. "Developer: Open Webview Developer Tools" (Command Palette) opens the console of the view. Also note which VS Code is running: `Code: About` shows 1.106.3 for `~/Applications` and 1.143.0 for the `.vscode-test` copy.
+
+### Verification
+
+- `npm run typecheck`, `npm run lint`: clean.
+- `npm test`: 276 passing (2 new bundle tests, 2 new html tests).
+- `npm run test:integration`: 8 passing (M1 now asserts the tree-sitter parser).
+- `npm run test:webview`: 47 passing.
+- `npm run test:packaged`: 8 passing on 1.143.0 against the packaged vsix; grammar loads.
+- Rebuilt `rtl-live-0.1.0.vsix` and reinstalled with `"$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" --install-extension rtl-live-0.1.0.vsix --force`; see the install log below.

@@ -2,7 +2,11 @@
 
 ## 0.1.0
 
-First release.
+First release. Rebuilt on 2026-10-22 with these fixes:
+
+- The bundled web-tree-sitter grammar now loads in the installed extension. The first build bundled the ESM copy of web-tree-sitter, whose `import.meta.url` is empty in a cjs bundle, so every install silently used the fallback regex scanner.
+- The webview reports boot progress, resource load failures, uncaught errors and unhandled rejections to the "RTL Live" output channel.
+- New `npm run test:packaged` runs the integration suite against a freshly packaged vsix.
 
 - Sidebar "Schematic" view with a strict CSP; works fully offline.
 - Structural view updated on every keystroke (web-tree-sitter with tree-sitter-verilog, fallback scanner): module box, ports, wires, instances, logic clouds; tolerant to partial code.
