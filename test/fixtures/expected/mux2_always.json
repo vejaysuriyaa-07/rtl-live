@@ -35,5 +35,47 @@
   "structural": {
     "always": 1,
     "assigns": 1
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "mux": 2,
+        "gate:and": 2
+      },
+      "noUnknown": true,
+      "nodes": [
+        {
+          "kind": "mux",
+          "pins": [
+            {
+              "id": "A",
+              "net": "a",
+              "side": "west"
+            },
+            {
+              "id": "B",
+              "net": "b"
+            },
+            {
+              "id": "S",
+              "side": "south"
+            },
+            {
+              "id": "Y",
+              "net": "out_assign"
+            }
+          ]
+        },
+        {
+          "kind": "mux",
+          "pins": [
+            {
+              "id": "Y",
+              "net": "out_always"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

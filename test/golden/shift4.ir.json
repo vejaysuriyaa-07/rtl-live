@@ -1,0 +1,305 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:clk",
+            "pin": "clk"
+          },
+          "id": "net:clk",
+          "name": "clk",
+          "sinks": [
+            {
+              "node": "dff:dff:48c941d1f2",
+              "pin": "CLK"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:in",
+            "pin": "in"
+          },
+          "id": "net:in",
+          "name": "in",
+          "sinks": [
+            {
+              "node": "join:817f70c056",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 38,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "dff:dff:48c941d1f2",
+            "pin": "Q"
+          },
+          "id": "net:sr",
+          "name": "sr",
+          "sinks": [
+            {
+              "node": "split:net:sr",
+              "pin": "in"
+            },
+            {
+              "node": "port:sr",
+              "pin": "sr"
+            }
+          ],
+          "src": [
+            {
+              "column": 57,
+              "endColumn": 59,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "split:net:sr",
+            "pin": "out[2:0]"
+          },
+          "id": "net:sr[2:0]",
+          "name": "sr[2:0]",
+          "sinks": [
+            {
+              "node": "join:817f70c056",
+              "pin": "in1"
+            }
+          ],
+          "src": [
+            {
+              "column": 57,
+              "endColumn": 59,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 3
+        },
+        {
+          "driver": {
+            "node": "join:817f70c056",
+            "pin": "out"
+          },
+          "id": "net:join:817f70c056.out",
+          "sinks": [
+            {
+              "node": "dff:dff:48c941d1f2",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 25,
+              "endLine": 3,
+              "line": 2
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "nodes": [
+        {
+          "id": "split:net:sr",
+          "kind": "split",
+          "label": "",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "in",
+              "label": "",
+              "net": "net:sr",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "bits": "[2:0]",
+              "direction": "out",
+              "id": "out[2:0]",
+              "label": "",
+              "net": "net:sr[2:0]",
+              "side": "east",
+              "width": 3
+            }
+          ],
+          "src": [
+            {
+              "column": 57,
+              "endColumn": 59,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "join:817f70c056",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[3:1]",
+              "direction": "in",
+              "id": "in1",
+              "label": "",
+              "net": "net:sr[2:0]",
+              "side": "west",
+              "width": 3
+            },
+            {
+              "bits": "[0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "",
+              "net": "net:in",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:join:817f70c056.out",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 25,
+              "endLine": 3,
+              "line": 2
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "dff:dff:48c941d1f2",
+          "info": {
+            "clock": "posedge"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "dff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:join:817f70c056.out",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:sr",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 25,
+              "endLine": 3,
+              "line": 2
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "clk",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "in",
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 38,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "output",
+          "name": "sr",
+          "range": "[3:0]",
+          "src": [
+            {
+              "column": 57,
+              "endColumn": 59,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 4
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 4,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "shift4.v",
+  "top": "top_module",
+  "version": 1
+}

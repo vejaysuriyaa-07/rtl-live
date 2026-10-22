@@ -10,6 +10,9 @@
       "name": "top_module",
       "nets": [
         {
+          "aliases": [
+            "w"
+          ],
           "driver": {
             "node": "port:a",
             "pin": "a"
@@ -33,6 +36,10 @@
           "width": 1
         },
         {
+          "aliases": [
+            "x",
+            "y"
+          ],
           "driver": {
             "node": "port:b",
             "pin": "b"
@@ -60,6 +67,9 @@
           "width": 1
         },
         {
+          "aliases": [
+            "z"
+          ],
           "driver": {
             "node": "port:c",
             "pin": "c"

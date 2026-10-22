@@ -2,6 +2,7 @@
 import type { SchematicDoc, Diagnostic } from "../ir/types";
 import { fromYosys } from "../ir/fromYosys";
 import { simplifyModule, type SimplifyOptions } from "../ir/simplify";
+import { annotateStateRegisters } from "../ir/fsmInfo";
 import type { StructuralFile } from "../structural/types";
 import type { SynthBackend } from "./backend";
 import { collectStubs, stubsToVerilog } from "./blackboxStubs";
@@ -95,7 +96,10 @@ export async function synthesize(backend: SynthBackend, opts: SynthesizeOptions,
     moduleNames: opts.file.modules.map((m) => m.name),
   });
   const modules: SchematicDoc["modules"] = {};
-  for (const [name, view] of Object.entries(rawDoc.modules)) modules[name] = simplifyModule(view, opts.simplify);
+  for (const [name, view] of Object.entries(rawDoc.modules)) {
+    const sm = opts.file.modules.find((m) => m.name === name);
+    modules[name] = annotateStateRegisters(simplifyModule(view, opts.simplify), sm);
+  }
   const doc: SchematicDoc = { ...rawDoc, modules };
   return { ...base, ok: true, doc, rawDoc, diagnostics: rawDoc.diagnostics, unknownCellTypes, elapsedMs: performance.now() - t0 };
 }

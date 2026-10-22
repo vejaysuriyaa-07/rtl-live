@@ -92,6 +92,8 @@ export interface Net {
   id: string;
   /** User-visible name when the net is a named signal or port */
   name?: string;
+  /** Other user names for the same bits (e.g. "state" when the net is named after port "out") */
+  aliases?: string[];
   width: number;
   /** Driver of this net; a port name ref uses node "port:<name>" */
   driver: NetEnd | null;

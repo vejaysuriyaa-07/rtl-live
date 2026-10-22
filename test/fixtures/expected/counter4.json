@@ -20,5 +20,43 @@
   "structural": {
     "always": 1,
     "assigns": 0
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "dff": 1,
+        "arith:add": 1
+      },
+      "noUnknown": true,
+      "fanout": {
+        "q": 2
+      },
+      "nodes": [
+        {
+          "kind": "dff",
+          "width": 4,
+          "pins": [
+            {
+              "id": "Q",
+              "net": "q"
+            },
+            {
+              "id": "CLK",
+              "side": "south"
+            }
+          ]
+        },
+        {
+          "kind": "arith",
+          "op": "add",
+          "pins": [
+            {
+              "id": "A",
+              "net": "q"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

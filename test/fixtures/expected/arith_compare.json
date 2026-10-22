@@ -34,5 +34,45 @@
   ],
   "structural": {
     "assigns": 4
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "arith:add": 1,
+        "arith:sub": 1,
+        "compare:lt": 1,
+        "compare:eq": 1
+      },
+      "noUnknown": true,
+      "nodes": [
+        {
+          "kind": "arith",
+          "op": "add",
+          "width": 9,
+          "pins": [
+            {
+              "id": "Y",
+              "net": "sum",
+              "width": 9
+            }
+          ]
+        },
+        {
+          "kind": "arith",
+          "op": "sub",
+          "width": 8
+        },
+        {
+          "kind": "compare",
+          "op": "lt",
+          "width": 1
+        },
+        {
+          "kind": "compare",
+          "op": "eq",
+          "width": 1
+        }
+      ]
+    }
   }
 }

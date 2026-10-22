@@ -39,6 +39,7 @@ interface DriverNet {
   ep: Endpoint;
   bits: YosysBit[];
   name: string | undefined;
+  aliases: string[];
   id: string;
   src: SrcRange[];
   sinks: NetEnd[];
@@ -90,12 +91,14 @@ export function fromYosys(design: YosysDesign, opts: FromYosysOptions): FromYosy
 function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: FromYosysOptions, unknown: Set<string>): ModuleView {
   // ---- named signals by bit signature
   const namesBySig = new Map<string, { name: string; src: SrcRange[] }>();
+  const aliasesBySig = new Map<string, string[]>();
   const srcBySig = new Map<string, SrcRange[]>();
   for (const [nn, info] of Object.entries(ym.netnames)) {
     const sig = info.bits.map(bitKey).join(",");
     const src = parseSrc(info.attributes?.["src"]);
     if (!srcBySig.has(sig)) srcBySig.set(sig, src);
     if (info.hide_name === 1 || nn.startsWith("$")) continue;
+    (aliasesBySig.get(sig) ?? aliasesBySig.set(sig, []).get(sig)!).push(nn);
     const prev = namesBySig.get(sig);
     if (!prev || (ym.ports[nn] && !ym.ports[prev.name])) namesBySig.set(sig, { name: nn, src });
   }
@@ -211,11 +214,13 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
     // A net driven by an input port is named after that port even when an output
     // port shares the same bits (assign outv = vec).
     const portName = ep.node.startsWith("port:") ? ep.pin : undefined;
+    const name = portName ?? named?.name;
     const net: DriverNet = {
       key,
       ep,
       bits: ep.bits,
-      name: portName ?? named?.name,
+      name,
+      aliases: (aliasesBySig.get(sig) ?? []).filter((a) => a !== name),
       id: "",
       src: named?.src ?? srcBySig.get(sig) ?? ep.src,
       sinks: [],
@@ -321,7 +326,7 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
   const ensureNet = (dn: DriverNet): Net => {
     let n = nets.get(dn.id);
     if (!n) {
-      n = { id: dn.id, ...(dn.name !== undefined ? { name: dn.name } : {}), width: dn.bits.length, driver: { node: dn.ep.node, pin: dn.ep.pin }, sinks: [], src: dn.src };
+      n = { id: dn.id, ...(dn.name !== undefined ? { name: dn.name } : {}), ...(dn.aliases.length > 0 ? { aliases: dn.aliases } : {}), width: dn.bits.length, driver: { node: dn.ep.node, pin: dn.ep.pin }, sinks: [], src: dn.src };
       nets.set(dn.id, n);
     }
     return n;

@@ -58,5 +58,50 @@
       "q2",
       "q3"
     ]
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "blackbox": 3,
+        "unknown": 0
+      },
+      "minCount": {
+        "pmux": 1
+      },
+      "noUnknown": true,
+      "netWidth": {
+        "sel": 2,
+        "q1": 8,
+        "q2": 8,
+        "q3": 8
+      },
+      "nodes": [
+        {
+          "kind": "blackbox",
+          "moduleType": "my_dff8",
+          "pins": [
+            {
+              "id": "d",
+              "width": 8
+            },
+            {
+              "id": "q",
+              "width": 8
+            }
+          ]
+        },
+        {
+          "kind": "pmux",
+          "width": 8,
+          "pins": [
+            {
+              "id": "Y",
+              "net": "q",
+              "width": 8
+            }
+          ]
+        }
+      ]
+    }
   }
 }

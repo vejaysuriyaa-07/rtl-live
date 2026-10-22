@@ -140,3 +140,18 @@ Status: done
 Verified:
 - `npm test`: 244 tests. module, module_pos, module_name, module_shift, module_add, module_add_full and multi_module pass, including black-box pin directions (module_pos: p0, p1 output, p2..p5 input; module_add: a, b 16-bit in, cin in, sum 16-bit out, cout out; cout_lo links lo.cout to hi.cin; `1'b0` constant on lo.cin).
 - Playwright (23 passing): double-clicking `add16` in module_add_full shows the add16 module with its adder, the breadcrumb has two crumbs and clicking the first returns to top_module (this found an off-by-one in the breadcrumb handler); black boxes are dashed with the "not defined in this file" tooltip; the dropdown for multi_module lists `inv` and `top_module`. Screenshots `artifacts/m4-*.png`.
+
+## M5: always blocks, muxes, flip-flops, counters, FSMs
+
+Status: done
+
+- Cell mapping (`src/ir/cellMap.ts`): `$mux` -> mux with A ("0") and B ("1") on the west and S on the south; `$pmux`/`$bmux` -> pmux with A labelled "else" and one west pin per select bit (B is split into S_WIDTH chunks); `$dff $adff $sdff $dffe $adffe $sdffe $sdffce $aldff $dlatch ...` -> dff with CLK south (triangle), optional R (ARST or SRST) and EN west, inverted pins drawn with bubbles when the polarity parameter is 0; latches get a "latch" warning badge in the tooltip.
+- `proc -norom` is used from the start; module_shift8 produces a `$pmux` fed by three `$eq` comparators on `sel` (one-hot select of width 3) and no ROM or memory cell. The spec's "mux-family node with 2-bit select" therefore holds for `sel` itself (2 bits into the comparators); the pmux select is the 3-bit one-hot join.
+- counter4: `$dff` plus a `$mux` for the synchronous reset (Yosys does not fold it into `$sdff` without `opt_dff`), `$add` with the `q` feedback and `4'b0001` / `4'b0000` constant pills.
+- mux2_always: the ternary and the always version each get their own `$and` and `$mux`; Yosys does not share them at this pass level (recorded as requested).
+- fsm_moore: `out = (state == B)` with `B = 1'b1` is simplified by Yosys to `out = state`, so the register's Q net carries both names. Nets now record `aliases` (other user names for the same bits), shown in the net tooltip; `src/ir/fsmInfo.ts` marks a DFF as a state register when its Q net name or alias is assigned or read in an always block that also reads a localparam, and adds `states: A = 1'b0, B = 1'b1` to the tooltip.
+- Golden files for wire, wire4 and vector0 changed only by the new `aliases` field (reviewed with diff, regenerated with `npm run test:golden:update`).
+
+Verified:
+- `npm test`: 272 tests. mux2_always, module_shift8, dff_async, counter4, shift4, fsm_moore and arith_compare pass their expectations; with `opt -fast` on and off no unknown-cell boxes appear for any of them.
+- Playwright (32 passing): `artifacts/m5-*.png`; counter4 has a DFF with a clock triangle, an adder and a mux; the fsm_moore DFF tooltip lists `states: A = 1'b0, B = 1'b1`.

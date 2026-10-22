@@ -33,5 +33,37 @@
       "A",
       "B"
     ]
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "dff": 1
+      },
+      "minCount": {
+        "mux": 1
+      },
+      "noUnknown": true,
+      "nodes": [
+        {
+          "kind": "dff",
+          "width": 1,
+          "infoContains": {
+            "states": "A = 1'b0, B = 1'b1"
+          }
+        },
+        {
+          "kind": "mux",
+          "pins": [
+            {
+              "id": "S",
+              "net": "reset"
+            }
+          ]
+        }
+      ],
+      "netWidth": {
+        "next_state": 1
+      }
+    }
   }
 }

@@ -57,3 +57,18 @@ describe("stable ids", () => {
     }
   });
 });
+
+describe("opt -fast on and off", () => {
+  for (const name of ["mux2_always.v", "module_shift8.v", "dff_async.v", "counter4.v", "shift4.v", "fsm_moore.v", "arith_compare.v"]) {
+    it(`${name}: no unknown-cell boxes with optimize on or off`, async () => {
+      for (const optimize of [false, true]) {
+        const res = await synthFixture(parser, readFixture(HDLBITS, name), name, { optimize });
+        expect(res.ok, `${name} optimize=${optimize}: ${res.error?.message ?? ""}`).toBe(true);
+        const view = res.doc!.modules["top_module"]!;
+        expect(view.nodes.filter((n) => n.kind === "unknown").map((n) => n.label), `${name} optimize=${optimize}`).toEqual([]);
+        expect(res.unknownCellTypes).toEqual([]);
+        expect(view.nodes.length).toBeGreaterThan(0);
+      }
+    });
+  }
+});

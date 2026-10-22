@@ -24,5 +24,44 @@
   ],
   "structural": {
     "always": 1
+  },
+  "synth": {
+    "simplified": {
+      "count": {
+        "dff": 1
+      },
+      "logicNodes": 1,
+      "noUnknown": true,
+      "nodes": [
+        {
+          "kind": "dff",
+          "width": 8,
+          "pins": [
+            {
+              "id": "D",
+              "net": "d",
+              "width": 8
+            },
+            {
+              "id": "Q",
+              "net": "q"
+            },
+            {
+              "id": "CLK",
+              "side": "south",
+              "net": "clk"
+            },
+            {
+              "id": "R",
+              "net": "areset",
+              "side": "west"
+            }
+          ],
+          "infoContains": {
+            "reset": "async"
+          }
+        }
+      ]
+    }
   }
 }

@@ -140,7 +140,7 @@ function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean): st
         `<text class="bus-width" x="${fmt(p.x + 4)}" y="${fmt(p.y - 3)}">${width}</text>`;
     }
   }
-  const title = net ? `${net.name ?? net.id} (${width} bit${width === 1 ? "" : "s"})` : netId;
+  const title = net ? `${net.name ?? net.id}${net.aliases && net.aliases.length > 0 ? ` (also ${net.aliases.join(", ")})` : ""} (${width} bit${width === 1 ? "" : "s"})` : netId;
   const junctions = (e.junctionPoints ?? []).map((j) => `<circle class="junction" cx="${fmt(j.x)}" cy="${fmt(j.y)}" r="2.5"/>`).join("");
   return `<g class="${cls}" data-net="${esc(netId)}"${net ? srcAttr(net.src) : ""}><path class="net-path" d="${d}"/>${label}${junctions}<title>${esc(title)}</title></g>`;
 }

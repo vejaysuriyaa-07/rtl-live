@@ -1,0 +1,227 @@
+{
+  "diagnostics": [],
+  "fidelity": "synthesized",
+  "generation": 0,
+  "moduleNames": [
+    "top_module"
+  ],
+  "modules": {
+    "top_module": {
+      "name": "top_module",
+      "nets": [
+        {
+          "driver": {
+            "node": "port:clk",
+            "pin": "clk"
+          },
+          "id": "net:clk",
+          "name": "clk",
+          "sinks": [
+            {
+              "node": "dff:adff:916859bb7f",
+              "pin": "CLK"
+            }
+          ],
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:areset",
+            "pin": "areset"
+          },
+          "id": "net:areset",
+          "name": "areset",
+          "sinks": [
+            {
+              "node": "dff:adff:916859bb7f",
+              "pin": "R"
+            }
+          ],
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 42,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "port:d",
+            "pin": "d"
+          },
+          "id": "net:d",
+          "name": "d",
+          "sinks": [
+            {
+              "node": "dff:adff:916859bb7f",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 56,
+              "endColumn": 57,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "dff:adff:916859bb7f",
+            "pin": "Q"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "port:q",
+              "pin": "q"
+            }
+          ],
+          "src": [
+            {
+              "column": 76,
+              "endColumn": 77,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "nodes": [
+        {
+          "id": "dff:adff:916859bb7f",
+          "info": {
+            "clock": "posedge",
+            "reset": "async, value 00000000"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "adff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:d",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "R",
+              "label": "R",
+              "net": "net:areset",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 24,
+              "endLine": 4,
+              "line": 2
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "ports": [
+        {
+          "direction": "input",
+          "name": "clk",
+          "src": [
+            {
+              "column": 25,
+              "endColumn": 28,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "areset",
+          "src": [
+            {
+              "column": 36,
+              "endColumn": 42,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "direction": "input",
+          "name": "d",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 56,
+              "endColumn": 57,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        },
+        {
+          "direction": "output",
+          "name": "q",
+          "range": "[7:0]",
+          "src": [
+            {
+              "column": 76,
+              "endColumn": 77,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 8
+        }
+      ],
+      "src": {
+        "column": 1,
+        "endColumn": 10,
+        "endLine": 5,
+        "line": 1
+      }
+    }
+  },
+  "sourceUri": "dff_async.v",
+  "top": "top_module",
+  "version": 1
+}

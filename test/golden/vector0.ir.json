@@ -10,6 +10,9 @@
       "name": "top_module",
       "nets": [
         {
+          "aliases": [
+            "outv"
+          ],
           "driver": {
             "node": "port:vec",
             "pin": "vec"

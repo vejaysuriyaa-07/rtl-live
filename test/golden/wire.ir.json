@@ -10,6 +10,9 @@
       "name": "top_module",
       "nets": [
         {
+          "aliases": [
+            "out"
+          ],
           "driver": {
             "node": "port:in",
             "pin": "in"
