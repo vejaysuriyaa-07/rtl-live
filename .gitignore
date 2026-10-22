@@ -4,4 +4,3 @@ dist/
 artifacts/
 *.vsix
 .DS_Store
-CLAUDE.md
