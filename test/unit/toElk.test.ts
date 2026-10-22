@@ -23,9 +23,9 @@ describe("toElk", () => {
     const doc = docFor("7458.v");
     const g = moduleToElk(doc.modules["top_module"]!);
     const inNode = g.children.find((c) => c.id === "port:p1a")!;
-    expect(inNode.layoutOptions["elk.layered.layering.layerConstraint"]).toBe("FIRST");
+    expect(inNode.layoutOptions["elk.layered.layering.layerConstraint"]).toBe("FIRST_SEPARATE");
     const outNode = g.children.find((c) => c.id === "port:p1y")!;
-    expect(outNode.layoutOptions["elk.layered.layering.layerConstraint"]).toBe("LAST");
+    expect(outNode.layoutOptions["elk.layered.layering.layerConstraint"]).toBe("LAST_SEPARATE");
     for (const c of g.children) {
       if (c.id.startsWith("port:")) continue;
       expect(c.layoutOptions["elk.portConstraints"]).toBe("FIXED_ORDER");

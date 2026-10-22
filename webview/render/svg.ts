@@ -4,6 +4,7 @@ import type { ModuleView, Net, Node, Pin, Port } from "../../src/ir/types";
 import type { ElkEdgeOut, ElkGraphOut, ElkNodeOut, ElkPortOut } from "../layout/types";
 import { elkPortId, portNodeId } from "../layout/toElk";
 import { symbolMarkup } from "./symbols";
+import { frameMinWidth } from "./geometry";
 
 export interface RenderOptions {
   /** Show the module frame and title */
@@ -118,14 +119,20 @@ function edgePath(e: ElkEdgeOut): string {
 function busLabelPos(e: ElkEdgeOut): { x: number; y: number } | undefined {
   const s = e.sections?.[0];
   if (!s) return undefined;
-  const a = s.startPoint;
-  const b = s.bendPoints?.[0] ?? s.endPoint;
-  // Put the slash a little along the first (horizontal) segment.
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const t = Math.min(14, len / 2);
-  return { x: a.x + (dx / len) * t, y: a.y + (dy / len) * t };
+  // The label sits on the longest segment of the first section, a little past its start,
+  // so it never lands on the port chevron or a ripper at the ends of a short stub (bug 8).
+  const pts = [s.startPoint, ...(s.bendPoints ?? []), s.endPoint];
+  let best = { a: pts[0]!, b: pts[1] ?? pts[0]!, len: -1 };
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a = pts[i]!;
+    const b = pts[i + 1]!;
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    if (len > best.len) best = { a, b, len };
+  }
+  const { a, b, len } = best;
+  if (len <= 0) return { x: a.x, y: a.y };
+  const t = Math.min(Math.max(10, len * 0.3), Math.max(len - 10, len / 2));
+  return { x: a.x + ((b.x - a.x) / len) * t, y: a.y + ((b.y - a.y) / len) * t };
 }
 
 function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean): string {
@@ -152,7 +159,8 @@ export function renderModule(view: ModuleView, layout: ElkGraphOut, opts: Render
   const nodeById = new Map(view.nodes.map((n) => [n.id, n] as const));
   const netById = new Map(view.nets.map((n) => [n.id, n] as const));
   const parts: string[] = [];
-  const width = Math.max(layout.width, 60);
+  // The frame holds its title even when the layout is tiny (bug 1).
+  const width = Math.max(layout.width, 60, opts.frame !== false ? frameMinWidth(view.name) : 0);
   const height = Math.max(layout.height, 40);
   if (opts.frame !== false) {
     parts.push(

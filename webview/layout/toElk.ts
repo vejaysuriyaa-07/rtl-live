@@ -19,6 +19,9 @@ export const ROOT_LAYOUT_OPTIONS: Readonly<Record<string, string>> = {
   "elk.spacing.edgeEdge": "10",
   "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
   "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+  // Ports with nothing attached (a half-typed header) must still line the left and right
+  // edges; packing disconnected nodes into components would lay them out as a grid (bug 10).
+  "elk.separateConnectedComponents": "false",
   "elk.layered.thoroughness": "7",
   "elk.padding": "[top=24,left=24,bottom=24,right=24]",
 };
@@ -91,7 +94,8 @@ function portNode(port: Port): ElkNodeIn {
     height: PORT_NODE_HEIGHT,
     layoutOptions: {
       "elk.portConstraints": "FIXED_SIDE",
-      "elk.layered.layering.layerConstraint": isInput ? "FIRST" : "LAST",
+      // Own layer at each edge: ports with nothing attached still line up left and right (bug 10).
+      "elk.layered.layering.layerConstraint": isInput ? "FIRST_SEPARATE" : "LAST_SEPARATE",
     },
     ports: [
       {

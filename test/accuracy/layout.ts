@@ -149,7 +149,15 @@ export function checkLayout(view: ModuleView, layout: ElkGraphOut): LayoutReport
   // 1. Labels inside their symbol. Ripper and bus labels sit beside wires by design; pin labels of
   //    boxes must still be inside the box.
   const labelsInside: LayoutCheck = { ok: true, issues: [] };
+  const frame: Box = { x: 0, y: 0, w: svg.width, h: svg.height };
   for (const t of texts) {
+    if (t.cls === "module-title") {
+      if (!inside(t, frame)) {
+        labelsInside.ok = false;
+        labelsInside.issues.push(`module title "${t.text}" spills out of the ${Math.round(frame.w)}x${Math.round(frame.h)} frame`);
+      }
+      continue;
+    }
     if (!t.owner) continue;
     if (t.cls === "ripper-label" || t.cls === "bus-width") continue;
     const box = nodeBox.get(t.owner);
@@ -169,6 +177,18 @@ export function checkLayout(view: ModuleView, layout: ElkGraphOut): LayoutReport
       if (overlaps(a, b)) {
         noOverlap.ok = false;
         noOverlap.issues.push(`"${a.text}" (${a.cls}) overlaps "${b.text}" (${b.cls}) near ${Math.round(a.x)},${Math.round(a.y)}`);
+      }
+    }
+  }
+
+  // 2b. Wire labels (bus widths, ripper ranges) must not sit on a symbol or a port chevron.
+  for (const t of texts) {
+    if (t.cls !== "bus-width" && t.cls !== "ripper-label") continue;
+    for (const [id, box] of nodeBox) {
+      if (t.cls === "ripper-label" && t.owner === id) continue;
+      if (overlaps(t, box, 0)) {
+        noOverlap.ok = false;
+        noOverlap.issues.push(`"${t.text}" (${t.cls}) sits on ${id} (${kindOf.get(id) ?? "port"})`);
       }
     }
   }

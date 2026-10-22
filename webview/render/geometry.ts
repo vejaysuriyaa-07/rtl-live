@@ -7,12 +7,21 @@ export const PORT_NODE_HEIGHT = 20;
 export const GATE_W = 48;
 export const GATE_H = 30;
 /** Fit never zooms past this factor (text keeps its designed size; 1 means at most 100%). */
-export const FIT_MAX_SCALE = 2;
+export const FIT_MAX_SCALE = 1;
 /** Nominal sidebar viewport used by the layout checks and the Playwright harness. */
 export const NOMINAL_VIEWPORT = { width: 900, height: 600 };
 
 export function textWidth(s: string, charW = CHAR_W): number {
   return Math.ceil(s.length * charW);
+}
+
+/** Module title font (12 px sans) and the frame padding around it. */
+export const TITLE_CHAR_W = 12 * 0.6;
+export const TITLE_PAD = 24;
+
+/** Width a module frame needs to hold its title, whatever the layout size. */
+export function frameMinWidth(title: string): number {
+  return textWidth(title, TITLE_CHAR_W) + TITLE_PAD;
 }
 
 export function portNodeWidth(port: Port): number {
