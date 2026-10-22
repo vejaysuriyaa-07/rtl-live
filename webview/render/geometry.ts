@@ -52,7 +52,7 @@ export function nodeSize(node: Node): Size {
     case "pmux":
       return { width: 30, height: Math.max(44, rows * PIN_PITCH + 12) };
     case "dff":
-      return { width: 56, height: Math.max(52, rows * PIN_PITCH + 22) };
+      return { width: 56, height: Math.max(52, rows * PIN_PITCH + 28) };
     case "arith":
     case "compare":
     case "shift":
@@ -73,7 +73,7 @@ export function nodeSize(node: Node): Size {
       const pinLabelW = Math.max(0, ...node.pins.filter((p) => p.side === "west").map((p) => textWidth(p.label)));
       const pinLabelE = Math.max(0, ...node.pins.filter((p) => p.side === "east").map((p) => textWidth(p.label)));
       const w = Math.max(80, textWidth(node.label) + 16, pinLabelW + pinLabelE + 30, south * PIN_PITCH + 10);
-      return { width: w, height: Math.max(40, rows * PIN_PITCH + 22) };
+      return { width: w, height: Math.max(40, rows * PIN_PITCH + 30) };
     }
   }
 }

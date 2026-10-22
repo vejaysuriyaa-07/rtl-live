@@ -70,7 +70,7 @@ function attr(tag: string, name: string): string | undefined {
 export function textBoxes(inner: string): TextBox[] {
   const out: TextBox[] = [];
   const stack: { dx: number; dy: number; owner: string | undefined }[] = [{ dx: 0, dy: 0, owner: undefined }];
-  const re = /<g\b[^>]*>|<\/g>|<text\b[^>]*>([^<]*)<\/text>/g;
+  const re = /<g\b[^>]*>|<\/g>|<text\b[^>]*>(?:<title>[^<]*<\/title>)?([^<]*)<\/text>/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(inner)) !== null) {
     const tag = m[0];
@@ -196,8 +196,12 @@ export function checkLayout(view: ModuleView, layout: ElkGraphOut): LayoutReport
   // 3. Every bus with a drawn edge has a width label.
   const busLabels: LayoutCheck = { ok: true, issues: [] };
   const drawn = new Set(layout.edges.map((e) => e.id.replace(/^edge:/, "").replace(/:\d+$/, "")));
+  const rippers = new Set(view.nodes.filter((n) => n.kind === "split" || n.kind === "join").map((n) => n.id));
   for (const net of view.nets) {
     if (net.width <= 1 || !drawn.has(net.id)) continue;
+    // A slice out of a split or a part into a join is labelled with its bit range on the ripper.
+    const onRipper = (net.driver !== null && rippers.has(net.driver.node)) || (net.sinks.length > 0 && net.sinks.every((x) => x.node.startsWith("join:")));
+    if (onRipper) continue;
     const re = new RegExp(`<g class="net bus" data-net="${net.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[^>]*>[\\s\\S]*?<text class="bus-width"[^>]*>${net.width}</text>`);
     if (!re.test(svg.inner)) {
       busLabels.ok = false;

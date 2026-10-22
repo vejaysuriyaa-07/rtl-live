@@ -1,7 +1,7 @@
 // Pure SVG string renderer: ELK layout + ModuleView -> SVG markup.
 // No DOM access so it can be unit tested in node and reused for export.
 import type { ModuleView, Net, Node, Pin, Port } from "../../src/ir/types";
-import type { ElkEdgeOut, ElkGraphOut, ElkNodeOut, ElkPortOut } from "../layout/types";
+import type { ElkEdgeOut, ElkGraphOut, ElkNodeOut, ElkPoint, ElkPortOut } from "../layout/types";
 import { elkPortId, portNodeId } from "../layout/toElk";
 import { symbolMarkup } from "./symbols";
 import { frameMinWidth } from "./geometry";
@@ -55,10 +55,13 @@ function renderPortNode(port: Port, n: ElkNodeOut): string {
   const label = port.width > 1 ? `${port.name}${port.range ?? `[${port.width - 1}:0]`}` : port.name;
   const w = n.width;
   const h = n.height;
-  // Chevron pointing in the flow direction.
-  const shape = isInput
-    ? `M0,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H0 Z`
-    : `M8,0 H${fmt(w)} V${fmt(h)} H8 L0,${fmt(h / 2)} Z`;
+  // Pentagon pointing in the flow direction; inout is a hexagon.
+  const shape =
+    port.direction === "inout"
+      ? `M8,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H8 L0,${fmt(h / 2)} Z`
+      : isInput
+        ? `M0,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H0 Z`
+        : `M8,0 H${fmt(w)} V${fmt(h)} H8 L0,${fmt(h / 2)} Z`;
   const cls = `port port-${port.direction}${port.width > 1 ? " bus" : ""}${port.ghost ? ` ghost ghost-${port.ghost}` : ""}${port.tentative ? " tentative" : ""}`;
   const note = port.ghost === "added" ? " (added in the newer text, not synthesized yet)" : port.ghost === "removed" ? " (removed in the newer text)" : port.ghost === "changed" ? " (changed in the newer text)" : port.tentative ? " (recovered from broken text)" : "";
   return (
@@ -116,46 +119,104 @@ function edgePath(e: ElkEdgeOut): string {
   return parts.join(" ");
 }
 
-function busLabelPos(e: ElkEdgeOut): { x: number; y: number } | undefined {
+interface BusLabel {
+  x: number;
+  y: number;
+  anchor: "start" | "end";
+}
+
+/**
+ * Where the width label goes. Normally a little along the longest segment. A wire that
+ * leaves a ripper carries the range label at that end, so the width goes near the other
+ * end instead (12 px before a pin, 20 px before a port chevron), anchored away from it.
+ */
+function busLabelPos(e: ElkEdgeOut, nearEnd: "start" | "end" | "middle", endIsPort: boolean): BusLabel | undefined {
   const s = e.sections?.[0];
   if (!s) return undefined;
-  // The label sits on the longest segment of the first section, a little past its start,
-  // so it never lands on the port chevron or a ripper at the ends of a short stub (bug 8).
   const pts = [s.startPoint, ...(s.bendPoints ?? []), s.endPoint];
-  let best = { a: pts[0]!, b: pts[1] ?? pts[0]!, len: -1 };
+  const segs: { a: ElkPoint; b: ElkPoint; len: number }[] = [];
   for (let i = 0; i + 1 < pts.length; i++) {
     const a = pts[i]!;
     const b = pts[i + 1]!;
-    const len = Math.hypot(b.x - a.x, b.y - a.y);
-    if (len > best.len) best = { a, b, len };
+    segs.push({ a, b, len: Math.hypot(b.x - a.x, b.y - a.y) });
   }
-  const { a, b, len } = best;
-  if (len <= 0) return { x: a.x, y: a.y };
-  const t = Math.min(Math.max(10, len * 0.3), Math.max(len - 10, len / 2));
-  return { x: a.x + ((b.x - a.x) / len) * t, y: a.y + ((b.y - a.y) / len) * t };
+  if (segs.length === 0) return undefined;
+  const gap = endIsPort ? 20 : 12;
+  const total = segs.reduce((a, x) => a + x.len, 0);
+  const along = (seg: { a: { x: number; y: number }; b: { x: number; y: number }; len: number }, t: number): { x: number; y: number } =>
+    seg.len <= 0 ? { x: seg.a.x, y: seg.a.y } : { x: seg.a.x + ((seg.b.x - seg.a.x) / seg.len) * t, y: seg.a.y + ((seg.b.y - seg.a.y) / seg.len) * t };
+  // Walk the polyline from one end by a distance, whatever the segment structure.
+  const fromStart = (dist: number): { x: number; y: number } => {
+    let left = dist;
+    for (const seg of segs) {
+      if (left <= seg.len) return along(seg, left);
+      left -= seg.len;
+    }
+    return segs[segs.length - 1]!.b;
+  };
+  if (nearEnd === "end") return { ...fromStart(Math.max(total - gap, total / 2)), anchor: "end" };
+  if (nearEnd === "start") return { ...fromStart(Math.min(gap, total / 2)), anchor: "start" };
+  const best = segs.reduce((m, x) => (x.len > m.len ? x : m), segs[0]!);
+  const t = Math.min(Math.max(10, best.len * 0.3), Math.max(best.len - 10, best.len / 2));
+  return { ...along(best, t), anchor: "start" };
 }
 
-function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean): string {
+/** Round every coordinate so wires land on whole pixels and corners stay sharp. */
+function roundLayout(layout: ElkGraphOut): ElkGraphOut {
+  const r = (v: number): number => Math.round(v);
+  return {
+    ...layout,
+    width: Math.ceil(layout.width),
+    height: Math.ceil(layout.height),
+    children: layout.children.map((c) => ({ ...c, x: r(c.x), y: r(c.y), ...(c.ports ? { ports: c.ports.map((p) => ({ ...p, x: r(p.x), y: r(p.y) })) } : {}) })),
+    edges: layout.edges.map((e) => ({
+      ...e,
+      ...(e.sections
+        ? {
+            sections: e.sections.map((sec) => ({
+              ...sec,
+              startPoint: { x: r(sec.startPoint.x), y: r(sec.startPoint.y) },
+              endPoint: { x: r(sec.endPoint.x), y: r(sec.endPoint.y) },
+              ...(sec.bendPoints ? { bendPoints: sec.bendPoints.map((b) => ({ x: r(b.x), y: r(b.y) })) } : {}),
+            })),
+          }
+        : {}),
+      ...(e.junctionPoints ? { junctionPoints: e.junctionPoints.map((j) => ({ x: r(j.x), y: r(j.y) })) } : {}),
+    })),
+  };
+}
+
+function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rippers: ReadonlySet<string>): { markup: string; labelled: boolean } {
   const d = edgePath(e);
   const width = net?.width ?? 1;
-  const cls = `net${width > 1 ? " bus" : ""}`;
+  const cls = `net${width > 1 ? " bus" : ""}${net?.role ? ` ${net.role}` : ""}`;
   const netId = net?.id ?? e.id;
   let label = "";
   if (width > 1 && showWidth) {
-    const p = busLabelPos(e);
+    const srcNode = e.sources[0]?.split(".")[0] ?? "";
+    const dstNode = e.targets[0]?.split(".")[0] ?? "";
+    const fromRipper = [...rippers].some((id) => (e.sources[0] ?? "").startsWith(`${id}.`)) || rippers.has(srcNode);
+    // Only a join labels its inputs with a range; a split's input is the whole bus.
+    const toRipper = [...rippers].some((id) => id.startsWith("join:") && (e.targets[0] ?? "").startsWith(`${id}.`)) || (dstNode.startsWith("join:") && rippers.has(dstNode));
+    const mode = fromRipper && !toRipper ? "end" : toRipper && !fromRipper ? "start" : "middle";
+    const endIsPort = mode === "end" ? dstNode.startsWith("port:") : mode === "start" ? srcNode.startsWith("port:") : false;
+    // A slice leaving a split or a part entering a join is labelled with its range on the ripper itself.
+    const p = fromRipper || toRipper ? undefined : busLabelPos(e, mode, endIsPort);
     if (p) {
       label =
         `<path class="bus-slash" d="M${fmt(p.x - 3)},${fmt(p.y + 4)} L${fmt(p.x + 3)},${fmt(p.y - 4)}"/>` +
-        `<text class="bus-width" x="${fmt(p.x + 4)}" y="${fmt(p.y - 3)}">${width}</text>`;
+        `<text class="bus-width" x="${fmt(p.anchor === "end" ? p.x - 4 : p.x + 4)}" y="${fmt(p.y - 3)}" text-anchor="${p.anchor}">${width}</text>`;
     }
   }
   const title = net ? `${net.name ?? net.id}${net.aliases && net.aliases.length > 0 ? ` (also ${net.aliases.join(", ")})` : ""} (${width} bit${width === 1 ? "" : "s"})` : netId;
   const junctions = (e.junctionPoints ?? []).map((j) => `<circle class="junction" cx="${fmt(j.x)}" cy="${fmt(j.y)}" r="2.5"/>`).join("");
-  return `<g class="${cls}" data-net="${esc(netId)}"${net ? srcAttr(net.src) : ""}><path class="net-path" d="${d}"/>${label}${junctions}<title>${esc(title)}</title></g>`;
+  return { markup: `<g class="${cls}" data-net="${esc(netId)}"${net ? srcAttr(net.src) : ""}><path class="net-path" d="${d}"/>${label}${junctions}<title>${esc(title)}</title></g>`, labelled: label !== "" };
 }
 
-export function renderModule(view: ModuleView, layout: ElkGraphOut, opts: RenderOptions = {}): RenderedSvg {
+export function renderModule(view: ModuleView, rawLayout: ElkGraphOut, opts: RenderOptions = {}): RenderedSvg {
+  const layout = roundLayout(rawLayout);
   const idx = index(layout);
+  const rippers = new Set(view.nodes.filter((n) => n.kind === "split" || n.kind === "join").map((n) => n.id));
   const nodeById = new Map(view.nodes.map((n) => [n.id, n] as const));
   const netById = new Map(view.nets.map((n) => [n.id, n] as const));
   const parts: string[] = [];
@@ -173,10 +234,10 @@ export function renderModule(view: ModuleView, layout: ElkGraphOut, opts: Render
   const labelled = new Set<string>();
   for (const e of layout.edges) {
     const netId = e.id.replace(/^edge:/, "").replace(/:\d+$/, "");
-    // One width label per net: all edges of a net leave the same driver pin.
-    const first = !labelled.has(netId);
-    labelled.add(netId);
-    edges.push(renderEdge(e, netById.get(netId), first));
+    // One width label per net, on the first wire that can carry it.
+    const r = renderEdge(e, netById.get(netId), !labelled.has(netId), rippers);
+    if (r.labelled) labelled.add(netId);
+    edges.push(r.markup);
   }
   parts.push(`<g class="nets">${edges.join("")}</g>`);
   const nodes: string[] = [];

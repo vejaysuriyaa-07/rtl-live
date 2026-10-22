@@ -41,11 +41,14 @@ function bitLabels(pins: PinPos): string {
   const out: string[] = [];
   for (const [, p] of pins) {
     if (!p.pin.bits) continue;
-    const side = p.pin.side;
-    const x = side === "west" ? p.x - 3 : p.x + 3;
-    const anchor = side === "west" ? "end" : "start";
-    const text = p.pin.label ? `${p.pin.bits} ${p.pin.label}` : p.pin.bits;
-    out.push(`<text class="ripper-label" x="${fmt(x)}" y="${fmt(p.y - 3)}" text-anchor="${anchor}">${esc(text)}</text>`);
+    // Both sides hang their label to the right of the bar, over the outgoing wire, so a split
+    // next to a join never crosses labels.
+    const x = p.pin.side === "west" ? p.x + 10 : p.x + 3;
+    const anchor = "start";
+    // A repeated input shows its count; the range it fills is in the tooltip.
+    const text = p.pin.label ? p.pin.label : p.pin.bits;
+    const tip = p.pin.label ? `${p.pin.bits} = ${p.pin.width} bit${p.pin.width === 1 ? "" : "s"} ${p.pin.label}` : `${p.pin.bits} (${p.pin.width} bit${p.pin.width === 1 ? "" : "s"})`;
+    out.push(`<text class="ripper-label" x="${fmt(x)}" y="${fmt(p.y - 3)}" text-anchor="${anchor}"><title>${esc(tip)}</title>${esc(text)}</text>`);
   }
   return out.join("");
 }
@@ -141,7 +144,7 @@ function dffSymbol(node: Node, w: number, h: number, pins: PinPos): string {
       parts.push(`<path class="clk-tri" d="M${fmt(p.x - 4.5)},${fmt(p.y)} L${fmt(p.x)},${fmt(p.y - 6)} L${fmt(p.x + 4.5)},${fmt(p.y)}"/>`);
     }
   }
-  parts.push(`<text class="label title" x="${fmt(w / 2)}" y="${fmt(h - 10)}" text-anchor="middle">${esc(node.label)}</text>`);
+  parts.push(`<text class="label title" x="${fmt(w / 2)}" y="11" text-anchor="middle">${esc(node.label)}</text>`);
   parts.push(pinLabels(pins));
   parts.push(pinMarkers(pins));
   return parts.join("");

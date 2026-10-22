@@ -99,6 +99,8 @@ export interface Net {
   /** Other user names for the same bits (e.g. "state" when the net is named after port "out") */
   aliases?: string[];
   width: number;
+  /** Clock or reset nets are drawn in their own style (Part B colour rules) */
+  role?: "clock" | "reset";
   /** Driver of this net; a port name ref uses node "port:<name>" */
   driver: NetEnd | null;
   sinks: NetEnd[];

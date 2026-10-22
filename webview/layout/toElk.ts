@@ -3,7 +3,7 @@
 // Node pins become ELK ports with fixed sides (inputs WEST, outputs EAST,
 // clock/select SOUTH) and explicit indices so the drawing order is stable.
 import type { ModuleView, Node, Pin, Port } from "../../src/ir/types";
-import { nodeSize, PORT_NODE_HEIGHT, portNodeWidth } from "../render/geometry";
+import { nodeSize, PORT_NODE_HEIGHT, portNodeWidth, textWidth } from "../render/geometry";
 import type { ElkEdgeIn, ElkGraphIn, ElkNodeIn, ElkPortIn } from "./types";
 
 export const ROOT_LAYOUT_OPTIONS: Readonly<Record<string, string>> = {
@@ -22,6 +22,8 @@ export const ROOT_LAYOUT_OPTIONS: Readonly<Record<string, string>> = {
   // Ports with nothing attached (a half-typed header) must still line the left and right
   // edges; packing disconnected nodes into components would lay them out as a grid (bug 10).
   "elk.separateConnectedComponents": "false",
+  // Fan-out from one pin shares its trunk and gets junction points where it splits (Part B lines).
+  "elk.layered.mergeEdges": "true",
   "elk.layered.thoroughness": "7",
   "elk.padding": "[top=24,left=24,bottom=24,right=24]",
 };
@@ -75,13 +77,42 @@ function elkPorts(node: Node): ElkPortIn[] {
   return out;
 }
 
+/** Pins keep clear of the title row: boxes carry it at the top, flip-flops at the bottom. */
+function portSurrounding(node: Node): string | undefined {
+  switch (node.kind) {
+    case "instance":
+    case "blackbox":
+    case "unknown":
+      return "[top=18,left=0,bottom=4,right=0]";
+    case "dff":
+      return "[top=18,left=0,bottom=6,right=0]";
+    default:
+      return undefined;
+  }
+}
+
+/** Ripper range labels hang off the bar along the wires; reserve that room so neighbours keep clear. */
+function ripperMargins(node: Node): string | undefined {
+  if (node.kind !== "split" && node.kind !== "join") return undefined;
+  const labelW = (p: Pin): number => textWidth(p.label ? `${p.bits ?? ""} ${p.label}` : (p.bits ?? ""), 8.5 * 0.6) + 6;
+  const left = Math.max(0, ...node.pins.filter((p) => p.side === "west").map(labelW));
+  const right = Math.max(0, ...node.pins.filter((p) => p.side === "east").map(labelW));
+  return `[top=0,left=${left},bottom=0,right=${right}]`;
+}
+
 function logicNode(node: Node): ElkNodeIn {
   const size = nodeSize(node);
+  const surrounding = portSurrounding(node);
+  const margins = ripperMargins(node);
   return {
     id: node.id,
     width: size.width,
     height: size.height,
-    layoutOptions: { "elk.portConstraints": "FIXED_ORDER" },
+    layoutOptions: {
+      "elk.portConstraints": "FIXED_ORDER",
+      ...(surrounding ? { "elk.spacing.portSurrounding": surrounding } : {}),
+      ...(margins ? { "elk.margins": margins } : {}),
+    },
     ports: elkPorts(node),
   };
 }

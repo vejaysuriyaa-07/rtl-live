@@ -524,6 +524,16 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
     return keep;
   });
   for (const n of nodes.values()) for (const p of n.pins) if (p.net !== null && !kept.has(p.net)) p.net = null;
+  // Clock and reset roles from the flip-flop pins they feed.
+  for (const n of nodes.values()) {
+    if (n.kind !== "dff") continue;
+    for (const p of n.pins) {
+      const role = p.id === "CLK" ? "clock" : p.id === "R" || p.id === "SET" || p.id === "CLR" ? "reset" : undefined;
+      if (!role || !p.net) continue;
+      const net = netList.find((x) => x.id === p.net);
+      if (net && net.role !== "clock") net.role = role;
+    }
+  }
   const src = parseSrc(ym.attributes?.["src"]);
   return { name, ports, nodes: [...nodes.values()], nets: netList, ...(src[0] ? { src: src[0] } : {}) };
 }

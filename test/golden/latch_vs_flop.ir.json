@@ -16,6 +16,7 @@
           },
           "id": "net:clk",
           "name": "clk",
+          "role": "clock",
           "sinks": [
             {
               "node": "dff:dlatch:b8ed290ca7",

@@ -319,6 +319,10 @@ function moduleToView(m: SModule, file: StructuralFile, labelLength: number): Mo
     }
   });
 
+  // Clocks named in sequential always blocks, resets by name.
+  for (const al of m.always) for (const c of al.clocks) if (nets.nets.has(c)) nets.nets.get(c)!.role = "clock";
+  for (const n of nets.nets.values()) if (!n.role && n.name && /^(a?rst|a?reset|rst_n|reset_n|nrst)$/i.test(n.name)) n.role = "reset";
+
   // Rename net ids used by pins to the net table ids.
   for (const n of nodes) {
     for (const p of n.pins) {

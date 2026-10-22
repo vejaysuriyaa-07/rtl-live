@@ -16,6 +16,7 @@
           },
           "id": "net:clk",
           "name": "clk",
+          "role": "clock",
           "sinks": [
             {
               "node": "dff:adff:916859bb7f",
@@ -39,6 +40,7 @@
           },
           "id": "net:areset",
           "name": "areset",
+          "role": "reset",
           "sinks": [
             {
               "node": "dff:adff:916859bb7f",
