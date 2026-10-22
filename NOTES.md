@@ -395,7 +395,30 @@ Baseline (docs/ACCURACY_REPORT.md): structural view L1 4/34 (only instance-only 
 
 PARTIAL: ACCURACY.md section 5.2 fixtures and 5.3 editing cases are unknown (file missing); the fixtures above cover the features the brief names. Editing cases are added in Phase 3 as regression tests for bugs 2, 3 and 9.
 
-### Phase 3: bug fixes (in progress, paused 2026-10-22)
+### Phase 3: bug fixes (done 2026-10-22)
+
+| Bug | Status | Commit |
+| --- | --- | --- |
+| 1 module title overflows, Fit above 100% | fixed: frame grows to its title, `FIT_MAX_SCALE` 1, L3 checks the title | `cd9e22e` |
+| 2 badge and drawing disagree | fixed: last good diagram stays with "Stale" and overlaid port changes; structural view with errors says "Editing" | `fa4d083`, `dd00a4a` |
+| 3 vague error messages, dropped ports | fixed: specific messages with end-of-file positions, Verilator refinement, recovered ports greyed | `bbc3cdd`, `dd00a4a` |
+| 4 sidebar stuck after sleep | fixed: heartbeat, resync on focus and visibility, active editor re-read | `86d1103` |
+| 5 logical vs bitwise | fixed in the IR and export; drawn with a `&&`/`||` glyph (Phase 4 adds the nonzero reducer look) | `9604f48` |
+| 6 structural overlay on stale | fixed for ports (added, removed, changed) | `fa4d083` |
+| 7 replicated groups | fixed: `{5{a,b,c,d,e}}` is one join of the group into an `x5` pin | `dd00a4a` |
+| 8 bus label on the chevron | fixed: label on the longest segment, L3 clearance check against symbols and chevrons | `cd9e22e` |
+| 9 untitled files | fixed: Verilog-mode untitled renders, Plain Text gets a one-click hint | `fa4d083` |
+| 10 ports in a grid | fixed: ports own the first and last layers, components not separated | `cd9e22e` |
+| 11 blank webview in a new window | fixed: ready watchdog, retry, failure page with Reload Window | `86d1103` |
+| 12 tests share the real profile | fixed: Phase 1 | `fecd4d6` |
+
+Also fixed on the way: host messages were ordered per document, so a long-edited file silenced a freshly opened one (`8567cf3`).
+
+Gate: typecheck and lint clean; unit 383 (24 files); integration 16; webview 50; packaged 16; `git status` clean under `test/fixtures/`. Accuracy report: structural L1 4/34, L2 34/34, L3 24/34; gate L1 34/34, L2 29/34, L3 25/34 (remaining L3: bus width labels on ripper labels, instance titles over the first pin label, LATCH over EN; remaining L2: case mux, enable and sync-reset flops, nand/nor chains, all Phase 4).
+
+Note on expected files: `test/fixtures/expected/*.json` are not edited for fixes; new assertions go into unit tests (bug 7 lives in `synth.test.ts`) or new expected files for new fixtures.
+
+#### Phase 3 log (as it happened)
 
 Done and committed:
 
