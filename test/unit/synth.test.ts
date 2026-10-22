@@ -32,6 +32,24 @@ describe("synthesis expectations", () => {
   }
 });
 
+describe("replicated groups (bug 7)", () => {
+  it("vector5: {5{a,b,c,d,e}} is one join of the group fed to an x5 pin, not 25 wires", async () => {
+    const res = await synthFixture(parser, readFixture(HDLBITS, "vector5.v"), "vector5.v");
+    expect(res.ok).toBe(true);
+    const view = res.doc!.modules["top_module"]!;
+    const joins = view.nodes.filter((n) => n.kind === "join");
+    const outer = joins.find((j) => j.pins.some((p) => p.label === "x5" && p.width === 5));
+    expect(outer, `joins: ${joins.map((j) => j.pins.map((p) => `${p.id}:${p.width}${p.label ? `/${p.label}` : ""}`).join(",")).join(" | ")}`).toBeDefined();
+    expect(outer!.width).toBe(25);
+    const group = joins.find((j) => j.width === 5 && j.pins.filter((p) => p.direction === "in").length === 5);
+    expect(group).toBeDefined();
+    // The {5{a}},{5{b}},... operand stays one join with five repeat pins.
+    const repeats = joins.find((j) => j.pins.filter((p) => p.label === "x5" && p.width === 1).length === 5);
+    expect(repeats).toBeDefined();
+    expect(joins.every((j) => j.pins.filter((p) => p.direction === "in").length <= 5)).toBe(true);
+  });
+});
+
 describe("stable ids", () => {
   it("inserting a comment line at the top changes no node or net ids", async () => {
     for (const name of ["7458.v", "notgate.v", "vectorgates.v", "xnor_misc.v"]) {

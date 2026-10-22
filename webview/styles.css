@@ -136,6 +136,10 @@ svg.schematic:active {
 .badge-synthesized {
   background: var(--rl-ok);
 }
+.badge-editing {
+  border-color: var(--vscode-charts-yellow, #cca700);
+  color: var(--vscode-charts-yellow, #cca700);
+}
 .badge-stale {
   background: var(--rl-warn);
 }

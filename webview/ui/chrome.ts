@@ -85,8 +85,8 @@ export class Chrome {
   }
 
   setStatus(s: StatusInfo): void {
-    const badge = s.warmingUp ? "Warming up" : s.fidelity === "synthesized" ? "Synthesized" : s.fidelity === "stale" ? "Stale" : "Structural";
-    const cls = s.warmingUp ? "warming" : s.fidelity;
+    const badge = s.warmingUp ? "Warming up" : s.fidelity === "synthesized" ? "Synthesized" : s.fidelity === "stale" ? "Stale" : s.editing ? "Editing" : "Structural";
+    const cls = s.warmingUp ? "warming" : s.editing && s.fidelity === "structural" ? "editing" : s.fidelity;
     const backend = s.backend === "none" || s.backend === "off" ? "" : ` · ${s.backend}${s.backendVersion ? ` ${s.backendVersion}` : ""}`;
     this.statusEl.innerHTML = "";
     const b = document.createElement("span");

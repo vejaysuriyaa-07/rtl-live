@@ -8,6 +8,8 @@ export type Fidelity = "structural" | "synthesized" | "stale";
 
 export interface StatusInfo {
   fidelity: Fidelity;
+  /** Structural view of text that does not parse yet: badge reads "Editing" */
+  editing?: boolean;
   backend: "native" | "wasm" | "off" | "none";
   backendVersion?: string;
   warmingUp?: boolean;

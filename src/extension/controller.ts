@@ -319,12 +319,12 @@ export class Controller implements vscode.Disposable {
         this.postRender(job.generation, overlay.doc);
         this.provider.post({ type: "error", generation: job.generation, error });
         const base = file.hasErrors ? "last good diagram, fix the error to resynthesize" : synthOn ? "last good diagram, synthesizing" : modCount;
-        this.postStatus({ fidelity: "stale", message: changes ? `${base}; ${changes}` : base });
+        this.postStatus({ fidelity: "stale", editing: false, message: changes ? `${base}; ${changes}` : base });
         if (!file.hasErrors) this.scheduler.requestSynth(job.docKey, job.generation, job.text);
       } else {
         this.postRender(job.generation, ir);
         this.provider.post({ type: "error", generation: job.generation, error });
-        this.postStatus({ fidelity: "structural", message: file.hasErrors ? modCount : synthOn && top !== "" ? "synthesizing" : modCount });
+        this.postStatus({ fidelity: "structural", editing: file.hasErrors, message: file.hasErrors ? `${modCount}, ${file.errors.length} syntax error${file.errors.length === 1 ? "" : "s"}` : synthOn && top !== "" ? "synthesizing" : modCount });
         if (!file.hasErrors && synthOn && top !== "") this.scheduler.requestSynth(job.docKey, job.generation, job.text);
       }
       if (t1 - t0 > 100) log.warn(`structural pass took ${(t1 - t0).toFixed(1)} ms`);
@@ -403,7 +403,7 @@ export class Controller implements vscode.Disposable {
         st.lastGoodKey = key;
         this.postRender(job.generation, res.doc);
         this.provider.post({ type: "error", generation: job.generation, error: null });
-        this.postStatus({ fidelity: "synthesized", message: `${res.elapsedMs.toFixed(0)} ms` });
+        this.postStatus({ fidelity: "synthesized", editing: false, message: `${res.elapsedMs.toFixed(0)} ms` });
         for (const d of res.diagnostics) log.warn(`synth: ${d.message}`);
       } else {
         let err: BannerError = { message: res.error?.message ?? "synthesis failed", ...(res.error?.line !== undefined ? { line: res.error.line } : {}), ...(res.error?.column !== undefined ? { column: res.error.column } : {}), file: baseName(doc.fileName) };

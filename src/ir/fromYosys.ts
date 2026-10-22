@@ -397,7 +397,46 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
     return n.id;
   };
 
+  const runKey = (r: Run): string => (r.kind === "slice" ? `${r.net.id}[${r.to}:${r.from}]` : r.kind === "repeat" ? `${r.net.id}[${r.idx}]x${r.count}` : r.kind === "const" ? `'${r.value}` : `?${r.width}`);
+
+  /** {5{a,b,c,d,e}}: runs repeat with period p; join the group once and feed it to one "x5" pin (bug 7). */
+  const periodOf = (runs: Run[]): number | undefined => {
+    const keys = runs.map(runKey);
+    for (let p = 1; p * 2 <= keys.length; p++) {
+      if (keys.length % p !== 0) continue;
+      let ok = true;
+      for (let i = p; i < keys.length && ok; i++) if (keys[i] !== keys[i - p]) ok = false;
+      if (ok && !(p === 1 && runs[0]!.kind === "repeat")) return p;
+    }
+    return undefined;
+  };
+
   function joinFor(runs: Run[], src: SrcRange[], sinkName: string, portName?: string): Net {
+    const period = periodOf(runs);
+    if (period !== undefined && period < runs.length) {
+      const group = period === 1 ? runNetFor(runs[0]!, src, sinkName) : joinFor(runs.slice(0, period), src, `${sinkName}.group`);
+      const count = runs.length / period;
+      const id = stableNodeId("join", undefined, [...runNames(runs.slice(0, period)), `x${count}`, sinkName], joinCount.get(`rep:${sinkName}`) ?? 0);
+      joinCount.set(`rep:${sinkName}`, (joinCount.get(`rep:${sinkName}`) ?? 0) + 1);
+      const width = group.width * count;
+      const outNetId = portName !== undefined && !nets.has(`net:${portName}`) ? `net:${portName}` : `net:${id}.out`;
+      group.sinks.push({ node: id, pin: "in0" });
+      const node: Node = {
+        id,
+        kind: "join",
+        width,
+        pins: [
+          { id: "in0", label: `x${count}`, direction: "in", side: "west", width: group.width, net: group.id, bits: `[${width - 1}:0]` },
+          { id: "out", label: "", direction: "out", side: "east", width, net: outNetId },
+        ],
+        label: "",
+        src,
+      };
+      nodes.set(id, node);
+      const outNet: Net = { id: outNetId, ...(portName !== undefined && outNetId === `net:${portName}` ? { name: portName } : {}), width, driver: { node: id, pin: "out" }, sinks: [], src };
+      nets.set(outNetId, outNet);
+      return outNet;
+    }
     const compKey = runs
       .map((r) => (r.kind === "slice" ? `${r.net.id}[${r.to}:${r.from}]` : r.kind === "repeat" ? `${r.net.id}[${r.idx}]x${r.count}` : r.kind === "const" ? `'${r.value}` : `?${r.width}`))
       .join("|");
@@ -441,6 +480,14 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
     nets.set(outNetId, outNet);
     joinNodes.set(compKey, { node, outNet });
     return outNet;
+  }
+
+  /** The net for a single run (whole net, slice, repeat or constant). */
+  function runNetFor(r: Run, src: SrcRange[], sinkName: string): Net {
+    if (r.kind === "slice") return r.from === 0 && r.to === r.net.bits.length - 1 ? ensureNet(r.net) : sliceNet(r);
+    if (r.kind === "repeat") return sliceNet(r);
+    if (r.kind === "const") return constNet(r, sinkName, src);
+    throw new Error("undriven run has no net");
   }
 
   // Cells -> nodes

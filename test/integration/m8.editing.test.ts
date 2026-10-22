@@ -158,3 +158,35 @@ suite("M8 tab switching", () => {
     await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
   });
 });
+
+suite("M8 partial headers", () => {
+  test("typing a module header alone draws a titled box with the Editing badge, then ports left and right", async function () {
+    this.timeout(60_000);
+    const api = await getApi();
+    await vscode.commands.executeCommand("workbench.view.extension.rtlLive");
+    await withTimeout(api.whenReady(), 10_000, "webview ready");
+    const doc = await vscode.workspace.openTextDocument({ language: "verilog", content: "module top_module(" });
+    const editor = await vscode.window.showTextDocument(doc);
+    // A broken header renders once, right away; poll the last render instead of waiting for the next one.
+    const ev = await waitFor("render of the header", 10_000, () => {
+      const e = api.controller.lastRenderEvent;
+      return e && e.doc.sourceUri === doc.uri.toString() && e.doc.top === "top_module" ? e : undefined;
+    });
+    assert.deepStrictEqual(ev.doc.modules["top_module"]!.ports, []);
+    await waitFor("Editing badge", 5000, () => (api.controller.currentStatus.editing === true && api.controller.currentStatus.fidelity === "structural" ? true : undefined));
+    await editor.edit((b) => b.insert(new vscode.Position(0, "module top_module(".length), "input a, output b"));
+    const ev2 = await waitFor("render with two ports", 10_000, () => {
+      const e = api.controller.lastRenderEvent;
+      return e && e.doc.sourceUri === doc.uri.toString() && (e.doc.modules["top_module"]?.ports.length ?? 0) === 2 ? e : undefined;
+    });
+    assert.deepStrictEqual(
+      ev2.doc.modules["top_module"]!.ports.map((p) => [p.name, p.direction]),
+      [
+        ["a", "input"],
+        ["b", "output"],
+      ],
+    );
+    assert.strictEqual(api.controller.currentStatus.editing, true);
+    await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
+  });
+});

@@ -38,3 +38,11 @@ test("M7: a hint with an action shows a button that posts setLanguage", async ({
   await post(page, { type: "hint", generation: 0, hint: null });
   await expect(page.locator("#hint")).toBeHidden();
 });
+
+test("M7: a structural status with editing shows the Editing badge", async ({ page }) => {
+  await page.goto(`${harness.url}/`);
+  await post(page, { type: "status", generation: 1, status: { fidelity: "structural", editing: true, backend: "native", message: "1 module, 1 syntax error" } });
+  await expect(page.locator(".badge")).toHaveText("Editing");
+  await post(page, { type: "status", generation: 2, status: { fidelity: "structural", editing: false, backend: "native" } });
+  await expect(page.locator(".badge")).toHaveText("Structural");
+});

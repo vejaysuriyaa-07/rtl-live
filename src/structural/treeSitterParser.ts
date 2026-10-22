@@ -20,7 +20,7 @@ import type {
   StructuralParser,
 } from "./types";
 import { parseRange } from "./width";
-import { refineErrors } from "./errorMessages";
+import { refineErrors, tokenize } from "./errorMessages";
 import { uniq, extractIdentifiers, analyzeAlwaysText, LineIndex, parseConnectionText } from "./textUtils";
 
 function rangeOf(n: TsNode): SrcRange {
@@ -111,7 +111,7 @@ export class TreeSitterStructuralParser implements StructuralParser {
     const root = tree.rootNode;
     const spans = this.moduleSpans(root, text.length);
     const errors = refineErrors(text, collectErrors(root));
-    const modules = spans.map((s) => this.buildModule(root, s));
+    const modules = spans.map((s) => this.buildModule(root, s, text));
     return { modules, errors, hasErrors: hasRealError(root), parser: "tree-sitter" };
   }
 
@@ -135,12 +135,22 @@ export class TreeSitterStructuralParser implements StructuralParser {
     return spans;
   }
 
-  private buildModule(root: TsNode, span: ModuleSpan): SModule {
+  private buildModule(root: TsNode, span: ModuleSpan, text: string): SModule {
     const inSpan = (n: TsNode): boolean => n.startIndex >= span.start && n.endIndex <= span.end;
     const nodes: TsNode[] = [];
     for (const n of walk(root)) if (inSpan(n)) nodes.push(n);
 
     const ports = extractPorts(nodes, span);
+    if (span.hasErrors) {
+      // The tree loses ports near the break ("output b" at the end of an unclosed list);
+      // read the header text itself and add what the tree missed, greyed out.
+      const seen = new Set(ports.map((p) => p.name));
+      for (const r of recoverHeaderPorts(text, span.start, span.end, this.lines)) {
+        if (seen.has(r.name)) continue;
+        seen.add(r.name);
+        ports.push(r);
+      }
+    }
     const decls = extractDecls(nodes);
     const assigns = extractAssigns(nodes, decls);
     const always = extractAlways(nodes, this.lines);
@@ -205,6 +215,72 @@ function recoveredPortName(declText: string): string | undefined {
   const m = /^\s*(?:input|output|inout)?\s*(?:wire|reg|logic|var|signed|unsigned|\s)*(?:\[[^\]]*\]\s*)*([A-Za-z_][\w$]*)/.exec(declText);
   const name = m?.[1];
   return name && !RESERVED.has(name) ? name : undefined;
+}
+
+const HEADER_STOP = new Set(["assign", "always", "always_comb", "always_ff", "initial", "wire", "reg", "logic", "localparam", "parameter", "endmodule", "module"]);
+
+/**
+ * Port list read from the text between "module name(" and the closing ")" (or the first
+ * statement keyword when the list never closes). Direction and range carry over items.
+ */
+export function recoverHeaderPorts(text: string, start: number, end: number, lines: LineIndex): SPort[] {
+  const toks = tokenize(text.slice(start, end)).map((t) => ({ ...t, start: t.start + start, end: t.end + start }));
+  let i = toks.findIndex((t) => t.text === "module");
+  if (i < 0 || !toks[i + 1] || toks[i + 2]?.text !== "(") return [];
+  i += 3;
+  const out: SPort[] = [];
+  let dir: PortDirection = "input";
+  let range: string | undefined;
+  let depth = 0;
+  let itemStart = i;
+  const flush = (from: number, to: number): void => {
+    let itemRange: string | undefined;
+    let name: string | undefined;
+    let nameTok: { start: number; end: number } | undefined;
+    for (let k = from; k < to; k++) {
+      const t = toks[k]!;
+      const d = directionOf(t.text);
+      if (d) {
+        dir = d;
+        range = undefined;
+        continue;
+      }
+      if (t.text === "[") {
+        let j = k;
+        while (j < to && toks[j]!.text !== "]") j++;
+        itemRange = text.slice(t.start, (toks[j] ?? t).end);
+        k = j;
+        continue;
+      }
+      if (/^[A-Za-z_$][\w$]*$/.test(t.text) && !RESERVED.has(t.text) && !["wire", "reg", "logic", "var", "signed", "unsigned", "tri"].includes(t.text)) {
+        name = t.text;
+        nameTok = t;
+      }
+    }
+    if (itemRange !== undefined) range = itemRange;
+    if (!name || !nameTok) return;
+    const r = parseRange(range);
+    out.push({ name, direction: dir, width: r ? r.width : 1, ...(r ? { range: r.range } : {}), src: lines.range(nameTok.start, nameTok.end), tentative: true });
+  };
+  for (; i < toks.length; i++) {
+    const t = toks[i]!;
+    if (t.text === "(" || t.text === "[" || t.text === "{") depth++;
+    else if (t.text === ")" || t.text === "]" || t.text === "}") {
+      if (depth === 0) {
+        flush(itemStart, i);
+        return out;
+      }
+      depth--;
+    } else if (depth === 0 && t.text === ",") {
+      flush(itemStart, i);
+      itemStart = i + 1;
+    } else if (depth === 0 && (t.text === ";" || HEADER_STOP.has(t.text))) {
+      flush(itemStart, i);
+      return out;
+    }
+  }
+  flush(itemStart, toks.length);
+  return out;
 }
 
 function extractPorts(nodes: TsNode[], span: ModuleSpan): SPort[] {

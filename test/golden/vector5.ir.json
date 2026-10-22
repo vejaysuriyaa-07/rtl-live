@@ -22,24 +22,8 @@
               "pin": "in4"
             },
             {
-              "node": "join:3578e1d0f9",
+              "node": "join:04eca2a4b2",
               "pin": "in4"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in9"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in14"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in19"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in24"
             }
           ],
           "src": [
@@ -65,24 +49,8 @@
               "pin": "in3"
             },
             {
-              "node": "join:3578e1d0f9",
+              "node": "join:04eca2a4b2",
               "pin": "in3"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in8"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in13"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in18"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in23"
             }
           ],
           "src": [
@@ -108,24 +76,8 @@
               "pin": "in2"
             },
             {
-              "node": "join:3578e1d0f9",
+              "node": "join:04eca2a4b2",
               "pin": "in2"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in7"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in12"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in17"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in22"
             }
           ],
           "src": [
@@ -151,24 +103,8 @@
               "pin": "in1"
             },
             {
-              "node": "join:3578e1d0f9",
+              "node": "join:04eca2a4b2",
               "pin": "in1"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in6"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in11"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in16"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in21"
             }
           ],
           "src": [
@@ -194,24 +130,8 @@
               "pin": "in0"
             },
             {
-              "node": "join:3578e1d0f9",
+              "node": "join:04eca2a4b2",
               "pin": "in0"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in5"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in10"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in15"
-            },
-            {
-              "node": "join:3578e1d0f9",
-              "pin": "in20"
             }
           ],
           "src": [
@@ -271,10 +191,32 @@
         },
         {
           "driver": {
-            "node": "join:3578e1d0f9",
+            "node": "join:04eca2a4b2",
             "pin": "out"
           },
-          "id": "net:join:3578e1d0f9.out",
+          "id": "net:join:04eca2a4b2.out",
+          "sinks": [
+            {
+              "node": "join:18baaeaa13",
+              "pin": "in0"
+            }
+          ],
+          "src": [
+            {
+              "column": 16,
+              "endColumn": 78,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 5
+        },
+        {
+          "driver": {
+            "node": "join:18baaeaa13",
+            "pin": "out"
+          },
+          "id": "net:join:18baaeaa13.out",
           "sinks": [
             {
               "node": "gate:xor:09639e5a02",
@@ -363,190 +305,10 @@
           "width": 25
         },
         {
-          "id": "join:3578e1d0f9",
+          "id": "join:04eca2a4b2",
           "kind": "join",
           "label": "",
           "pins": [
-            {
-              "bits": "[24]",
-              "direction": "in",
-              "id": "in24",
-              "label": "",
-              "net": "net:a",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[23]",
-              "direction": "in",
-              "id": "in23",
-              "label": "",
-              "net": "net:b",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[22]",
-              "direction": "in",
-              "id": "in22",
-              "label": "",
-              "net": "net:c",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[21]",
-              "direction": "in",
-              "id": "in21",
-              "label": "",
-              "net": "net:d",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[20]",
-              "direction": "in",
-              "id": "in20",
-              "label": "",
-              "net": "net:e",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[19]",
-              "direction": "in",
-              "id": "in19",
-              "label": "",
-              "net": "net:a",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[18]",
-              "direction": "in",
-              "id": "in18",
-              "label": "",
-              "net": "net:b",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[17]",
-              "direction": "in",
-              "id": "in17",
-              "label": "",
-              "net": "net:c",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[16]",
-              "direction": "in",
-              "id": "in16",
-              "label": "",
-              "net": "net:d",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[15]",
-              "direction": "in",
-              "id": "in15",
-              "label": "",
-              "net": "net:e",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[14]",
-              "direction": "in",
-              "id": "in14",
-              "label": "",
-              "net": "net:a",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[13]",
-              "direction": "in",
-              "id": "in13",
-              "label": "",
-              "net": "net:b",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[12]",
-              "direction": "in",
-              "id": "in12",
-              "label": "",
-              "net": "net:c",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[11]",
-              "direction": "in",
-              "id": "in11",
-              "label": "",
-              "net": "net:d",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[10]",
-              "direction": "in",
-              "id": "in10",
-              "label": "",
-              "net": "net:e",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[9]",
-              "direction": "in",
-              "id": "in9",
-              "label": "",
-              "net": "net:a",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[8]",
-              "direction": "in",
-              "id": "in8",
-              "label": "",
-              "net": "net:b",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[7]",
-              "direction": "in",
-              "id": "in7",
-              "label": "",
-              "net": "net:c",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[6]",
-              "direction": "in",
-              "id": "in6",
-              "label": "",
-              "net": "net:d",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "bits": "[5]",
-              "direction": "in",
-              "id": "in5",
-              "label": "",
-              "net": "net:e",
-              "side": "west",
-              "width": 1
-            },
             {
               "bits": "[4]",
               "direction": "in",
@@ -596,7 +358,40 @@
               "direction": "out",
               "id": "out",
               "label": "",
-              "net": "net:join:3578e1d0f9.out",
+              "net": "net:join:04eca2a4b2.out",
+              "side": "east",
+              "width": 5
+            }
+          ],
+          "src": [
+            {
+              "column": 16,
+              "endColumn": 78,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 5
+        },
+        {
+          "id": "join:18baaeaa13",
+          "kind": "join",
+          "label": "",
+          "pins": [
+            {
+              "bits": "[24:0]",
+              "direction": "in",
+              "id": "in0",
+              "label": "x5",
+              "net": "net:join:04eca2a4b2.out",
+              "side": "west",
+              "width": 5
+            },
+            {
+              "direction": "out",
+              "id": "out",
+              "label": "",
+              "net": "net:join:18baaeaa13.out",
               "side": "east",
               "width": 25
             }
@@ -630,7 +425,7 @@
               "direction": "in",
               "id": "B",
               "label": "",
-              "net": "net:join:3578e1d0f9.out",
+              "net": "net:join:18baaeaa13.out",
               "side": "west",
               "width": 25
             },
