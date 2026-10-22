@@ -1,15 +1,6 @@
 import * as assert from "node:assert";
-import * as path from "node:path";
 import * as vscode from "vscode";
-import { getApi } from "./util";
-
-async function openFixture(name: string): Promise<{ doc: vscode.TextDocument; editor: vscode.TextEditor }> {
-  const folder = vscode.workspace.workspaceFolders?.[0];
-  assert.ok(folder, "workspace folder missing");
-  const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(folder.uri.fsPath, "hdlbits", name)));
-  const editor = await vscode.window.showTextDocument(doc);
-  return { doc, editor };
-}
+import { getApi, openFixture } from "./util";
 
 suite("M2 synthesis", () => {
   test("7458.v synthesizes to 4 ANDs and 2 ORs", async function () {

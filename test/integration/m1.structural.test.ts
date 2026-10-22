@@ -1,7 +1,6 @@
 import * as assert from "node:assert";
-import * as path from "node:path";
 import * as vscode from "vscode";
-import { getApi } from "./util";
+import { getApi, openFixture } from "./util";
 
 suite("M1 structural", () => {
   test("editing wire.v renders ports in/out within 500 ms", async () => {
@@ -12,11 +11,7 @@ suite("M1 structural", () => {
     // The bundled web-tree-sitter must load; the regex scanner is only a fallback for broken installs.
     assert.strictEqual(parser.name, "tree-sitter", "structural parser is not tree-sitter (grammar failed to load from the bundle)");
 
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    assert.ok(folder, "workspace folder missing");
-    const file = vscode.Uri.file(path.join(folder.uri.fsPath, "hdlbits", "wire.v"));
-    const doc = await vscode.workspace.openTextDocument(file);
-    const editor = await vscode.window.showTextDocument(doc);
+    const { doc, editor } = await openFixture("wire.v");
     // Wait for the initial render of this document.
     await api.nextRender((ev) => ev.doc.sourceUri === doc.uri.toString(), 5000).catch(() => undefined);
 

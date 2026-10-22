@@ -360,3 +360,22 @@ sidebar webview ready, replaying 3 message(s)
 ```
 
 Both running VS Code windows (1.106.3 and the 1.143.0 copy) still hold the old 0.1.0 files until "Developer: Reload Window".
+
+
+## v0.2 work log (2026-10-22)
+
+### Phase 0: baseline and missing inputs
+
+Baseline on the v0.1.0 tree (`npm run build && npm run typecheck && npm run lint && npm test && npm run test:integration && npm run test:webview && npm run test:packaged`): typecheck and lint clean; unit and golden 276 passing (15 files); integration 8 passing; webview 47 passing; packaged 8 passing.
+
+The v0.2 brief refers to `docs/BUGS.md` (12 bugs), `docs/ACCURACY.md` (sections 2 to 6, fixture list 5.2, editing cases 5.3) and `docs/BUG_HUNT.md` (Parts A to C). None of these files exists in the repository, in git history, or anywhere on this machine (`mdfind`, `find ~`). Work proceeds from the requirements that the brief itself spells out (bug 2, 3, 4, 9, 11, 12 and the Phase 2, 4, 5, 6 bullet lists). Items that only the missing documents define (bugs 1, 5, 6, 7, 8, 10; the 5.2 fixture list; the 5.3 editing cases; Part A checklist items beyond the A2 semantics list) are marked PARTIAL below with what was done instead.
+
+### Phase 1: test isolation (bug 12)
+
+- `test/isolation.mjs`: `isolatedLaunch(label)` creates `rl-<label>-XXXXXX` under the OS temp dir with `ud/` (user data), `ext/` (extensions) and `fixtures/` (a copy of `test/fixtures`), returns the launch args (`--user-data-dir`, `--extensions-dir`, `--disable-extensions`, `--disable-workspace-trust`, `--skip-welcome`, `--skip-release-notes`, `--disable-telemetry`) and removes the folder when the test CLI exits. Short names on purpose: the IPC socket lives under the user-data dir and macOS caps socket paths at about 103 characters (a launch with a long dir exits silently with `ENOTSOCK`).
+- `.vscode-test.mjs` and `.vscode-test.packaged.mjs` both use it; the packaged config no longer accepts `RTL_LIVE_VSCODE_PATH` or `RTL_LIVE_EXTENSIONS_DIR` (those pointed at the real app or the real extensions folder). `RTL_LIVE_VSCODE_VERSION` remains.
+- Integration tests open fixtures through `openFixture()` / `fixturePath()` in `test/integration/util.ts`, which assert that the workspace is not the repository fixtures folder.
+- Playwright tests never launch VS Code; they read fixtures read-only to build documents and post them to the harness page. The downloaded VS Code under `.vscode-test/` is only ever started by `@vscode/test-cli` with the args above.
+- Guard: `test/unit/isolation.test.ts` imports both configs and checks the three dirs are under the temp dir and not under `~/Library` or `~/.vscode`, that `--disable-extensions` is set, that no config, script or test file mentions the real profile, extensions folder, `fromMachine` or the removed env knobs, and that integration tests do not read `workspaceFolders` or build `fixtures` paths themselves.
+
+How to run everything without touching the real VS Code: `npm test`, `npm run test:integration`, `npm run test:webview`, `npm run test:packaged`. Never open `.vscode-test/vscode-darwin-arm64-*/Visual Studio Code.app` by hand; it shares the real profile when launched from Finder. To try a build in the real VS Code, use `npm run package` and `"$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" --install-extension rtl-live-<version>.vsix --force`, then "Developer: Reload Window".

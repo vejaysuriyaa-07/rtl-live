@@ -3,10 +3,10 @@
 // temp dir and runs the integration suite against that copy
 // (.vscode-test.packaged.mjs), so the tests see exactly the files a user installs.
 //
-//   npm run test:packaged                      # VS Code stable (downloaded once)
+// VS Code runs with a throwaway profile (test/isolation.mjs).
+//
+//   npm run test:packaged                      # VS Code stable (downloaded once into .vscode-test/)
 //   RTL_LIVE_VSCODE_VERSION=1.106.3 npm run test:packaged
-//   RTL_LIVE_VSCODE_PATH="$HOME/Applications/Visual Studio Code.app/Contents/MacOS/Electron" npm run test:packaged
-//   RTL_LIVE_EXTENSIONS_DIR=$HOME/.vscode/extensions npm run test:packaged   # with the user's extensions enabled
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
