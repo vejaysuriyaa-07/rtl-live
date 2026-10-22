@@ -91,3 +91,39 @@ export function buildWebviewHtml(input: WebviewHtmlInput): string {
 </body>
 </html>`;
 }
+
+/**
+ * Page shown when the real view never posted ready (twice). Plain text plus a
+ * Reload Window action that works both as a command link (no script needed)
+ * and as a button that posts reloadWindow to the host.
+ */
+export function buildFallbackHtml(input: { cspSource: string; nonce: string; reason: string }): string {
+  const csp = buildCsp(input.cspSource, input.nonce);
+  const n = input.nonce;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="${csp}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTL Live</title>
+<style nonce="${n}">
+body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); padding: 12px; }
+button { font: inherit; padding: 4px 10px; }
+a { color: var(--vscode-textLink-foreground); }
+</style>
+</head>
+<body data-fallback="1">
+<p><strong>RTL Live could not start its view.</strong></p>
+<p>${escapeAttr(input.reason)}</p>
+<p><button id="reload">Reload Window</button> or use <a href="command:workbench.action.reloadWindow">Developer: Reload Window</a>. Run "RTL Live: Show Log" for details.</p>
+<script nonce="${n}">
+(function () {
+  var api = typeof acquireVsCodeApi === "function" ? acquireVsCodeApi() : undefined;
+  var b = document.getElementById("reload");
+  if (b) b.addEventListener("click", function () { if (api) api.postMessage({ type: "reloadWindow", generation: 0 }); });
+})();
+</script>
+</body>
+</html>`;
+}

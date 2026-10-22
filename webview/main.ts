@@ -49,6 +49,9 @@ const chrome = new Chrome(app, {
   onErrorClick: (err) => {
     if (err.line !== undefined) postToHost({ type: "revealError", generation: state.generation, line: err.line, column: err.column ?? 1 });
   },
+  onHintAction: (command) => {
+    if (command === "setLanguage") postToHost({ type: "setLanguage", generation: state.generation, language: "verilog" });
+  },
 });
 
 function fit(animate: boolean): void {
@@ -147,7 +150,11 @@ function persist(): void {
 }
 
 function handle(msg: HostToWebview): void {
-  if (msg.generation < state.generation && msg.type !== "fit" && msg.type !== "export" && msg.type !== "drillUp" && msg.type !== "theme") return;
+  if (msg.type === "ping") {
+    postToHost({ type: "pong", generation: state.generation, id: msg.id });
+    return;
+  }
+  if (msg.generation < state.generation && msg.type !== "fit" && msg.type !== "export" && msg.type !== "drillUp" && msg.type !== "theme" && msg.type !== "hint") return;
   if (msg.generation > state.generation) state.generation = msg.generation;
   switch (msg.type) {
     case "render": {
@@ -189,6 +196,9 @@ function handle(msg: HostToWebview): void {
     case "cursor":
       cursor = msg.cursor;
       highlightCursor();
+      break;
+    case "hint":
+      chrome.setHint(msg.hint);
       break;
   }
 }

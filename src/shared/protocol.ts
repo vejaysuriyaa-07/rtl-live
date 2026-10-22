@@ -21,6 +21,12 @@ export interface BannerError {
   message: string;
 }
 
+/** Advice shown above the diagram with an optional action button (e.g. untitled Plain Text that looks like Verilog). */
+export interface HintInfo {
+  message: string;
+  action?: { label: string; command: "setLanguage" };
+}
+
 export interface CursorInfo {
   line: number;
   column: number;
@@ -38,7 +44,9 @@ export type HostToWebview =
   | { type: "selectTop"; generation: number; top: string }
   | { type: "export"; generation: number; format: "svg" | "png" }
   | { type: "fit"; generation: number }
-  | { type: "drillUp"; generation: number };
+  | { type: "drillUp"; generation: number }
+  | { type: "ping"; generation: number; id: number }
+  | { type: "hint"; generation: number; hint: HintInfo | null };
 
 // Webview -> host
 export type WebviewToHost =
@@ -50,7 +58,10 @@ export type WebviewToHost =
   | { type: "revealError"; generation: number; line: number; column: number }
   | { type: "openInPanel"; generation: number }
   | { type: "drill"; generation: number; module: string }
-  | { type: "highlighted"; generation: number; ids: string[] };
+  | { type: "highlighted"; generation: number; ids: string[] }
+  | { type: "pong"; generation: number; id: number }
+  | { type: "reloadWindow"; generation: number }
+  | { type: "setLanguage"; generation: number; language: "verilog" | "systemverilog" };
 
 const HOST_TYPES: ReadonlySet<string> = new Set([
   "render",
@@ -62,6 +73,8 @@ const HOST_TYPES: ReadonlySet<string> = new Set([
   "export",
   "fit",
   "drillUp",
+  "ping",
+  "hint",
 ]);
 const WEBVIEW_TYPES: ReadonlySet<string> = new Set([
   "ready",
@@ -73,6 +86,9 @@ const WEBVIEW_TYPES: ReadonlySet<string> = new Set([
   "openInPanel",
   "drill",
   "highlighted",
+  "pong",
+  "reloadWindow",
+  "setLanguage",
 ]);
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -105,6 +121,10 @@ export function isWebviewToHost(x: unknown): x is WebviewToHost {
       return Array.isArray(x["ids"]) && (x["ids"] as unknown[]).every((i) => typeof i === "string");
     case "export":
       return typeof x["data"] === "string" && (x["format"] === "svg" || x["format"] === "png");
+    case "pong":
+      return typeof x["id"] === "number";
+    case "setLanguage":
+      return x["language"] === "verilog" || x["language"] === "systemverilog";
     default:
       return true;
   }

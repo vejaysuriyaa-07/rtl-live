@@ -112,6 +112,17 @@ export class Controller implements vscode.Disposable {
         this.postStatus();
         this.rerunActive();
       }),
+      // After sleep or a long time in the background the editor and the view can drift apart:
+      // pick the active editor up again whenever the window or the view comes back.
+      provider.onDidChangeVisibility((visible) => {
+        if (visible) this.followActiveEditor("view shown");
+      }),
+      vscode.window.onDidChangeWindowState((ws) => {
+        if (ws.focused) {
+          this.provider.resync("window focus");
+          this.followActiveEditor("window focus");
+        }
+      }),
       provider.onMessage((msg) => {
         switch (msg.type) {
           case "revealSource":
@@ -171,6 +182,17 @@ export class Controller implements vscode.Disposable {
 
   whenParserReady(): Promise<StructuralParser> {
     return this.parserPromise;
+  }
+
+  /** Re-read the active editor and rerun; used after focus and visibility changes. */
+  followActiveEditor(reason: string): void {
+    const doc = vscode.window.activeTextEditor?.document;
+    if (doc && isVerilogDocument(doc) && doc !== this.activeDoc) {
+      log.info(`following active editor after ${reason}: ${baseName(doc.fileName)}`);
+      this.setActive(doc);
+      return;
+    }
+    this.rerunActive();
   }
 
   private rerunActive(): void {

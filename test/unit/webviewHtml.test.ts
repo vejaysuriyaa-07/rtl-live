@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOT_SCRIPT, buildCsp, buildWebviewHtml, makeNonce } from "../../src/extension/webviewHtml";
+import { BOOT_SCRIPT, buildCsp, buildFallbackHtml, buildWebviewHtml, makeNonce } from "../../src/extension/webviewHtml";
 
 describe("webview html", () => {
   const cspSource = "vscode-webview://abc123";
@@ -50,5 +50,15 @@ describe("webview html", () => {
     const n = makeNonce();
     expect(n).toMatch(/^[A-Za-z0-9]{32}$/);
     expect(makeNonce()).not.toBe(n);
+  });
+
+  it("fallback page keeps the CSP, nonces its script and offers Reload Window twice", () => {
+    const fb = buildFallbackHtml({ cspSource, nonce, reason: "never <ready>" });
+    expect(fb).toContain(`<meta http-equiv="Content-Security-Policy" content="${buildCsp(cspSource, nonce)}">`);
+    for (const tag of fb.match(/<script[^>]*>/g) ?? []) expect(tag).toContain(`nonce="${nonce}"`);
+    expect(fb).toContain('href="command:workbench.action.reloadWindow"');
+    expect(fb).toContain('type: "reloadWindow"');
+    expect(fb).toContain("never &lt;ready>");
+    expect(fb).not.toMatch(/https?:/);
   });
 });

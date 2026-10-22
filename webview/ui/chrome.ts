@@ -1,5 +1,5 @@
 // Toolbar, status badge, banner and breadcrumb. Plain DOM, no framework.
-import type { StatusInfo, BannerError } from "../../src/shared/protocol";
+import type { StatusInfo, BannerError, HintInfo } from "../../src/shared/protocol";
 
 export interface ChromeHandlers {
   onFit(): void;
@@ -10,6 +10,7 @@ export interface ChromeHandlers {
   onOpenInPanel(): void;
   onDrillTo(depth: number): void;
   onErrorClick(err: BannerError): void;
+  onHintAction(command: "setLanguage"): void;
 }
 
 function button(label: string, title: string, onClick: () => void, cls = ""): HTMLButtonElement {
@@ -27,6 +28,7 @@ export class Chrome {
   private readonly bannerEl: HTMLElement;
   private readonly breadcrumbEl: HTMLElement;
   private readonly emptyEl: HTMLElement;
+  private readonly hintEl: HTMLElement;
   private currentError: BannerError | null = null;
 
   constructor(
@@ -38,6 +40,10 @@ export class Chrome {
     this.bannerEl = root.querySelector<HTMLElement>("#banner")!;
     this.breadcrumbEl = root.querySelector<HTMLElement>("#breadcrumb")!;
     this.emptyEl = root.querySelector<HTMLElement>("#empty")!;
+    this.hintEl = document.createElement("div");
+    this.hintEl.id = "hint";
+    this.hintEl.hidden = true;
+    this.bannerEl.insertAdjacentElement("afterend", this.hintEl);
 
     toolbar.append(
       button("Fit", "Fit diagram to view (f)", () => handlers.onFit()),
@@ -105,6 +111,26 @@ export class Chrome {
     this.bannerEl.textContent = `${where ? `${where}  ` : ""}${err.message}`;
     this.bannerEl.title = "Click to jump to the error";
     this.bannerEl.hidden = false;
+  }
+
+  setHint(hint: HintInfo | null): void {
+    this.hintEl.replaceChildren();
+    if (!hint) {
+      this.hintEl.hidden = true;
+      return;
+    }
+    const text = document.createElement("span");
+    text.textContent = hint.message;
+    this.hintEl.append(text);
+    if (hint.action) {
+      const b = document.createElement("button");
+      b.className = "tb-btn hint-action";
+      b.textContent = hint.action.label;
+      const command = hint.action.command;
+      b.addEventListener("click", () => this.handlers.onHintAction(command));
+      this.hintEl.append(b);
+    }
+    this.hintEl.hidden = false;
   }
 
   setBreadcrumb(path: string[]): void {

@@ -74,6 +74,16 @@ body {
   white-space: pre-wrap;
 }
 
+#hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  border-bottom: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.3));
+}
+
 #breadcrumb {
   flex: none;
   padding: 2px 8px;

@@ -2,8 +2,9 @@
 // message channel to it. Everything posted goes through postToWebview so
 // generations are attached consistently.
 import * as vscode from "vscode";
-import { buildWebviewHtml, makeNonce } from "./webviewHtml";
+import { buildFallbackHtml, buildWebviewHtml, makeNonce } from "./webviewHtml";
 import { isWebviewToHost, type HostToWebview, type WebviewToHost } from "../shared/protocol";
+import { DEFAULT_LIFECYCLE, WebviewLifecycle, type LifecycleOptions } from "./lifecycle";
 import { log } from "./log";
 
 export type WebviewMessageHandler = (msg: WebviewToHost, source: "sidebar" | "panel") => void;
@@ -13,6 +14,10 @@ interface Target {
   webview: vscode.Webview;
   ready: boolean;
   disposables: vscode.Disposable[];
+  lifecycle: WebviewLifecycle;
+  isVisible: () => boolean;
+  /** Set when the failure page replaced the view */
+  fallback: boolean;
 }
 
 export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
@@ -37,6 +42,15 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
   lastHighlighted: string[] = [];
   private readonly highlightEmitter = new vscode.EventEmitter<string[]>();
   readonly onDidHighlight = this.highlightEmitter.event;
+  private readonly visibilityEmitter = new vscode.EventEmitter<boolean>();
+  /** Fires when the sidebar view is shown or hidden */
+  readonly onDidChangeVisibility = this.visibilityEmitter.event;
+  /** Lifecycle timing; tests shorten it before (re)loading the view */
+  lifecycleOptions: LifecycleOptions = { ...DEFAULT_LIFECYCLE };
+  /** Test hook: this many upcoming page loads get HTML that never posts ready */
+  breakHtmlLoads = 0;
+  /** Count of render messages actually posted to a webview (tests check replay) */
+  postedRenders = 0;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -50,13 +64,18 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
 
   resolveWebviewView(view: vscode.WebviewView): void {
     this.sidebar?.disposables.forEach((d) => d.dispose());
-    const target: Target = { kind: "sidebar", webview: view.webview, ready: false, disposables: [] };
+    const target = this.makeTarget("sidebar", view.webview, () => view.visible);
     this.sidebar = target;
     this.setup(target, view.webview);
     target.disposables.push(
       view.onDidDispose(() => {
         target.disposables.forEach((d) => d.dispose());
         if (this.sidebar === target) this.sidebar = undefined;
+      }),
+      view.onDidChangeVisibility(() => {
+        log.info(`sidebar webview ${view.visible ? "visible" : "hidden"}`);
+        if (view.visible) target.lifecycle.resync("visible");
+        this.visibilityEmitter.fire(view.visible);
       }),
     );
     this.resolvedCount++;
@@ -75,7 +94,7 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
       { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
       { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: this.resourceRoots() },
     );
-    const target: Target = { kind: "panel", webview: panel.webview, ready: false, disposables: [] };
+    const target = this.makeTarget("panel", panel.webview, () => panel.visible);
     this.panel = { target, panel };
     this.setup(target, panel.webview);
     target.disposables.push(
@@ -86,12 +105,69 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
     );
   }
 
+  private makeTarget(kind: Target["kind"], webview: vscode.Webview, isVisible: () => boolean): Target {
+    const target: Target = { kind, webview, ready: false, disposables: [], isVisible, fallback: false, lifecycle: undefined as unknown as WebviewLifecycle };
+    target.lifecycle = this.makeLifecycle(target);
+    target.disposables.push(new vscode.Disposable(() => target.lifecycle.dispose()));
+    return target;
+  }
+
+  private makeLifecycle(target: Target): WebviewLifecycle {
+    const webview = target.webview;
+    return new WebviewLifecycle(this.lifecycleOptions, {
+      reload: (reason) => {
+        log.warn(`${target.kind} webview reloading (${reason})`);
+        target.ready = false;
+        this.setHtml(target, webview);
+      },
+      showFallback: () => {
+        target.ready = false;
+        target.fallback = true;
+        webview.html = buildFallbackHtml({ cspSource: webview.cspSource, nonce: makeNonce(), reason: "The schematic page did not report ready, even after a reload." });
+      },
+      ping: (id) => void webview.postMessage({ type: "ping", generation: 0, id }),
+      isVisible: target.isVisible,
+      log: (level, text) => log[level](`${target.kind} ${text}`),
+    });
+  }
+
+  /** Test hook: throw the sidebar page away and load it again with the current lifecycle options. */
+  reloadSidebar(): void {
+    const t = this.sidebar;
+    if (!t) throw new Error("no sidebar webview");
+    t.lifecycle.dispose();
+    t.lifecycle = this.makeLifecycle(t);
+    t.ready = false;
+    t.fallback = false;
+    this.setHtml(t, t.webview);
+  }
+
+  /** Window focus or similar: ask every live page to answer now. */
+  resync(reason: string): void {
+    for (const t of this.targets()) t.lifecycle.resync(reason);
+  }
+
+  get lifecycleStats(): WebviewLifecycle["stats"] | undefined {
+    return this.sidebar?.lifecycle.stats;
+  }
+
+  get sidebarFallbackShown(): boolean {
+    return this.sidebar?.fallback ?? false;
+  }
+
   private resourceRoots(): vscode.Uri[] {
     return [vscode.Uri.joinPath(this.extensionUri, "dist"), vscode.Uri.joinPath(this.extensionUri, "media")];
   }
 
   private setup(target: Target, webview: vscode.Webview): void {
-    webview.options = { enableScripts: true, localResourceRoots: this.resourceRoots() };
+    webview.options = { enableScripts: true, enableCommandUris: ["workbench.action.reloadWindow"], localResourceRoots: this.resourceRoots() };
+    this.setHtml(target, webview);
+    target.disposables.push(
+      webview.onDidReceiveMessage((raw: unknown) => this.dispatch(raw, target, webview)),
+    );
+  }
+
+  private setHtml(target: Target, webview: vscode.Webview): void {
     const nonce = makeNonce();
     const scriptUri = webview
       .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "webview.js"))
@@ -103,16 +179,21 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
       .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "elkWorker.js"))
       .toString();
     log.info(`${target.kind} webview script ${scriptUri}`);
-    webview.html = buildWebviewHtml({
+    const html = buildWebviewHtml({
       cspSource: webview.cspSource,
       nonce,
       scriptUri,
       styleUri,
       elkWorkerUri,
     });
-    target.disposables.push(
-      webview.onDidReceiveMessage((raw: unknown) => this.dispatch(raw, target, webview)),
-    );
+    if (this.breakHtmlLoads > 0) {
+      this.breakHtmlLoads--;
+      // A page that loads but never posts ready (exercises the watchdog).
+      webview.html = html.replace(/<script nonce="[^"]*" src="[^"]*"><\/script>/, "");
+    } else {
+      webview.html = html;
+    }
+    target.lifecycle.htmlSet();
   }
 
   /** Test hook: feed a message as if the sidebar webview had posted it. */
@@ -141,11 +222,24 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
         }
         if (raw.type === "ready") {
           target.ready = true;
+          target.fallback = false;
+          target.lifecycle.ready();
           log.info(`${target.kind} webview ready, replaying ${this.lastMessages.size} message(s)`);
           for (const m of this.lastMessages.values()) {
+            if (m.type === "render") this.postedRenders++;
             void webview.postMessage(m);
           }
           this.readyEmitter.fire(target.kind);
+          return;
+        }
+        if (raw.type === "pong") {
+          target.lifecycle.pong(raw.id);
+          return;
+        }
+        if (raw.type === "reloadWindow") {
+          log.warn("reload window requested from the webview");
+          void vscode.commands.executeCommand("workbench.action.reloadWindow");
+          return;
         }
         if (raw.type === "log") {
           const text = `[webview] ${raw.text}`;
@@ -171,11 +265,13 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
   /** Post to every live webview; remembers the latest message per type for late-ready webviews. */
   post(msg: HostToWebview): void {
     // "render" and "status" are replayable state; transient commands are not.
-    if (msg.type === "render" || msg.type === "status" || msg.type === "error" || msg.type === "theme") {
+    if (msg.type === "render" || msg.type === "status" || msg.type === "error" || msg.type === "theme" || msg.type === "hint") {
       this.lastMessages.set(msg.type, msg);
     }
     for (const t of this.targets()) {
-      if (t.ready) void t.webview.postMessage(msg);
+      if (!t.ready) continue;
+      if (msg.type === "render") this.postedRenders++;
+      void t.webview.postMessage(msg);
     }
   }
 
@@ -197,5 +293,6 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
     this.readyEmitter.dispose();
     this.logEmitter.dispose();
     this.highlightEmitter.dispose();
+    this.visibilityEmitter.dispose();
   }
 }
