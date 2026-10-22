@@ -6,6 +6,8 @@ export interface WebviewHtmlInput {
   nonce: string;
   scriptUri: string;
   styleUri: string;
+  /** URI of dist/elkWorker.js for the Blob-URL layout worker */
+  elkWorkerUri?: string;
   /** Initial state the webview should use before any message arrives */
   initialState?: string;
 }
@@ -47,7 +49,7 @@ export function buildWebviewHtml(input: WebviewHtmlInput): string {
 <title>RTL Live</title>
 <link rel="stylesheet" nonce="${n}" href="${escapeAttr(input.styleUri)}">
 </head>
-<body data-initial-state="${escapeAttr(input.initialState ?? "")}">
+<body data-initial-state="${escapeAttr(input.initialState ?? "")}" data-elk-worker-uri="${escapeAttr(input.elkWorkerUri ?? "")}">
 <div id="app">
   <div id="toolbar"></div>
   <div id="banner" hidden></div>

@@ -1,0 +1,50 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 32
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 32
+    },
+    {
+      "name": "sum",
+      "direction": "output",
+      "width": 32
+    }
+  ],
+  "structural": {
+    "modules": [
+      "add16",
+      "top_module"
+    ],
+    "instances": [
+      {
+        "name": "lo",
+        "type": "add16",
+        "pins": [
+          "a",
+          "b",
+          "cin",
+          "sum",
+          "cout"
+        ]
+      },
+      {
+        "name": "hi",
+        "type": "add16",
+        "pins": [
+          "a",
+          "b",
+          "cin",
+          "sum",
+          "cout"
+        ]
+      }
+    ]
+  }
+}

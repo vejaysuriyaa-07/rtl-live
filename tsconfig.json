@@ -19,6 +19,6 @@
     "noEmit": true,
     "types": ["node", "mocha"]
   },
-  "include": ["src/**/*.ts", "test/unit/**/*.ts", "test/golden/**/*.ts", "test/integration/**/*.ts", "scripts/**/*.ts"],
+  "include": ["src/**/*.ts", "test/unit/**/*.ts", "test/golden/**/*.ts", "test/integration/**/*.ts", "test/webview/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist", "webview"]
 }

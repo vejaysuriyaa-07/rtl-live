@@ -1,0 +1,28 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "in",
+      "direction": "input",
+      "width": 4
+    },
+    {
+      "name": "out_and",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "out_or",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "out_xor",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "assigns": 3
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "d",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "q",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "instances": [
+      {
+        "name": "d1",
+        "type": "my_dff",
+        "pins": [
+          "clk",
+          "d",
+          "q"
+        ]
+      },
+      {
+        "name": "d2",
+        "type": "my_dff",
+        "pins": [
+          "clk",
+          "d",
+          "q"
+        ]
+      },
+      {
+        "name": "d3",
+        "type": "my_dff",
+        "pins": [
+          "clk",
+          "d",
+          "q"
+        ]
+      }
+    ],
+    "decls": [
+      "q1",
+      "q2"
+    ]
+  }
+}

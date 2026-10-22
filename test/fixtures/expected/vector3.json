@@ -1,0 +1,58 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 5
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 5
+    },
+    {
+      "name": "c",
+      "direction": "input",
+      "width": 5
+    },
+    {
+      "name": "d",
+      "direction": "input",
+      "width": 5
+    },
+    {
+      "name": "e",
+      "direction": "input",
+      "width": 5
+    },
+    {
+      "name": "f",
+      "direction": "input",
+      "width": 5
+    },
+    {
+      "name": "w",
+      "direction": "output",
+      "width": 8
+    },
+    {
+      "name": "x",
+      "direction": "output",
+      "width": 8
+    },
+    {
+      "name": "y",
+      "direction": "output",
+      "width": 8
+    },
+    {
+      "name": "z",
+      "direction": "output",
+      "width": 8
+    }
+  ],
+  "structural": {
+    "assigns": 1
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "areset",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "d",
+      "direction": "input",
+      "width": 8
+    },
+    {
+      "name": "q",
+      "direction": "output",
+      "width": 8
+    }
+  ],
+  "structural": {
+    "always": 1
+  }
+}

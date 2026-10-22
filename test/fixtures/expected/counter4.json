@@ -1,0 +1,24 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "reset",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "q",
+      "direction": "output",
+      "width": 4
+    }
+  ],
+  "structural": {
+    "always": 1,
+    "assigns": 0
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "v",
+      "direction": "input",
+      "width": 4
+    },
+    {
+      "name": "y1",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "y2",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "y3",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "assigns": 3
+  }
+}

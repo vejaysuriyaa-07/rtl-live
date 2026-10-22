@@ -1,0 +1,15 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "in",
+      "direction": "input",
+      "width": 32
+    },
+    {
+      "name": "out",
+      "direction": "output",
+      "width": 32
+    }
+  ]
+}

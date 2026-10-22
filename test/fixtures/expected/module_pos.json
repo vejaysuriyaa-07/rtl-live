@@ -1,0 +1,51 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "c",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "d",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "out1",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "out2",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "instances": [
+      {
+        "name": "u1",
+        "type": "mod_a",
+        "pins": [
+          "p0",
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5"
+        ]
+      }
+    ]
+  }
+}

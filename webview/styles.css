@@ -1,10 +1,17 @@
 :root {
-  --rl-fg: var(--vscode-editor-foreground);
-  --rl-bg: var(--vscode-editor-background);
-  --rl-accent: var(--vscode-charts-blue);
-  --rl-error: var(--vscode-editorError-foreground);
-  --rl-focus: var(--vscode-focusBorder);
-  --rl-muted: var(--vscode-descriptionForeground, var(--vscode-editor-foreground));
+  --rl-fg: var(--vscode-editor-foreground, #ccc);
+  --rl-bg: var(--vscode-editor-background, #1e1e1e);
+  --rl-accent: var(--vscode-charts-blue, #3794ff);
+  --rl-error: var(--vscode-editorError-foreground, #f14c4c);
+  --rl-focus: var(--vscode-focusBorder, #007fd4);
+  --rl-muted: var(--vscode-descriptionForeground, var(--vscode-editor-foreground, #999));
+  --rl-font: var(--vscode-font-family, system-ui, sans-serif);
+  --rl-warn: var(--vscode-charts-yellow, #cca700);
+  --rl-ok: var(--vscode-charts-green, #89d185);
+}
+
+[hidden] {
+  display: none !important;
 }
 
 html,
@@ -15,8 +22,8 @@ body {
   overflow: hidden;
   color: var(--rl-fg);
   background: var(--rl-bg);
-  font-family: var(--vscode-font-family);
-  font-size: var(--vscode-font-size);
+  font-family: var(--rl-font);
+  font-size: var(--vscode-font-size, 13px);
 }
 
 #app {
@@ -25,16 +32,105 @@ body {
   height: 100%;
 }
 
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rl-fg) 15%, transparent);
+  flex: none;
+}
+
+.tb-btn,
+.tb-select {
+  font: inherit;
+  font-size: 11px;
+  color: var(--rl-fg);
+  background: color-mix(in srgb, var(--rl-fg) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rl-fg) 20%, transparent);
+  border-radius: 3px;
+  padding: 1px 7px;
+  cursor: pointer;
+}
+.tb-btn:hover {
+  background: color-mix(in srgb, var(--rl-fg) 16%, transparent);
+}
+.tb-btn:focus-visible,
+.tb-select:focus-visible {
+  outline: 1px solid var(--rl-focus);
+}
+.tb-spacer {
+  flex: 1;
+}
+
+#banner {
+  flex: none;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--rl-fg);
+  background: color-mix(in srgb, var(--rl-error) 20%, var(--rl-bg));
+  border-left: 3px solid var(--rl-error);
+  cursor: pointer;
+  white-space: pre-wrap;
+}
+
+#breadcrumb {
+  flex: none;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+.crumb {
+  color: var(--rl-accent);
+  text-decoration: none;
+}
+.crumb.current {
+  color: var(--rl-fg);
+  font-weight: 600;
+}
+
 #canvas {
   flex: 1;
   min-height: 0;
   position: relative;
 }
 
+svg.schematic {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+svg.schematic:active {
+  cursor: grabbing;
+}
+
 #status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
-  padding: 2px 6px;
-  opacity: 0.8;
+  padding: 2px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--rl-fg) 15%, transparent);
+  color: var(--rl-muted);
+}
+.badge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 15px;
+  color: var(--rl-bg);
+  background: var(--rl-muted);
+}
+.badge-synthesized {
+  background: var(--rl-ok);
+}
+.badge-stale {
+  background: var(--rl-warn);
+}
+.badge-warming {
+  background: var(--rl-accent);
 }
 
 .empty {
@@ -47,4 +143,118 @@ body {
   padding: 16px;
   color: var(--rl-muted);
   pointer-events: none;
+}
+
+/* ---- diagram ---- */
+.schematic text {
+  font-family: var(--rl-font);
+  font-size: 11px;
+  fill: var(--rl-fg);
+  user-select: none;
+}
+.schematic .module-rect {
+  fill: none;
+  stroke: var(--rl-fg);
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+}
+.schematic .module-title {
+  font-weight: 600;
+  fill: var(--rl-fg);
+  opacity: 0.8;
+}
+.schematic .body {
+  fill: var(--rl-bg);
+  stroke: var(--rl-fg);
+  stroke-width: 1.3;
+}
+.schematic .body.dashed {
+  stroke-dasharray: 4 3;
+}
+.schematic .body.cloud {
+  stroke-opacity: 0.7;
+}
+.schematic .body.const {
+  fill: color-mix(in srgb, var(--rl-fg) 10%, var(--rl-bg));
+}
+.schematic .label.title {
+  font-weight: 600;
+}
+.schematic .pin-label {
+  font-size: 9.5px;
+  opacity: 0.85;
+}
+.schematic .pin {
+  fill: var(--rl-fg);
+}
+.schematic .pin-stub {
+  stroke: var(--rl-fg);
+  stroke-width: 1.2;
+}
+.schematic .port-shape {
+  fill: color-mix(in srgb, var(--rl-accent) 18%, var(--rl-bg));
+  stroke: var(--rl-accent);
+  stroke-width: 1.2;
+}
+.schematic .port-label {
+  font-weight: 600;
+}
+.schematic .net-path {
+  fill: none;
+  stroke: var(--rl-fg);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+.schematic .net.bus .net-path {
+  stroke-width: 2.4;
+}
+.schematic .bus-slash {
+  stroke: var(--rl-fg);
+  stroke-width: 1.2;
+}
+.schematic .bus-width {
+  font-size: 9px;
+  opacity: 0.85;
+}
+.schematic .junction {
+  fill: var(--rl-fg);
+}
+.schematic .node,
+.schematic .port {
+  cursor: pointer;
+}
+.schematic .node:hover .body,
+.schematic .port:hover .port-shape {
+  stroke: var(--rl-focus);
+  stroke-width: 2;
+}
+.schematic .net:hover .net-path {
+  stroke: var(--rl-focus);
+}
+.schematic .highlight .body,
+.schematic .highlight .port-shape,
+.schematic .net.highlight .net-path {
+  stroke: var(--rl-focus);
+  stroke-width: 2.4;
+}
+.schematic .gate-body {
+  fill: var(--rl-bg);
+  stroke: var(--rl-fg);
+  stroke-width: 1.4;
+}
+.schematic .bubble {
+  fill: var(--rl-bg);
+  stroke: var(--rl-fg);
+  stroke-width: 1.2;
+}
+
+body.stale .schematic .viewport {
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schematic .node,
+  .schematic .port {
+    transition: none !important;
+  }
 }

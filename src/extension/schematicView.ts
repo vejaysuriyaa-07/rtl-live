@@ -29,6 +29,10 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
   readonly onDidResolve = this.resolvedEmitter.event;
   readonly onDidBecomeReady = this.readyEmitter.event;
   resolvedCount = 0;
+  /** Recent webview log lines (for tests and diagnostics) */
+  readonly webviewLogs: string[] = [];
+  private readonly logEmitter = new vscode.EventEmitter<string>();
+  readonly onWebviewLog = this.logEmitter.event;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -86,7 +90,8 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
     const nonce = makeNonce();
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "webview.js")).toString();
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "webview.css")).toString();
-    webview.html = buildWebviewHtml({ cspSource: webview.cspSource, nonce, scriptUri, styleUri });
+    const elkWorkerUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "elkWorker.js")).toString();
+    webview.html = buildWebviewHtml({ cspSource: webview.cspSource, nonce, scriptUri, styleUri, elkWorkerUri });
     target.disposables.push(
       webview.onDidReceiveMessage((raw: unknown) => {
         if (!isWebviewToHost(raw)) {
@@ -102,6 +107,9 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
         }
         if (raw.type === "log") {
           const text = `[webview] ${raw.text}`;
+          this.webviewLogs.push(raw.text);
+          if (this.webviewLogs.length > 200) this.webviewLogs.shift();
+          this.logEmitter.fire(raw.text);
           if (raw.level === "error") log.error(text);
           else if (raw.level === "warn") log.warn(text);
           else log.info(text);
@@ -145,5 +153,6 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
     this.panel?.panel.dispose();
     this.resolvedEmitter.dispose();
     this.readyEmitter.dispose();
+    this.logEmitter.dispose();
   }
 }

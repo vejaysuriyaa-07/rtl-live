@@ -1,0 +1,37 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "reset",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "in",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "out",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "always": 2,
+    "assigns": 1,
+    "decls": [
+      "state",
+      "next_state"
+    ],
+    "localparams": [
+      "A",
+      "B"
+    ]
+  }
+}

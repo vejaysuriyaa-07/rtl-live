@@ -1,0 +1,30 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "vec",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "outv",
+      "direction": "output",
+      "width": 3
+    },
+    {
+      "name": "o2",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "o1",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "o0",
+      "direction": "output",
+      "width": 1
+    }
+  ]
+}

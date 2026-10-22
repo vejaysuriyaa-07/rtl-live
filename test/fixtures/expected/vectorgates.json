@@ -1,0 +1,30 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "out_or_bitwise",
+      "direction": "output",
+      "width": 3
+    },
+    {
+      "name": "out_or_logical",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "out_not",
+      "direction": "output",
+      "width": 6
+    }
+  ]
+}

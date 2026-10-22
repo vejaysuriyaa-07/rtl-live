@@ -1,0 +1,16 @@
+{
+  "file": "tree-sitter-verilog.wasm",
+  "sha256": "feeeed46bcab73588835aa16a351b9a6d74ed14834fc15c9eede9513e06765ef",
+  "bytes": 18261143,
+  "grammar": {
+    "package": "tree-sitter-verilog",
+    "version": "1.0.0",
+    "license": "MIT",
+    "abi": 14
+  },
+  "builtWith": {
+    "tree-sitter-cli": "tree-sitter 0.27.1",
+    "toolchain": "wasi-sdk clang + binaryen fetched by tree-sitter-cli"
+  },
+  "builtAt": "2026-10-22T07:56:42.529Z"
+}

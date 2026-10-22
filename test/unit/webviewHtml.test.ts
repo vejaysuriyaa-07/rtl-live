@@ -9,6 +9,7 @@ describe("webview html", () => {
     nonce,
     scriptUri: `${cspSource}/dist/webview.js`,
     styleUri: `${cspSource}/dist/webview.css`,
+    elkWorkerUri: `${cspSource}/dist/elkWorker.js`,
   });
 
   it("emits the exact CSP string", () => {

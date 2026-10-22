@@ -19,6 +19,6 @@
     "noEmit": true,
     "types": []
   },
-  "include": ["webview/**/*.ts", "src/ir/**/*.ts", "src/shared/**/*.ts", "test/webview/**/*.ts"],
+  "include": ["webview/**/*.ts", "src/ir/**/*.ts", "src/shared/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

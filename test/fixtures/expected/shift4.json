@@ -1,0 +1,23 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "in",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "sr",
+      "direction": "output",
+      "width": 4
+    }
+  ],
+  "structural": {
+    "always": 1
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "b",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "structural": {
+    "modules": [
+      "inv",
+      "top_module"
+    ],
+    "instances": [
+      {
+        "name": "u0",
+        "type": "inv",
+        "pins": [
+          "x",
+          "y"
+        ]
+      }
+    ]
+  }
+}
