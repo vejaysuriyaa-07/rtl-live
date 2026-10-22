@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import { startHarness, postRender, post, ROOT } from "./harness";
 import { structuralDoc } from "./docs";
+import { FallbackStructuralParser } from "../../src/structural/fallbackScanner";
+import { structuralToIr } from "../../src/structural/toIr";
 
 const ART = join(ROOT, "artifacts");
 let harness: Awaited<ReturnType<typeof startHarness>>;
@@ -62,7 +65,6 @@ test("M7: the view toggle posts setView and the badge names the view", async ({ 
 
 test("M7: a latch carries a warning badge and no clock triangle; a flop has the triangle", async ({ page }) => {
   await page.goto(`${harness.url}/`);
-  const { readFileSync } = await import("node:fs");
   const doc = JSON.parse(readFileSync(join(ROOT, "test", "golden", "latch_vs_flop.ir.json"), "utf8"));
   await postRender(page, doc);
   await expect(page.locator('g.node-dff.op-dlatch .warn-badge')).toHaveCount(1);
@@ -70,4 +72,17 @@ test("M7: a latch carries a warning badge and no clock triangle; a flop has the 
   await expect(page.locator('g.node-dff.op-dff .clk-tri')).toHaveCount(1);
   await expect(page.locator('g.node-dff.op-dff .warn-badge')).toHaveCount(0);
   await page.screenshot({ path: join(ART, "m7-latch-vs-flop.png") });
+});
+
+test("M7: a multiply driven net and a combinational loop carry warning badges on the wire", async ({ page }) => {
+  await page.goto(`${harness.url}/`);
+  for (const [name, net] of [
+    ["multi_driver.v", "y"],
+    ["comb_loop.v", "a"],
+  ]) {
+    const file = new FallbackStructuralParser().parse(readFileSync(join(ROOT, "test", "fixtures", "semantics", name!), "utf8"));
+    await postRender(page, structuralToIr(file, { sourceUri: name!, generation: 1, top: "top_module" }));
+    await expect(page.locator(`g.net.warn[data-net="net:${net}"] .warn-badge`)).toHaveCount(1);
+  }
+  await page.screenshot({ path: join(ART, "m7-comb-loop.png") });
 });

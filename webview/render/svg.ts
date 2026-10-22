@@ -189,7 +189,7 @@ function roundLayout(layout: ElkGraphOut): ElkGraphOut {
 function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rippers: ReadonlySet<string>): { markup: string; labelled: boolean } {
   const d = edgePath(e);
   const width = net?.width ?? 1;
-  const cls = `net${width > 1 ? " bus" : ""}${net?.role ? ` ${net.role}` : ""}`;
+  const cls = `net${width > 1 ? " bus" : ""}${net?.role ? ` ${net.role}` : ""}${net?.warnings && net.warnings.length > 0 ? " warn" : ""}`;
   const netId = net?.id ?? e.id;
   let label = "";
   if (width > 1 && showWidth) {
@@ -210,7 +210,15 @@ function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rip
   }
   const title = net ? `${net.name ?? net.id}${net.aliases && net.aliases.length > 0 ? ` (also ${net.aliases.join(", ")})` : ""} (${width} bit${width === 1 ? "" : "s"})` : netId;
   const junctions = (e.junctionPoints ?? []).map((j) => `<circle class="junction" cx="${fmt(j.x)}" cy="${fmt(j.y)}" r="2.5"/>`).join("");
-  return { markup: `<g class="${cls}" data-net="${esc(netId)}"${net ? srcAttr(net.src) : ""}><path class="net-path" d="${d}"/>${label}${junctions}<title>${esc(title)}</title></g>`, labelled: label !== "" };
+  // Semantic warning badge on the first wire of the net (multiple drivers, combinational loop).
+  let warn = "";
+  if (showWidth && net?.warnings && net.warnings.length > 0) {
+    const p = busLabelPos(e, "middle", false);
+    if (p) {
+      warn = `<g class="warn" data-warning="${esc(net.warnings.join(","))}"><path class="warn-badge" d="M${fmt(p.x)},${fmt(p.y - 13)} L${fmt(p.x + 6)},${fmt(p.y - 3)} L${fmt(p.x - 6)},${fmt(p.y - 3)} Z"/><text class="warn-badge-text" x="${fmt(p.x)}" y="${fmt(p.y - 4)}" text-anchor="middle">!</text><title>${esc(`warning: ${net.warnings.join(", ")}`)}</title></g>`;
+    }
+  }
+  return { markup: `<g class="${cls}" data-net="${esc(netId)}"${net ? srcAttr(net.src) : ""}><path class="net-path" d="${d}"/>${label}${junctions}${warn}<title>${esc(title)}${net?.warnings && net.warnings.length > 0 ? `\nwarning: ${net.warnings.join(", ")}` : ""}</title></g>`, labelled: label !== "" || warn !== "" };
 }
 
 export function renderModule(view: ModuleView, rawLayout: ElkGraphOut, opts: RenderOptions = {}): RenderedSvg {

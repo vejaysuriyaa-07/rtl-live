@@ -4,6 +4,7 @@ import { fromYosys } from "../ir/fromYosys";
 import { simplifyModule, type SimplifyOptions } from "../ir/simplify";
 import { annotateStateRegisters } from "../ir/fsmInfo";
 import { rtlView } from "../ir/rtlView";
+import { annotateSemantics } from "../ir/semantics";
 import type { StructuralFile } from "../structural/types";
 import type { SynthBackend } from "./backend";
 import { collectStubs, stubsToVerilog } from "./blackboxStubs";
@@ -103,7 +104,9 @@ export async function synthesize(backend: SynthBackend, opts: SynthesizeOptions,
   for (const [name, view] of Object.entries(rawDoc.modules)) {
     const sm = opts.file.modules.find((m) => m.name === name);
     const shaped = opts.view === "rtl" ? rtlView(view) : view;
-    modules[name] = annotateStateRegisters(simplifyModule(shaped, opts.simplify), sm);
+    const out = annotateStateRegisters(simplifyModule(shaped, opts.simplify), sm);
+    rawDoc.diagnostics.push(...annotateSemantics(out, sm));
+    modules[name] = out;
   }
   const doc: SchematicDoc = { ...rawDoc, modules, view: opts.view };
   return { ...base, ok: true, doc, rawDoc, diagnostics: rawDoc.diagnostics, unknownCellTypes, elapsedMs: performance.now() - t0 };

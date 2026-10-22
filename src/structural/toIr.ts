@@ -15,6 +15,7 @@ import {
 } from "../ir/types";
 import type { SConnection, SInstance, SModule, StructuralFile } from "./types";
 import { literalWidth, selectWidth } from "./width";
+import { annotateSemantics } from "../ir/semantics";
 
 export interface ToIrOptions {
   sourceUri: string;
@@ -178,7 +179,9 @@ export function structuralToIr(file: StructuralFile, opts: ToIrOptions): Schemat
   const modules: Record<string, ModuleView> = {};
   for (const m of file.modules) {
     try {
-      modules[m.name] = moduleToView(m, file, labelLength);
+      const view = moduleToView(m, file, labelLength);
+      diagnostics.push(...annotateSemantics(view, m));
+      modules[m.name] = view;
     } catch (e) {
       diagnostics.push({ severity: "error", message: `structural IR failed for ${m.name}: ${String(e)}`, source: "structural", line: m.src.line });
       modules[m.name] = { name: m.name, ports: m.ports.map(portOf), nodes: [], nets: [], src: m.src };

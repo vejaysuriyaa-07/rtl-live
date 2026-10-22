@@ -101,6 +101,8 @@ export interface Net {
   width: number;
   /** Clock or reset nets are drawn in their own style (Part B colour rules) */
   role?: "clock" | "reset";
+  /** Semantic warnings drawn as a badge on the wire: "multiple drivers", "combinational loop" */
+  warnings?: string[];
   /** Driver of this net; a port name ref uses node "port:<name>" */
   driver: NetEnd | null;
   sinks: NetEnd[];

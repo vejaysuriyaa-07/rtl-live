@@ -429,6 +429,40 @@ Note on expected files: `test/fixtures/expected/*.json` are not edited for fixes
 - Deviation to know: Yosys's Verilog front end folds `state == B` with a 1-bit constant into the state bit before any pass runs (also with `read_verilog -noopt`), so `fsm_moore` shows `out` driven by the register, not a `==` box. Comparators the front end keeps (`compare4`, `arith_compare`) stay.
 - Accuracy report after this phase: structural L1 4/43 (clouds), L2 43/43, L3 39/43; rtl L1 43/43, L2 43/43, L3 32/43; gate L1 43/43, L2 5/5 asserted (n/a elsewhere), L3 32/43. L3 leftovers are Phase 5: bus width labels on ripper labels, instance titles over the first pin label, LATCH title over EN.
 
+### Phase 5 (reduced): readability (done 2026-10-22, `b4ba3ba`)
+
+Fast-track scope: only the remaining L3 failures. Titled boxes (instances, black boxes, unknown cells) reserve an 18 px title row and flip-flops carry their title at the top, both through `elk.spacing.portSurrounding`; fan-out edges merge (`elk.layered.mergeEdges`) so a trunk splits at junction dots; clock and reset nets carry `role` (CSS hooks `net.clock`, `net.reset`); inout ports are hexagons; every layout coordinate is rounded to whole pixels; ripper labels hang right of the bar on both sides (a join input shows `xN` and keeps its range in the tooltip); the width label goes on the first wire of a bus that can carry it and never on a slice that already shows its range (L3 counts the ripper range as that slice's width label). Result: L3 43/43 in all three views.
+
+### Phase 6 (reduced): semantic warnings (done 2026-10-22)
+
+`src/ir/semantics.ts`: a signal assigned by more than one `assign` or `always` gets the "multiple drivers" badge on its wire and an error in the banner (Yosys merges the drivers silently, so the structural finding is carried into both synthesized views); a cycle through combinational nodes (flops, instances, black boxes, constants and sequential always clouds break it) marks every net on the cycle with "combinational loop" and a warning diagnostic. Badges are a small triangle on the wire with the text in the tooltip; the wire is dashed in the warning colour. Fixtures live in `test/fixtures/semantics/` (outside the accuracy set: a zero-delay loop would hang Icarus). Tests: `test/unit/semantics.test.ts`, Playwright `m7.states.spec.ts`.
+
+### Manual checks (BUG_HUNT.md Part A items not automated)
+
+Run in a scratch folder outside the repo with the installed vsix. Expected results in brackets.
+
+A1 live typing: paste a whole file then Cmd+Z twenty times fast [no stuck or stale diagram]; CRLF and tab files [hover and click land on the right line and column]; `` `define WIDTH 8 `` in a port [no crash, width unknown shows as `?`]; `parameter N = 8` with `input [N-1:0] a` [width 8 after synthesis, `?` in the structural view]; big-endian `[0:7]`, `[0:0]`, `[127:0]`, `signed` ports [widths right]; non-ANSI header [ports drawn]; two modules neither named `top_module` [first module is top, dropdown switches]; empty file and comment-only file [empty state]; delete one `;` mid-file [rest of the diagram survives, banner says `missing ';'`].
+
+A2 semantics: undriven output and unused input [not yet badged, see Deferred]; incomplete `if` in `always @(*)` [LATCH box with the badge]; `case` with and without `default` [latch only when a value is missing]; `<=` versus `=` shift register [different flop chains]; async reset [R pin, tooltip "async"]; priority `if / else if / else` [mux chain]; `casez` with `?` [renders, no crash]; tri-state `1'bz` [constant pill `1'bz`]; `{cout, sum} = a + b` [join on the adder output]; `assign y8 = a4 + b4` [adder output width 8]; `generate for` with 4 instances [4 boxes]; memory `reg [7:0] mem [0:15]` [generic `$mem` box, logged once]; a `function` in an `assign` [inlined logic].
+
+A3 layout: crossing without a dot versus junction with a dot; 30-character names [boxes grow]; 50+ gates and one clock to 20 flops [readable, no hairball]; feedback loops readable; light, dark, high contrast, VS Code zoom, narrow sidebar, external monitor.
+
+A4 interaction: hover and click on a multi-line expression; cursor highlight on every element kind; three-level hierarchy drill and breadcrumb; exported SVG in a browser and sharp PNG; sidebar and pop-out panel in sync.
+
+A5 lifecycle: sleep then switch tabs; second window; five tabs quickly; split editors [the active editor is drawn]; rename and delete an open file; untitled set to Verilog; `rtlLive.synthesisBackend` = `wasm` [same diagrams as native]; only one VS Code version running.
+
+A6 performance: 500-line design [typing instant]; one hour of use [helper process memory stable in Activity Monitor].
+
+### Deferred to v0.3
+
+- Part B: minimap, hover focus mode, print-ready export (white background option), designed loading and error states beyond the banner and badges, grid-snapped routing, monospace signal names and the full line-weight pass, selection accent on connected nets, a bubble on negative-latch clock pins.
+- ACCURACY 6.4 golden screenshots compared on every change, and the contact sheet.
+- A2 badges for undriven outputs, unused inputs and inferred latches from incomplete `case` (the latch itself is badged).
+- A1 and A3 to A6 automation listed under "Manual checks".
+- Structural view L1: logic clouds have no netlist; an RTL-view-from-structure for broken files.
+- Part C: search, trace drivers and loads, cones, path view, stats, simulation values.
+- Yosys front-end folding of `state == 1'b1` (fsm_moore keeps no comparator).
+
 #### Phase 3 log (as it happened)
 
 Done and committed:

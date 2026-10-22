@@ -256,6 +256,10 @@ svg.schematic:active {
   font-size: 9px;
   opacity: 0.85;
 }
+.schematic .net.warn .net-path {
+  stroke: var(--rl-warn);
+  stroke-dasharray: 5 3;
+}
 .schematic .junction {
   fill: var(--rl-fg);
 }
