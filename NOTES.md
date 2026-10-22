@@ -346,3 +346,17 @@ Next time it happens: open the view, run "RTL Live: Show Log", and copy the line
 - `npm run test:webview`: 47 passing.
 - `npm run test:packaged`: 8 passing on 1.143.0 against the packaged vsix; grammar loads.
 - Rebuilt `rtl-live-0.1.0.vsix` and reinstalled with `"$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" --install-extension rtl-live-0.1.0.vsix --force`; see the install log below.
+
+Install log (2026-10-22 02:32, `code --install-extension rtl-live-0.1.0.vsix --force` from `~/Applications/Visual Studio Code.app`): "Extension 'rtl-live-0.1.0.vsix' was successfully installed." The installed `dist/extension.js` (169,587 bytes) has no `import_meta` reference and contains the boot script. A probe launch of the same app through LaunchServices (translocated, installed mode, 7458.v open) logged:
+
+```
+structural parser: tree-sitter
+sidebar webview script https://file%2B.vscode-resource.vscode-cdn.net/.../dist/webview.js
+sidebar webview resolved (visible: true)
+synthesis backend: native yosys 0.70+post at /opt/homebrew/bin/yosys
+[webview] webview booting (vscode api)
+sidebar webview ready, replaying 3 message(s)
+[webview] layout engine: worker
+```
+
+Both running VS Code windows (1.106.3 and the 1.143.0 copy) still hold the old 0.1.0 files until "Developer: Reload Window".
