@@ -394,3 +394,35 @@ What was built (no fixes yet):
 Baseline (docs/ACCURACY_REPORT.md): structural view L1 4/34 (only instance-only files export; clouds have no netlist), L2 34/34, L3 0/34; gate view L1 32/34, L2 29/34, L3 0/34. Real findings behind the numbers: logical operators are not distinguishable from bitwise ones in the IR (`vectorgates.v`, `logic_ops.v` L1); `case` produces `$pmux` plus two `$eq` cells, `if (en)` produces a `$dff` plus `$mux` (no `opt_dff`/dffe), `~(a & b & c)` ends as AND plus NAND (bubble rule runs before chain merging); every L3 fails on Fit above 100 percent, and on top of that bus width labels sit on ripper labels, instance titles overlap the first pin label, and the LATCH title overlaps its EN pin.
 
 PARTIAL: ACCURACY.md section 5.2 fixtures and 5.3 editing cases are unknown (file missing); the fixtures above cover the features the brief names. Editing cases are added in Phase 3 as regression tests for bugs 2, 3 and 9.
+
+### Phase 3: bug fixes (in progress, paused 2026-10-22)
+
+Done and committed:
+
+- L1 first: logical operators (`9604f48`, bug 5). Gate view L1 is 34/34.
+- Bug 4 and 11 (`86d1103`): `src/extension/lifecycle.ts` runs a ready watchdog (8 s, retry once, then a failure page with a Reload Window command link and button), a 15 s ping/pong heartbeat while visible (a missed pong reloads the page), and a resync on view show and window focus; the controller re-reads the active editor at those moments. Fake-timer unit tests plus three integration tests (`m7.lifecycle.test.ts`).
+- Bug 2 and 6 (`fa4d083`): one rule. When the newest text does not parse or has not been synthesized, the last good diagram stays with the "Stale" badge and the ports that were added, removed or changed in the structural parse are overlaid muted (`src/ir/overlay.ts`); the badge text names the changes. Bug 9: untitled Verilog or SystemVerilog renders; untitled Plain Text that looks like Verilog gets a hint with "Set language to Verilog".
+- Bug 3 (`bbc3cdd`): `src/structural/errorMessages.ts` names what is missing with the right line and column, including at the end of the file; tree-sitter MISSING tokens kept; recovered ports marked `tentative` and drawn greyed; Verilator (`lintWithVerilator`, now default on) sharpens generic messages 400 ms later. Integration test `m8.editing.test.ts` edits a temp copy of 7458.v four ways.
+- Found while writing those tests (`8567cf3`): host-to-webview generations were per document, so after many edits in one file a freshly opened file was silently dropped by the page. Messages now carry a global sequence number; regression test "after many edits in one file, a freshly opened file still reaches the view". This is the ACCURACY.md 5.3 "switch tab" case.
+- Bug 12: Phase 1.
+
+Suite at the pause: typecheck and lint clean; unit 375 (21 files); integration 15; webview 49; `git status` clean under `test/fixtures/`.
+
+The spec documents arrived during this phase (`fd5eca0`). Items that were PARTIAL for lack of them, now mapped:
+
+| Item | Where it goes |
+| --- | --- |
+| Bug 1 (module title overflows its box, Fit above 100%) | Phase 3, next: structural module box grows to its title (`nodeSize`/`moduleToElk` for the port-only case), `FIT_MAX_SCALE` to 1 (also closes every L3 "fit" failure) |
+| Bug 7 (`{5{a,b,c,d,e}}` expands to one wire per bit) | Phase 3: periodic run detection in `fromYosys` `joinFor` (inner join of the group, outer pin `x5`), exporter already handles `{N{...}}` of any width |
+| Bug 8 (bus label touches the port chevron) | Phase 3 (or 5): place the width label on the longest segment of the first edge, L3 overlap check against port shapes |
+| Bug 10 (ports scattered in a grid when the file has errors) | Phase 3: `elk.separateConnectedComponents=false` plus model order for port-only graphs; unit check that inputs are on the left, outputs on the right, in declaration order |
+| ACCURACY 5.2 fixtures (rca4, mux4_case, en_flop, scan_flop, latch_vs_flop, counter8_reset, compare4, bitwise_vs_logical, inverted_gates) | Phase 2 backfill, done first thing in Phase 4 with expectations written to the "Must show" lines (existing case_mux, dff_enable, latch_en, logic_ops, nand_nor stay as variants) |
+| ACCURACY 5.1 "must show" rows for existing fixtures | Phase 4: add missing assertions (counter4 adder feedback, module_shift8 mux labels 0..3, fsm_moore comparator kept) |
+| ACCURACY 5.3 editing cases | `module top_module(` title fits (bug 1 test), `module top_module(input a, output b` ports left/right (bug 10 test), delete endmodule (done), switch tab (done), sleep (manual, A5) |
+| ACCURACY 2 and 3 (RTL view and gate view) | Phase 4: two Yosys scripts (RTL: `proc; opt_clean; opt_dff; opt_clean`, no `opt_expr` so `state == B` stays a comparator; gate: current script), `$pmux` plus `$eq` on one selector collapsed to an N:1 mux with select-value labels, EN flop in RTL view, mux-in-front-of-D in gate view, toolbar toggle, badge shows the view, `synth.rtl` and `synth.gate` blocks in expected JSON, accuracy report gains an `rtl` view |
+| ACCURACY 6.4 golden screenshots | Phase 5: Playwright `toHaveScreenshot` baselines per fixture, light and dark, committed |
+| BUG_HUNT Part A | Phase 6: A1 and A2 as parser, IR and integration tests with new fixtures; A2 semantics (multiple drivers, undriven, unused, loop, latch, blocking vs non-blocking) as visible warning badges; A3 to A6 where feasible, rest in "Manual checks" |
+| BUG_HUNT Part B | Phase 5 |
+| BUG_HUNT Part C | out of scope except search and trace as a stretch |
+
+Exact next step: bug 1. Add a unit test that lays out `structuralToIr` of `module top_module(` and asserts the title text box fits the module frame and that `FIT_MAX_SCALE === 1`; then set the cap, size the frame to the title, and run `npm run test:accuracy:update` (the L3 "fit" entries disappear from `known-failures.json`; review the diff). Then bugs 10, 7, 8 in that order, each test first, then update docs/ACCURACY_REPORT.md and this section, and close Phase 3 with the full suite and `npm run test:packaged`.
