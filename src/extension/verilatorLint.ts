@@ -31,7 +31,8 @@ export async function verilatorLint(binary: string, text: string, stubs: string,
       files.push("blackboxes.v");
     }
     const out = await new Promise<string>((resolve) => {
-      execFile(binary, ["--lint-only", "-Wno-fatal", "--top-module", top, ...files], { cwd: dir, timeout: 10_000 }, (_err, stdout, stderr) => resolve(`${stderr}\n${stdout}`));
+      const topArgs = top ? ["--top-module", top] : [];
+      execFile(binary, ["--lint-only", "-Wno-fatal", ...topArgs, ...files], { cwd: dir, timeout: 10_000 }, (_err, stdout, stderr) => resolve(`${stderr}\n${stdout}`));
     });
     const line = out.split(/\r?\n/).find((l) => l.startsWith("%Error"));
     if (!line) return undefined;

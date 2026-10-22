@@ -30,7 +30,7 @@ export function readSynthSettings(): SynthSettings {
     extraPasses: c.get<string>("yosysExtraPasses", ""),
     optimize: c.get<boolean>("optimize", false),
     bubbles: c.get<boolean>("bubbles", true),
-    lintWithVerilator: c.get<boolean>("lintWithVerilator", false),
+    lintWithVerilator: c.get<boolean>("lintWithVerilator", true),
   };
 }
 

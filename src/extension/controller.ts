@@ -12,6 +12,7 @@ import { Scheduler, type StructuralJob, type SynthJob } from "./scheduler";
 import type { SchematicViewProvider } from "./schematicView";
 import { readSynthSettings, SynthManager } from "./synthManager";
 import { findVerilator, verilatorLint } from "./verilatorLint";
+import { friendlyVerilatorMessage } from "../structural/errorMessages";
 
 export interface RenderEvent {
   generation: number;
@@ -55,6 +56,9 @@ export class Controller implements vscode.Disposable {
   private activeDoc: vscode.TextDocument | undefined;
   /** Untitled Plain Text document currently offered the "Set language to Verilog" hint */
   private hintDoc: vscode.TextDocument | undefined;
+  private lintTimer: NodeJS.Timeout | undefined;
+  /** Counters for tests */
+  lintStats = { runs: 0, replaced: 0 };
   private readonly topOverride = new Map<string, string>();
   private readonly docs = new Map<string, DocState>();
   private readonly renderEmitter = new vscode.EventEmitter<RenderEvent>();
@@ -302,6 +306,8 @@ export class Controller implements vscode.Disposable {
       st.structural = { generation: job.generation, file, top, text: job.text };
       const first = file.errors[0];
       const error: BannerError | null = first ? { line: first.line, column: first.column, message: first.message, file: baseName(doc.fileName) } : null;
+      if (error) this.scheduleLint(job, top, error);
+      else this.cancelLint();
       const synthOn = this.synth.backendName !== "off";
       const keepLastGood = synthOn && st.lastGood !== undefined && st.lastGood.top === top && (top === "" || st.lastGood.modules[top] !== undefined);
       const modCount = `${file.modules.length} module${file.modules.length === 1 ? "" : "s"}`;
@@ -325,6 +331,40 @@ export class Controller implements vscode.Disposable {
     } catch (e) {
       log.error("structural pass failed", e);
     }
+  }
+
+  private cancelLint(): void {
+    if (this.lintTimer) clearTimeout(this.lintTimer);
+    this.lintTimer = undefined;
+  }
+
+  /**
+   * Bug 3: when the text does not parse, ask Verilator (if installed and enabled) for its
+   * verdict a moment later and replace a generic structural message with the specific one.
+   */
+  private scheduleLint(job: StructuralJob, top: string, current: BannerError): void {
+    this.cancelLint();
+    if (!this.synth.currentSettings.lintWithVerilator) return;
+    const binary = findVerilator();
+    if (!binary) return;
+    this.lintTimer = setTimeout(() => {
+      this.lintTimer = undefined;
+      if (this.scheduler.currentGeneration(job.docKey) !== job.generation) return;
+      this.lintStats.runs++;
+      void verilatorLint(binary, job.text, "", top)
+        .then((lint) => {
+          if (!lint || lint.line === undefined || this.scheduler.currentGeneration(job.docKey) !== job.generation) return;
+          const message = friendlyVerilatorMessage(lint.message);
+          const generic = /^syntax error/.test(current.message);
+          if (!generic) {
+            log.info(`verilator: ${message} at ${lint.line}:${lint.column ?? 1} (keeping "${current.message}")`);
+            return;
+          }
+          this.lintStats.replaced++;
+          this.provider.post({ type: "error", generation: job.generation, error: { ...current, message, line: lint.line, ...(lint.column !== undefined ? { column: lint.column } : {}) } });
+        })
+        .catch((e: unknown) => log.warn(`verilator lint failed: ${e instanceof Error ? e.message : String(e)}`));
+    }, 400);
   }
 
   private async runSynth(job: SynthJob): Promise<void> {
@@ -409,6 +449,7 @@ export class Controller implements vscode.Disposable {
   }
 
   dispose(): void {
+    this.cancelLint();
     this.scheduler.dispose();
     this.renderEmitter.dispose();
     for (const d of this.disposables) d.dispose();

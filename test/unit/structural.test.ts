@@ -123,4 +123,17 @@ describe("top selection", () => {
     expect(selectTop({ modules: f3.modules, cursorLine: 2 })).toBe("m2");
     expect(selectTop({ modules: f3.modules, override: "m1", cursorLine: 2 })).toBe("m1");
   });
+
+});
+
+describe("recovered ports", () => {
+  it("ports inside a broken header are kept and marked tentative", async () => {
+    const [ts] = await bothParsers();
+    const file = ts!.parse("module t(input a, output b\n  assign b = a;\nendmodule\n");
+    const m = file.modules[0]!;
+    expect(m.ports.map((p) => p.name)).toEqual(["a", "b"]);
+    expect(m.ports.find((p) => p.name === "b")!.tentative).toBe(true);
+    expect(m.ports.find((p) => p.name === "a")!.tentative).toBeUndefined();
+    expect(file.errors[0]).toEqual({ line: 1, column: 27, message: "missing ')' to close the port list" });
+  });
 });

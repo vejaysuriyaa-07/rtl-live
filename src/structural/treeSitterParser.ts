@@ -20,6 +20,7 @@ import type {
   StructuralParser,
 } from "./types";
 import { parseRange } from "./width";
+import { refineErrors } from "./errorMessages";
 import { uniq, extractIdentifiers, analyzeAlwaysText, LineIndex, parseConnectionText } from "./textUtils";
 
 function rangeOf(n: TsNode): SrcRange {
@@ -109,7 +110,7 @@ export class TreeSitterStructuralParser implements StructuralParser {
     this.lines = new LineIndex(text);
     const root = tree.rootNode;
     const spans = this.moduleSpans(root, text.length);
-    const errors = collectErrors(root);
+    const errors = refineErrors(text, collectErrors(root));
     const modules = spans.map((s) => this.buildModule(root, s));
     return { modules, errors, hasErrors: hasRealError(root), parser: "tree-sitter" };
   }
@@ -187,6 +188,25 @@ function collectErrors(root: TsNode): SError[] {
   return out;
 }
 
+/** A node inside, or containing, a syntax error: what it yields is tentative. */
+function inErrorContext(n: TsNode): boolean {
+  for (let p: TsNode | null = n; p; p = p.parent) if (p.type === "ERROR") return true;
+  return n.hasError;
+}
+
+const RESERVED = new Set(["assign", "always", "always_comb", "always_ff", "initial", "wire", "reg", "logic", "input", "output", "inout", "module", "endmodule", "begin", "end", "if", "else", "case", "endcase", "localparam", "parameter", "signed", "unsigned"]);
+
+/**
+ * Inside a broken header tree-sitter may attach the next statement's keyword to a
+ * port ("output b\n assign b = a" yields a port named "assign"). Read the name from
+ * the declaration text instead: the first identifier after the direction and type words.
+ */
+function recoveredPortName(declText: string): string | undefined {
+  const m = /^\s*(?:input|output|inout)?\s*(?:wire|reg|logic|var|signed|unsigned|\s)*(?:\[[^\]]*\]\s*)*([A-Za-z_][\w$]*)/.exec(declText);
+  const name = m?.[1];
+  return name && !RESERVED.has(name) ? name : undefined;
+}
+
 function extractPorts(nodes: TsNode[], span: ModuleSpan): SPort[] {
   const ports: SPort[] = [];
   const seen = new Map<string, SPort>();
@@ -218,10 +238,12 @@ function extractPorts(nodes: TsNode[], span: ModuleSpan): SPort[] {
     } else if (dim !== undefined) {
       lastRange = dim;
     }
-    const name = identName(directChildOfType(a, "port_identifier") ?? firstOfType(a, "port_identifier"));
+    const broken = inErrorContext(a);
+    const treeName = identName(directChildOfType(a, "port_identifier") ?? firstOfType(a, "port_identifier"));
+    const name = broken ? (recoveredPortName(a.text) ?? (treeName && !RESERVED.has(treeName) ? treeName : undefined)) : treeName;
     if (!name) continue;
     const r = parseRange(lastRange);
-    push({ name, direction: lastDir, width: r ? r.width : 1, ...(r ? { range: r.range } : {}), src: rangeOf(a) });
+    push({ name, direction: lastDir, width: r ? r.width : 1, ...(r ? { range: r.range } : {}), src: rangeOf(a), ...(broken ? { tentative: true } : {}) });
   }
 
   // Header fragments under ERROR: a dangling "output" with no identifier is ignored,
@@ -239,7 +261,7 @@ function extractPorts(nodes: TsNode[], span: ModuleSpan): SPort[] {
       const sib = f.nextNamedSibling;
       if (sib && sib.type === "port_identifier") {
         const name = identName(sib);
-        if (name) push({ name, direction: lastDir, width: r ? r.width : 1, ...(r ? { range: r.range } : {}), src: rangeOf(f) });
+        if (name) push({ name, direction: lastDir, width: r ? r.width : 1, ...(r ? { range: r.range } : {}), src: rangeOf(f), tentative: true });
       }
     }
   }

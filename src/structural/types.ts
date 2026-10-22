@@ -9,6 +9,8 @@ export interface SPort {
   width: number;
   range?: string;
   src: SrcRange;
+  /** Recovered from text inside a syntax error; drawn greyed out */
+  tentative?: boolean;
 }
 
 export type DeclKind = "wire" | "reg" | "logic" | "other";

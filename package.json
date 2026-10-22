@@ -177,8 +177,8 @@
         },
         "rtlLive.lintWithVerilator": {
           "type": "boolean",
-          "default": false,
-          "description": "When synthesis fails and verilator is on PATH, run verilator --lint-only for a friendlier error message."
+          "default": true,
+          "description": "When the file does not parse or synthesis fails and verilator is on PATH, run verilator --lint-only to sharpen the error message."
         }
       }
     }

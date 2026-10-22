@@ -197,7 +197,7 @@ export function structuralToIr(file: StructuralFile, opts: ToIrOptions): Schemat
 }
 
 function portOf(p: SModule["ports"][number]): Port {
-  return { name: p.name, direction: p.direction, width: p.width, ...(p.range !== undefined ? { range: p.range } : {}), src: [p.src] };
+  return { name: p.name, direction: p.direction, width: p.width, ...(p.range !== undefined ? { range: p.range } : {}), src: [p.src], ...(p.tentative ? { tentative: true } : {}) };
 }
 
 function moduleToView(m: SModule, file: StructuralFile, labelLength: number): ModuleView {

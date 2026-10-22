@@ -1,6 +1,7 @@
 // Fallback structural parser: tolerant tokenizer plus recursive descent for the
 // HDLBits subset. Used when the tree-sitter grammar wasm cannot be loaded.
 // It must produce the same StructuralFile as the tree-sitter parser on the fixtures.
+import { refineErrors } from "./errorMessages";
 import type { PortDirection, SrcRange } from "../ir/types";
 import type {
   SAlways,
@@ -74,7 +75,8 @@ export class FallbackStructuralParser implements StructuralParser {
       const t0 = toks[0];
       errors.push({ ...(t0 ? lines.pos(t0.start) : { line: 1, column: 1 }), message: "no module found" });
     }
-    return { modules, errors, hasErrors: errors.length > 0, parser: "fallback" };
+    const refined = refineErrors(text, errors);
+    return { modules, errors: refined, hasErrors: errors.length > 0, parser: "fallback" };
   }
 }
 
