@@ -32,8 +32,11 @@ describe("svg renderer with real ELK layout", () => {
   for (const name of goldens()) {
     it(`${name}: every net wider than 1 bit carries a width label`, async () => {
       const { view, svg } = await render(name);
+      const rippers = new Set(view.nodes.filter((n) => n.kind === "split" || n.kind === "join").map((n) => n.id));
       for (const net of view.nets) {
         if (net.width <= 1 || net.sinks.length === 0 || !net.driver) continue;
+        // A slice out of a split or a part into a join shows its range on the ripper instead.
+        if (rippers.has(net.driver.node) || net.sinks.every((x) => x.node.startsWith("join:"))) continue;
         const re = new RegExp(`<g class="net bus" data-net="${net.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[^>]*>[\\s\\S]*?<text class="bus-width"[^>]*>${net.width}</text>`);
         expect(svg.inner, `${name}: net ${net.id} (${net.width} bits) has no width label`).toMatch(re);
       }
