@@ -418,6 +418,17 @@ Gate: typecheck and lint clean; unit 383 (24 files); integration 16; webview 50;
 
 Note on expected files: `test/fixtures/expected/*.json` are not edited for fixes; new assertions go into unit tests (bug 7 lives in `synth.test.ts`) or new expected files for new fixtures.
 
+### Phase 4: RTL view, gate view and symbol rules (done 2026-10-22, `4cfc6a4`)
+
+- Two Yosys scripts (`src/synth/script.ts`, `view`): RTL runs `proc; opt_clean; opt_dff; opt_clean` (enables and resets fold into `$dffe`/`$sdff`, no `opt_expr` so written comparators and muxes survive); gate keeps `proc; opt_clean; opt_expr -mux_undef; opt_clean`. `SchematicDoc.view` records which one a doc is.
+- `src/ir/rtlView.ts`: a `$pmux` whose select bits are `$eq(sel, k)`, `$logic_not(sel)` (k = 0) or, for a 1-bit selector, the bit and its `$not`, becomes one N:1 mux with inputs labelled by select value, the selector net on `S` (width shown), the comparator and constant helpers removed, and an undefined default dropped when every value is covered (`info.select = "value"`, exported as an `==` chain). `mux4_case` shows `0 1 2 3`, `module_shift8` the same with a 2-bit `sel`, `fsm_moore` a 2:1 by state.
+- Simplify order is now buffers, chains, bubbles, chains, so `~(a & b & c)` is one 3-input NAND (`inverted_gates`, `nand_nor`).
+- Latches: no CLK pin so no triangle; every node with warnings draws a small badge (`warningBadge` in `symbols.ts`).
+- Host: `Controller.activeView` (persisted in `workspaceState`), both views cached per text and view, the shown view synthesized first and the other in the background so the toggle is instant; `setView` message from the toolbar; `StatusInfo.view`; the badge reads "RTL view" or "Gate view". Integration test `m9.views.test.ts` (en_flop: EN pin in RTL, mux with Q on input 0 in gate), Playwright toggle and latch tests.
+- Expected files: `synth.simplified` renamed to `synth.rtl` (mechanical), `synth.gate`, `rtlModules` and `gateModules` added; `fsm_moore.json`'s reset-mux assertion moved to its gate block and an `sdff` assertion added to rtl (the view split made the old assertion gate-only). The nine 5.2 fixtures have per-view expectations. 5.1 rows that the expected files did not cover are unit tests in `synth.test.ts` ("ACCURACY.md 5.1 rows"). Goldens: every `<fixture>.ir.json` gained `"view": "rtl"`; counter4, fsm_moore and module_shift8 changed shape as intended; `<fixture>.gate.ir.json` added for every synthesized fixture.
+- Deviation to know: Yosys's Verilog front end folds `state == B` with a 1-bit constant into the state bit before any pass runs (also with `read_verilog -noopt`), so `fsm_moore` shows `out` driven by the register, not a `==` box. Comparators the front end keeps (`compare4`, `arith_compare`) stay.
+- Accuracy report after this phase: structural L1 4/43 (clouds), L2 43/43, L3 39/43; rtl L1 43/43, L2 43/43, L3 32/43; gate L1 43/43, L2 5/5 asserted (n/a elsewhere), L3 32/43. L3 leftovers are Phase 5: bus width labels on ripper labels, instance titles over the first pin label, LATCH title over EN.
+
 #### Phase 3 log (as it happened)
 
 Done and committed:
