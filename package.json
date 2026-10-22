@@ -194,6 +194,7 @@
     "test": "npm run build && vitest run",
     "test:golden:update": "UPDATE_GOLDEN=1 vitest run test/golden",
     "test:integration": "npm run build && vscode-test",
+    "test:packaged": "node scripts/test-packaged.mjs",
     "test:webview": "npm run build && playwright test",
     "bench": "node scripts/bench.mjs",
     "package": "npm run build:prod && vsce package --no-dependencies",
