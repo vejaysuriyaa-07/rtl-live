@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0
+
+Visual design release: calm, precise and readable, like a polished EDA tool or a textbook figure. Every value is a design token in `webview/render/tokens.ts`; the stylesheet repeats them on `:root` and a unit test keeps the two in step.
+
+- Symbols in the editor foreground at 1.75 px, wires a step lighter (70 percent) at 1.25 px, buses 2.5 px, the module frame 1 px. One accent, the theme link colour, for ports and junction dots only; warning and error colours only for real warnings and errors; everything else greyscale.
+- Gate and box bodies filled at 6 percent of the foreground, the module frame at 3 percent, dashed boxes (black boxes, logic clouds) unfilled. Node boxes have 6 px corners, port chevrons 4 px, muxes 3 px.
+- Wire bends get a 4 px arc, except within 8 px of a junction dot or a pin, so a rounded corner never reads as a connection.
+- Type: signal, port, pin and width labels in the editor's monospace font (11 px, 10 px for widths and slice ranges, muted); titles and operator glyphs in the UI sans at 12 px semibold.
+- Hover lifts an element with a soft 2 px accent glow and changes no colour; focus mode fades everything outside the net to 35 percent; the editor cursor match takes the accent. Transitions are 150 ms and off under prefers-reduced-motion.
+- High contrast themes: no fills, no glow, no shadows, 2 px borders in the theme's contrast colours.
+- Toolbar: 22 px controls, codicons for fit, zoom and open-in-panel, RTL and Gate as one segmented control; badges, banner, hint, breadcrumb, Legend and the empty, loading, error and stale states restyled on the same tokens.
+- Export: dark lines on white with a 24 px margin and safe font stacks by default, so the file looks finished outside VS Code; `rtlLive.exportPalette: "theme"` keeps the editor colours. PNG export sizes itself from the SVG.
+- Performance: the junction post-pass that keeps dots 20 px apart was quadratic in the number of wires and took 2.3 s on a 100-node diagram; it now indexes segments and scores each slide by what it changes, and the same diagram renders in 13 ms. The renderer's crossing markers use the same index.
+- Proof: `test/webview/v04.visual.spec.ts` renders every fixture in light and dark and the key fixtures plus the Legend in light, dark and high contrast; `scripts/v04-compare.mjs` writes before and after pairs. `test/webview/v04.hover.spec.ts` checks the hover glow, the focus fade, the high contrast rules and both export palettes. `npm run test:perf` holds the 16 ms render budget.
+
 ## 0.3.1
 
 Two layout fixes from docs/BUGS.md (items 19 and 20).
