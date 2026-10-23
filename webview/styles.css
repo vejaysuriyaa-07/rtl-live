@@ -41,7 +41,21 @@ body {
   flex: none;
 }
 
-.tb-btn,
+.tb-btn {
+  font: inherit;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--rl-fg);
+  background: color-mix(in srgb, var(--rl-fg) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rl-fg) 20%, transparent);
+  border-radius: 3px;
+  padding: 1px 7px;
+  cursor: pointer;
+}
+.tb-btn.active {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #fff);
+}
 .tb-views {
   display: inline-flex;
   margin-left: 6px;
@@ -128,6 +142,51 @@ body {
   flex: 1;
   min-height: 0;
   position: relative;
+}
+
+/* ---- legend ---- */
+#legend {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 300px;
+  max-width: calc(100% - 16px);
+  max-height: calc(100% - 16px);
+  overflow: auto;
+  background: var(--rl-bg);
+  color: var(--rl-fg);
+  border: 1px solid color-mix(in srgb, var(--rl-fg) 25%, transparent);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 11px;
+  z-index: 5;
+}
+.legend-head {
+  padding: 6px 10px;
+  font-weight: 600;
+  border-bottom: 1px solid color-mix(in srgb, var(--rl-fg) 15%, transparent);
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rl-fg) 8%, transparent);
+}
+.legend-pic {
+  flex: none;
+  width: 96px;
+  display: flex;
+  justify-content: center;
+}
+.legend-svg {
+  overflow: visible;
+}
+.legend-title {
+  font-weight: 600;
+}
+.legend-body {
+  color: var(--rl-muted);
 }
 
 svg.schematic {
@@ -263,11 +322,31 @@ svg.schematic:active {
 .schematic .junction {
   fill: var(--rl-fg);
 }
+.schematic .crossing {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+}
+.schematic .tag {
+  font-size: 7.5px;
+  fill: var(--rl-muted);
+  letter-spacing: 0.3px;
+}
+.schematic .body.reduce-box {
+  stroke-dasharray: none;
+}
+.schematic .pin-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+}
 .schematic .node,
 .schematic .port {
   cursor: pointer;
 }
-.schematic .node:hover .body,
+.schematic .node:hover .body {
+  stroke: var(--rl-focus);
+}
 .schematic .port.ghost .port-shape,
 .schematic .port.tentative .port-shape {
   stroke-dasharray: 3 2;

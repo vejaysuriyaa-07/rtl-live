@@ -1,5 +1,7 @@
 // Toolbar, status badge, banner and breadcrumb. Plain DOM, no framework.
 import type { StatusInfo, BannerError, HintInfo } from "../../src/shared/protocol";
+import { legendItems } from "./legend";
+import { fmt } from "../render/svg";
 
 export interface ChromeHandlers {
   onFit(): void;
@@ -31,6 +33,8 @@ export class Chrome {
   private readonly breadcrumbEl: HTMLElement;
   private readonly emptyEl: HTMLElement;
   private readonly hintEl: HTMLElement;
+  private readonly legendEl: HTMLElement;
+  private readonly legendBtn: HTMLButtonElement;
   private currentError: BannerError | null = null;
 
   constructor(
@@ -48,12 +52,12 @@ export class Chrome {
     this.bannerEl.insertAdjacentElement("afterend", this.hintEl);
 
     toolbar.append(
-      button("Fit", "Fit diagram to view (f)", () => handlers.onFit()),
+      button("Fit", "Fit the whole diagram in the view (f)", () => handlers.onFit()),
       button("+", "Zoom in (+)", () => handlers.onZoomIn()),
       button("−", "Zoom out (-)", () => handlers.onZoomOut()),
     );
     this.viewButtons = {
-      rtl: button("RTL", "RTL view: shaped like the source (case is one mux, enable flops keep their EN pin)", () => handlers.onSetView("rtl"), "view-btn"),
+      rtl: button("RTL", "RTL view: drawn the way the code reads (a case is one mux, an enable stays a pin)", () => handlers.onSetView("rtl"), "view-btn"),
       gate: button("Gate", "Gate view: what synthesis builds (enables and resets become muxes)", () => handlers.onSetView("gate"), "view-btn"),
     };
     const views = document.createElement("span");
@@ -63,20 +67,43 @@ export class Chrome {
     this.setView("rtl");
     this.topSelect = document.createElement("select");
     this.topSelect.className = "tb-select";
-    this.topSelect.title = "Top module";
+    this.topSelect.title = "Which module to draw";
     this.topSelect.addEventListener("change", () => handlers.onSelectTop(this.topSelect.value));
     toolbar.append(this.topSelect);
     const spacer = document.createElement("span");
     spacer.className = "tb-spacer";
     toolbar.append(spacer);
+    this.legendBtn = button("Legend", "What every symbol means (l)", () => this.toggleLegend(), "legend-btn");
+    this.legendBtn.setAttribute("aria-pressed", "false");
     toolbar.append(
-      button("SVG", "Export SVG", () => handlers.onExport("svg")),
-      button("PNG", "Export PNG (2x)", () => handlers.onExport("png")),
-      button("↗", "Open in editor panel", () => handlers.onOpenInPanel()),
+      this.legendBtn,
+      button("SVG", "Save the diagram as an SVG file", () => handlers.onExport("svg")),
+      button("PNG", "Save the diagram as a PNG image (2x)", () => handlers.onExport("png")),
+      button("↗", "Open in an editor tab", () => handlers.onOpenInPanel()),
     );
+    this.legendEl = document.createElement("div");
+    this.legendEl.id = "legend";
+    this.legendEl.setAttribute("role", "dialog");
+    this.legendEl.setAttribute("aria-label", "Legend");
+    this.legendEl.hidden = true;
+    root.querySelector<HTMLElement>("#canvas")!.append(this.legendEl);
     this.bannerEl.addEventListener("click", () => {
       if (this.currentError) handlers.onErrorClick(this.currentError);
     });
+  }
+
+  toggleLegend(open?: boolean): void {
+    const next = open ?? this.legendEl.hidden;
+    // Built on open and emptied on close, so the samples never sit in the diagram's DOM.
+    if (next) this.legendEl.replaceChildren(...buildLegend().children);
+    else this.legendEl.replaceChildren();
+    this.legendEl.hidden = !next;
+    this.legendBtn.classList.toggle("active", next);
+    this.legendBtn.setAttribute("aria-pressed", next ? "true" : "false");
+  }
+
+  get legendOpen(): boolean {
+    return !this.legendEl.hidden;
   }
 
   setModules(names: string[], selected: string): void {
@@ -112,6 +139,17 @@ export class Chrome {
     const b = document.createElement("span");
     b.className = `badge badge-${cls}`;
     b.textContent = badge;
+    b.title = s.warmingUp
+      ? "Starting the Yosys synthesizer. The first diagram takes a moment."
+      : s.fidelity === "synthesized"
+        ? s.view === "gate"
+          ? "Synthesized by Yosys and optimized into gates."
+          : "Synthesized by Yosys and drawn the way the code reads."
+        : s.fidelity === "stale"
+          ? "The code changed or has an error. This is the last diagram that synthesized; changed ports are greyed."
+          : s.editing
+            ? "The code has a syntax error. Showing what could still be read from it."
+            : "Drawn from the code text only, not yet synthesized into gates.";
     b.dataset["fidelity"] = s.fidelity;
     this.statusEl.append(b);
     const t = document.createElement("span");
@@ -129,7 +167,7 @@ export class Chrome {
     }
     const where = err.line !== undefined ? `${err.file ? `${err.file}:` : "line "}${err.line}${err.column !== undefined ? `:${err.column}` : ""}` : "";
     this.bannerEl.textContent = `${where ? `${where}  ` : ""}${err.message}`;
-    this.bannerEl.title = "Click to jump to the error";
+    this.bannerEl.title = "Click to jump to this line in the editor";
     this.bannerEl.hidden = false;
   }
 
@@ -183,4 +221,39 @@ export class Chrome {
       this.emptyEl.textContent = message;
     }
   }
+}
+
+/** The panel's DOM: a list of samples with titles and one-line meanings. */
+export function buildLegend(): HTMLElement {
+  const root = document.createElement("div");
+  root.id = "legend";
+  root.setAttribute("role", "dialog");
+  root.setAttribute("aria-label", "Legend");
+  const head = document.createElement("div");
+  head.className = "legend-head";
+  head.textContent = "Legend";
+  root.append(head);
+  const list = document.createElement("div");
+  list.className = "legend-list";
+  for (const item of legendItems()) {
+    const row = document.createElement("div");
+    row.className = "legend-row";
+    row.dataset["key"] = item.key;
+    const pic = document.createElement("div");
+    pic.className = "legend-pic";
+    pic.innerHTML = `<svg class="schematic legend-svg" viewBox="0 0 ${fmt(item.width)} ${fmt(item.height)}" width="${fmt(Math.min(item.width, 96))}" height="${fmt(item.height * Math.min(1, 96 / item.width))}">${item.svg}</svg>`;
+    const text = document.createElement("div");
+    text.className = "legend-text";
+    const title = document.createElement("div");
+    title.className = "legend-title";
+    title.textContent = item.title;
+    const body = document.createElement("div");
+    body.className = "legend-body";
+    body.textContent = item.text;
+    text.append(title, body);
+    row.append(pic, text);
+    list.append(row);
+  }
+  root.append(list);
+  return root;
 }

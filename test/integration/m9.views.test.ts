@@ -46,7 +46,7 @@ suite("M9 views", () => {
     assert.ok(gateNodes.some((n) => n.kind === "dff" && !n.pins.some((p) => p.id === "EN")), "gate view flop has no EN pin");
     api.provider.simulateWebviewMessage({ type: "setView", generation: 0, view: "rtl" });
     await waitFor("back to rtl", 30_000, () => (api.controller.lastRenderEvent?.doc.view === "rtl" ? true : undefined));
-    assert.strictEqual(api.controller.currentStatus.message, "cached");
+    assert.strictEqual(api.controller.currentStatus.message, "ready, from cache");
     await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
   });
 });
