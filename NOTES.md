@@ -552,3 +552,30 @@ Gate: triage table above; fixtures `p9_two_missing_commas.v`, `vectorgates_slice
 - Bug 16 (`src/ir/semantics.ts`, `src/structural/lvalues.ts`): the dashed yellow segment was the "multiple drivers" badge, raised because the driver count was per signal name. Driver analysis is now bit-accurate: every assign and every always block is one driver, its left-hand sides are parsed into literal bit ranges (`y[5:3]`, `q[0]`, `x[4 +: 2]`, concatenations), and only bits written by two drivers are reported. The message names the bits (`y[3:2] has multiple drivers`, `y bits [6:5], [0] has multiple drivers`), the wire tooltip reads `warning: multiple drivers on y[3:2]`, and whole-signal clashes keep the old wording. `SAlways.lhsTexts` carries the left-hand sides of always-block assignments. The structural view draws two or more disjoint slice assigns as one cloud per assign feeding a join (pins labelled with the ranges), so `assign out_not[5:3] = ~b; assign out_not[2:0] = ~a;` looks like the RTL view instead of two clouds with the same id. Tests: `test/unit/drivers.test.ts` (both parsers).
 - Bug 13 (`src/structural/treeSitterParser.ts`): a missing comma makes tree-sitter read `p1c p1d` as a port of user type `p1c` named `p1d`, which is why `p1c` vanished; with two missing commas the second name landed in an ERROR node and was recovered out of order. An identifier in the type position that is not a `typedef` of the file is now a tentative port, reported as `missing ',' before 'p1d'`, and recovered ports are sorted back into text order. A port named by a keyword (`p1f output p1y` with the comma gone) is dropped instead of becoming a port called `output`. Tests: `test/unit/portRecovery.test.ts`: the p9 fixture keeps all twelve ports in order with p1c, p1d and p1e tentative and the w2 cloud reading p1c; the typing fuzz deletes every character of the 7458 port list in turn and checks that every name still written as a whole token is still a port.
 - Accuracy: the vectorgates_slices L3 entries left the baseline (no false badge, one cloud per assign); structural L1 stays at clouds only.
+
+### Phase 2: readable layout and spacing (bugs 8, 14, 15)
+
+New L3 checks in `test/accuracy/layout.ts`, run on every fixture in all three views and fed known-bad input in `harness.test.ts`: `wireSpacing` (parallel segments of different nets at least 8 px apart), `labelsClear` (bus width labels, ripper labels and warning badges never on a wire of another net; ripper labels carry `data-net`), `junctions` (every dot is a real T of its own net, no dot on a crossing, no 4-way, two dots never touch, radius at least 2.5 times the stroke). Before the fixes they failed on 41, 27 and 12 fixture views.
+
+A/B of the ELK spacing over all 44 fixtures in three views (132 layouts), measured on the rounded layout: crossings between nets, parallel pairs of different nets under 8 px, and total drawing area. Ripper pins were already at a 16 px pitch for this run.
+
+| set | edgeEdge | edgeEdgeBetweenLayers | edgeNodeBetweenLayers | nodeNodeBetweenLayers | crossings | pairs under 8 px | min gap | area |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A (v0.2) | 10 | 10 | 20 | 44 | 305 | 20 | 4 | 11.5M px2 |
+| B (brief) | 12 | 12 | 20 | 56 | 301 | 22 | 3 | 12.4M |
+| C | 12 | 12 | 24 | 56 | 303 | 25 | 3 | 13.0M |
+| D | 16 | 16 | 28 | 64 | 307 | 2 | 6 | 13.9M |
+| E | 14 | 14 | 24 | 64 | 309 | 7 | 7 | 13.1M |
+| F | 16 | 16 | 24 | 56 | 309 | 4 | 5 | 12.7M |
+| G | 20 | 20 | 28 | 64 | 307 | 6 | 5 | 14.1M |
+
+Set D was chosen (20 percent more area than v0.2, 2 close pairs left). A second A/B of the node placement strategy with set D: network simplex 307 crossings and 2 close pairs; Brandes-Koepf 259 crossings, 0 close pairs, min gap 11 px, area +4 percent; Brandes-Koepf balanced 295 and 15; linear segments 275 and 0. Brandes-Koepf is now the default (`webview/layout/toElk.ts`).
+
+Other changes:
+
+- Junction dots are 2.5 times the stroke (r 3 on 1-bit wires, r 6 on buses, `junctionRadius` in geometry.ts, checked against styles.css). `webview/layout/postprocess.ts` slides one branch of every 4-way junction along its trunk by 8 px (14 px on buses) into a second T, keeping 8 px from other nets, and rebuilds the dot list from the geometry so every T has a dot and no dot sits on a plain crossing. The renderer and the L3 checks share `prepareLayout` (round, then separate).
+- Join input labels sit left of the bar above their own incoming slice, split output labels right of the bar above their own outgoing slice, at a 16 px pin pitch (`RIPPER_PITCH`). The label room is declared to ELK as port labels (`elk.portLabels.placement: OUTSIDE`), which the layered router keeps clear of; `elk.margins` turned out to be ignored by the router.
+- Bus width labels and warning badges try several spots along the wire and take the first one clear of other nets' wires, symbols and the net's own junction dots (`busLabelPos` in svg.ts).
+- Screenshots: `artifacts/v03-layout/<fixture>-before.png` and `-after.png` for vectorgates, 7458, module_add and module_shift8 (`test/webview/m8.layout.spec.ts`, tag through `RTL_LIVE_SHOT_TAG`).
+
+Result: L3 passes on every fixture in all three views, including the four new checks.

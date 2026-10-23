@@ -7,7 +7,7 @@ Levels:
 - L1 functional: the netlist exported from the diagram (src/ir/toVerilog.ts) simulates identically to the source under Icarus Verilog on random vectors (clocked designs cycle by cycle). Bits that are x or z on either side are skipped and counted.
 - L2 structural: the assertions in test/fixtures/expected/<fixture>.json hold (ports and structural counts for the structural view; node, net, pin and width assertions in the rtl and gate blocks for the two synthesized views).
 - n/a: the gate view is asserted only where it differs from the RTL view (ACCURACY.md 6.2).
-- L3 readable: labels fit their symbols, no two labels overlap, every bus has a width label, Fit stays at or below 100 percent, no wire crosses a symbol.
+- L3 readable: labels fit their symbols, no two labels overlap, every bus has a width label, Fit stays at or below 100 percent, no wire crosses a symbol, parallel wires of different nets are at least 8 px apart, wire labels keep clear of other nets, and every junction dot marks a real T of its own net (none on a plain crossing, no 4-way junctions, dot radius at least 2.5 times the stroke).
 
 ## Summary
 
