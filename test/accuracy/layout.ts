@@ -2,11 +2,13 @@
 // labels fit their symbols, labels do not overlap, every bus carries a width
 // label, Fit never zooms past 100 percent, no wire crosses a symbol, parallel
 // wires of different nets keep 8 px apart, wire labels keep clear of other
-// nets' wires, and every junction dot marks a real T (never a crossing or a 4-way).
+// nets' wires, every junction dot marks a real T (never a crossing or a 4-way), dots are
+// 20 px apart and plain crossings keep 16 px from any dot.
 // Runs in node: ELK via elkjs, then the pure SVG renderer, then a small walk
 // over the markup to recover text boxes in diagram coordinates.
 import ELK from "elkjs/lib/main.js";
 import type { ModuleView } from "../../src/ir/types";
+import { MIN_CROSSING_GAP, MIN_DOT_GAP } from "../../webview/layout/postprocess";
 import { moduleToElk } from "../../webview/layout/toElk";
 import type { ElkGraphOut } from "../../webview/layout/types";
 import { FIT_MAX_SCALE, NOMINAL_VIEWPORT, WIRE_STROKE } from "../../webview/render/geometry";
@@ -49,6 +51,8 @@ export interface LayoutReport {
   wireSpacing: LayoutCheck;
   labelsClear: LayoutCheck;
   junctions: LayoutCheck;
+  junctionSpacing: LayoutCheck;
+  crossingClearance: LayoutCheck;
   width: number;
   height: number;
   fitScale: number;
@@ -237,12 +241,40 @@ function directionsAt(segs: Segment[], pt: { x: number; y: number }): Set<string
 /** Junction dots drawn in the markup, with the net they belong to. */
 export function junctionDots(inner: string): { net: string; x: number; y: number; r: number }[] {
   const out: { net: string; x: number; y: number; r: number }[] = [];
-  const re = /<g class="net[^"]*" data-net="([^"]*)"[^>]*>([\s\S]*?)<\/g>/g;
+  // Walk the group tree: a net group holds nested groups (bus marks, warning badges), so the
+  // matching close tag is found by depth, not by the first "</g>".
+  const re = /<g\b[^>]*>|<\/g>|<circle class="junction" cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)"/g;
+  const stack: (string | undefined)[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(inner)) !== null) {
-    const net = m[1]!;
-    for (const c of (m[2] ?? "").matchAll(/<circle class="junction" cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)"/g)) {
-      out.push({ net, x: Number(c[1]), y: Number(c[2]), r: Number(c[3]) });
+    const tag = m[0];
+    if (tag.startsWith("</g")) {
+      stack.pop();
+      continue;
+    }
+    if (tag.startsWith("<g")) {
+      const netGroup = /^<g class="net[\s"]/.test(tag) ? attr(tag, "data-net") : undefined;
+      stack.push(netGroup);
+      continue;
+    }
+    const net = [...stack].reverse().find((n) => n !== undefined);
+    if (net !== undefined) out.push({ net, x: Number(m[1]), y: Number(m[2]), r: Number(m[3]) });
+  }
+  return out;
+}
+
+/** Plain crossings between wires of different nets, each with the two nets. */
+export function wireCrossings(segs: Segment[]): { x: number; y: number; nets: [string, string] }[] {
+  const out: { x: number; y: number; nets: [string, string] }[] = [];
+  for (let i = 0; i < segs.length; i++) {
+    for (let j = i + 1; j < segs.length; j++) {
+      const p = segs[i]!;
+      const q = segs[j]!;
+      if (p.net === q.net) continue;
+      const x = crossing(p, q);
+      if (!x) continue;
+      if (out.some((c) => Math.abs(c.x - x.x) < EPS && Math.abs(c.y - x.y) < EPS)) continue;
+      out.push({ x: x.x, y: x.y, nets: [p.net, q.net] });
     }
   }
   return out;
@@ -402,18 +434,12 @@ export function checkLayout(rawView: ModuleView, rawLayout: ElkGraphOut): Layout
       junctions.issues.push(`junction dot of ${d.net} at ${d.x},${d.y} has radius ${d.r} on a ${stroke} px wire`);
     }
   }
-  for (let i = 0; i < segs.length; i++) {
-    for (let j = i + 1; j < segs.length; j++) {
-      const p = segs[i]!;
-      const q = segs[j]!;
-      if (p.net === q.net) continue;
-      const x = crossing(p, q);
-      if (!x) continue;
-      const dot = dots.find((d) => Math.abs(d.x - x.x) < d.r && Math.abs(d.y - x.y) < d.r);
-      if (dot) {
-        junctions.ok = false;
-        junctions.issues.push(`dot of ${dot.net} at ${dot.x},${dot.y} sits on the crossing of ${p.net} and ${q.net}`);
-      }
+  const crossings = wireCrossings(segs);
+  for (const x of crossings) {
+    const dot = dots.find((d) => Math.abs(d.x - x.x) < d.r && Math.abs(d.y - x.y) < d.r);
+    if (dot) {
+      junctions.ok = false;
+      junctions.issues.push(`dot of ${dot.net} at ${dot.x},${dot.y} sits on the crossing of ${x.nets[0]} and ${x.nets[1]}`);
     }
   }
   // Two T junctions closer than a dot diameter read as one 4-way.
@@ -428,5 +454,31 @@ export function checkLayout(rawView: ModuleView, rawLayout: ElkGraphOut): Layout
     }
   }
 
-  return { labelsInside, noOverlap, busLabels, fit, wiresClear, wireSpacing, labelsClear, junctions, width: svg.width, height: svg.height, fitScale, svg: svg.inner };
+  // 9. Junction dots keep MIN_DOT_GAP apart, whatever their nets (bug 19).
+  const junctionSpacing: LayoutCheck = { ok: true, issues: [] };
+  for (let i = 0; i < dots.length; i++) {
+    for (let j = i + 1; j < dots.length; j++) {
+      const a = dots[i]!;
+      const b = dots[j]!;
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d < MIN_DOT_GAP - EPS) {
+        junctionSpacing.ok = false;
+        junctionSpacing.issues.push(`junction dots of ${a.net} at ${a.x},${a.y} and ${b.net} at ${b.x},${b.y} are ${Math.round(d * 10) / 10} px apart`);
+      }
+    }
+  }
+
+  // 10. A plain crossing keeps MIN_CROSSING_GAP from every junction dot (bug 19).
+  const crossingClearance: LayoutCheck = { ok: true, issues: [] };
+  for (const x of crossings) {
+    for (const dot of dots) {
+      const d = Math.hypot(dot.x - x.x, dot.y - x.y);
+      if (d < MIN_CROSSING_GAP - EPS) {
+        crossingClearance.ok = false;
+        crossingClearance.issues.push(`crossing of ${x.nets[0]} and ${x.nets[1]} at ${x.x},${x.y} is ${Math.round(d * 10) / 10} px from the junction dot of ${dot.net} at ${dot.x},${dot.y}`);
+      }
+    }
+  }
+
+  return { labelsInside, noOverlap, busLabels, fit, wiresClear, wireSpacing, labelsClear, junctions, junctionSpacing, crossingClearance, width: svg.width, height: svg.height, fitScale, svg: svg.inner };
 }

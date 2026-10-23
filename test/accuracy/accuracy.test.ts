@@ -100,7 +100,7 @@ async function layoutChecks(doc: SchematicDoc): Promise<{ result: CheckResult; l
   } catch (e) {
     return { result: { ok: false, reason: `layout threw: ${e instanceof Error ? e.message : String(e)}` }, layout: {} };
   }
-  const parts = { labelsInside: rep.labelsInside, noOverlap: rep.noOverlap, busLabels: rep.busLabels, fit: rep.fit, wiresClear: rep.wiresClear, wireSpacing: rep.wireSpacing, labelsClear: rep.labelsClear, junctions: rep.junctions };
+  const parts = { labelsInside: rep.labelsInside, noOverlap: rep.noOverlap, busLabels: rep.busLabels, fit: rep.fit, wiresClear: rep.wiresClear, wireSpacing: rep.wireSpacing, labelsClear: rep.labelsClear, junctions: rep.junctions, junctionSpacing: rep.junctionSpacing, crossingClearance: rep.crossingClearance };
   const failing = Object.entries(parts).filter(([, c]) => !c.ok);
   const result: CheckResult = failing.length === 0 ? { ok: true } : { ok: false, reason: failing.map(([k, c]) => `${k}: ${c.issues[0]}${c.issues.length > 1 ? ` (+${c.issues.length - 1})` : ""}`).join("; ") };
   result.detail = { width: rep.width, height: rep.height, fitScale: Number(rep.fitScale.toFixed(2)) };

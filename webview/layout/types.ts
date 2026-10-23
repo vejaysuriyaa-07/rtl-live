@@ -15,6 +15,9 @@ export interface ElkPortIn {
   id: string;
   width: number;
   height: number;
+  /** Fixed position relative to the node (elk.portConstraints FIXED_POS). */
+  x?: number;
+  y?: number;
   layoutOptions: ElkLayoutOptions;
   /** Reserves room next to the port (ripper range labels); the renderer draws its own text. */
   labels?: ElkLabelIn[];

@@ -1,9 +1,10 @@
 // ModuleView -> ELK graph. Pure and unit tested.
 // Ports of the module become small boundary nodes pinned to the first/last layer.
-// Node pins become ELK ports with fixed sides (inputs WEST, outputs EAST,
-// clock/select SOUTH) and explicit indices so the drawing order is stable.
+// Node pins become ELK ports at fixed positions (inputs WEST, outputs EAST,
+// clock/select SOUTH) in IR order at a 16 px pitch, so a wire crossing next to a pin
+// is never closer than that to the junction dot feeding the pin beside it (bug 19).
 import type { ModuleView, Node, Pin, Port } from "../../src/ir/types";
-import { LOGICAL_TAG_H, nodeSize, PORT_NODE_HEIGHT, portNodeWidth, RIPPER_LABEL_CHAR, textWidth } from "../render/geometry";
+import { LOGICAL_TAG_H, nodeSize, PIN_PITCH, PORT_NODE_HEIGHT, portNodeWidth, RIPPER_LABEL_CHAR, textWidth } from "../render/geometry";
 import { expandLogicalGates } from "../render/logical";
 import type { ElkEdgeIn, ElkGraphIn, ElkNodeIn, ElkPortIn } from "./types";
 
@@ -54,49 +55,60 @@ function sideOf(pin: Pin): "WEST" | "EAST" | "SOUTH" | "NORTH" {
   }
 }
 
+/** Pins keep clear of the title row: boxes carry it at the top, flip-flops at the bottom. */
+export function pinBand(node: Node): { top: number; bottom: number } {
+  if (node.kind === "gate" && node.info?.["logical"] === "1") return { top: 0, bottom: LOGICAL_TAG_H };
+  switch (node.kind) {
+    case "instance":
+    case "blackbox":
+    case "unknown":
+      return { top: 18, bottom: 4 };
+    case "dff":
+      return { top: 18, bottom: 6 };
+    default:
+      return { top: 0, bottom: 0 };
+  }
+}
+
+/** Centres of `n` pins at PIN_PITCH, centred in [lo, hi]; a single pin sits in the middle. */
+export function pinCentres(n: number, lo: number, hi: number): number[] {
+  const start = (lo + hi) / 2 - ((n - 1) * PIN_PITCH) / 2;
+  return Array.from({ length: n }, (_, i) => start + i * PIN_PITCH);
+}
+
 /**
- * ELK FIXED_ORDER indexes ports clockwise starting at the north-west corner,
- * so WEST ports run bottom-to-top. We reverse west indices so pin order in the
- * IR (top-to-bottom) is preserved on screen. SOUTH runs right-to-left, also reversed.
+ * Ports at fixed positions, one pitch apart, in IR order top-to-bottom (west and east) and
+ * left-to-right (south and north). A port is a 1 by 1 square just outside the node border,
+ * as ELK itself places them, and the edge attaches to its centre.
  */
 function elkPorts(node: Node): ElkPortIn[] {
+  const size = nodeSize(node);
+  const band = pinBand(node);
   const groups: Record<string, Pin[]> = { NORTH: [], EAST: [], SOUTH: [], WEST: [] };
   for (const p of node.pins) groups[sideOf(p)]!.push(p);
   const out: ElkPortIn[] = [];
-  let index = 0;
-  const emit = (pins: Pin[], side: string, reverse: boolean): void => {
-    const ordered = reverse ? [...pins].reverse() : pins;
-    for (const p of ordered) {
+  const emit = (pins: Pin[], side: string): void => {
+    const vertical = side === "WEST" || side === "EAST";
+    const centres = vertical ? pinCentres(pins.length, band.top, size.height - band.bottom) : pinCentres(pins.length, 0, size.width);
+    pins.forEach((p, i) => {
+      const c = centres[i]! - 0.5;
       const label = ripperLabelSize(node, p);
       out.push({
         id: elkPortId(node.id, p.id),
         width: 1,
         height: 1,
-        layoutOptions: { "elk.port.side": side, "elk.port.index": String(index++) },
+        x: vertical ? (side === "WEST" ? -1 : size.width) : c,
+        y: vertical ? c : side === "NORTH" ? -1 : size.height,
+        layoutOptions: { "elk.port.side": side },
         ...(label ? { labels: [label] } : {}),
       });
-    }
+    });
   };
-  emit(groups["NORTH"]!, "NORTH", false);
-  emit(groups["EAST"]!, "EAST", false);
-  emit(groups["SOUTH"]!, "SOUTH", true);
-  emit(groups["WEST"]!, "WEST", true);
+  emit(groups["NORTH"]!, "NORTH");
+  emit(groups["EAST"]!, "EAST");
+  emit(groups["SOUTH"]!, "SOUTH");
+  emit(groups["WEST"]!, "WEST");
   return out;
-}
-
-/** Pins keep clear of the title row: boxes carry it at the top, flip-flops at the bottom. */
-function portSurrounding(node: Node): string | undefined {
-  if (node.kind === "gate" && node.info?.["logical"] === "1") return `[top=0,left=0,bottom=${LOGICAL_TAG_H},right=0]`;
-  switch (node.kind) {
-    case "instance":
-    case "blackbox":
-    case "unknown":
-      return "[top=18,left=0,bottom=4,right=0]";
-    case "dff":
-      return "[top=18,left=0,bottom=6,right=0]";
-    default:
-      return undefined;
-  }
 }
 
 /**
@@ -112,15 +124,13 @@ function ripperLabelSize(node: Node, pin: Pin): { text: string; width: number; h
 
 function logicNode(node: Node): ElkNodeIn {
   const size = nodeSize(node);
-  const surrounding = portSurrounding(node);
   const ripper = node.kind === "split" || node.kind === "join";
   return {
     id: node.id,
     width: size.width,
     height: size.height,
     layoutOptions: {
-      "elk.portConstraints": "FIXED_ORDER",
-      ...(surrounding ? { "elk.spacing.portSurrounding": surrounding } : {}),
+      "elk.portConstraints": "FIXED_POS",
       ...(ripper ? { "elk.portLabels.placement": "OUTSIDE" } : {}),
     },
     ports: elkPorts(node),

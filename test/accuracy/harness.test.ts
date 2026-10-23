@@ -246,6 +246,70 @@ describe("L3 harness", () => {
     expect(junctionDots(checkLayout(view, tee).svg)).toEqual([{ net: "net:a", x: 150, y: 150, r: 3 }]);
   });
 
+  it("finds the junction dots of a bus net whose group holds nested groups", () => {
+    const ports = ["a", "y", "n"].map((name, i) => ({ name, direction: i === 0 ? ("input" as const) : ("output" as const), width: 4, src: [] }));
+    const view: ModuleView = {
+      name: "m",
+      ports,
+      nodes: [],
+      nets: [{ id: "net:a", name: "a", width: 4, driver: { node: "port:a", pin: "a" }, sinks: [{ node: "port:y", pin: "y" }, { node: "port:n", pin: "n" }], src: [] }],
+    };
+    const tee: ElkGraphOut = {
+      id: "root",
+      width: 300,
+      height: 300,
+      children: [box("port:a", 0, 140, 30, 20), box("port:y", 250, 140, 30, 20), box("port:n", 135, 0, 30, 20)],
+      edges: [
+        { id: "edge:net:a:0", sources: ["port:a.a"], targets: ["port:y.y"], sections: [{ id: "s1", startPoint: { x: 30, y: 150 }, endPoint: { x: 250, y: 150 } }], junctionPoints: [{ x: 150, y: 150 }] },
+        { id: "edge:net:a:1", sources: ["port:a.a"], targets: ["port:n.n"], sections: [{ id: "s2", startPoint: { x: 30, y: 150 }, bendPoints: [{ x: 150, y: 150 }], endPoint: { x: 150, y: 20 } }] },
+      ],
+    };
+    const rep = checkLayout(view, tee);
+    // The bus slash and width label sit in a nested group before the dot; the dot must still be found.
+    expect(rep.svg).toMatch(/<g class="bus-mark">/);
+    expect(junctionDots(rep.svg)).toEqual([{ net: "net:a", x: 150, y: 150, r: 6 }]);
+    expect(rep.junctions.ok).toBe(true);
+  });
+
+  it("flags junction dots closer than 20 px and a plain crossing closer than 16 px to a dot", () => {
+    const ports = ["a", "y", "n", "s", "c", "z"].map((name, i) => ({ name, direction: i === 0 || i === 4 ? ("input" as const) : ("output" as const), width: 1, src: [] }));
+    const view: ModuleView = {
+      name: "m",
+      ports,
+      nodes: [],
+      nets: [
+        { id: "net:a", name: "a", width: 1, driver: { node: "port:a", pin: "a" }, sinks: [{ node: "port:y", pin: "y" }, { node: "port:n", pin: "n" }, { node: "port:s", pin: "s" }], src: [] },
+        { id: "net:c", name: "c", width: 1, driver: { node: "port:c", pin: "c" }, sinks: [{ node: "port:z", pin: "z" }], src: [] },
+      ],
+    };
+    // Two T junctions of net a at x=150 (up) and x=150+dDot (down); net c runs vertically at x=150+dCross.
+    // Every branch leg ends on a pin, so nothing can slide: the checker sees the geometry as given.
+    const graph = (dDot: number, dCross: number): ElkGraphOut => ({
+      id: "root",
+      width: 400,
+      height: 300,
+      children: [box("port:a", 0, 140, 30, 20), box("port:y", 350, 140, 30, 20), box("port:n", 135, 0, 30, 20), box("port:s", 135 + dDot, 280, 30, 20), box("port:c", 140 + dCross, 0, 20, 10), box("port:z", 140 + dCross, 290, 20, 10)],
+      edges: [
+        { id: "edge:net:a:0", sources: ["port:a.a"], targets: ["port:y.y"], sections: [{ id: "s1", startPoint: { x: 30, y: 150 }, endPoint: { x: 350, y: 150 } }], junctionPoints: [{ x: 150, y: 150 }, { x: 150 + dDot, y: 150 }] },
+        { id: "edge:net:a:1", sources: ["port:a.a"], targets: ["port:n.n"], sections: [{ id: "s2", startPoint: { x: 30, y: 150 }, bendPoints: [{ x: 150, y: 150 }], endPoint: { x: 150, y: 20 } }] },
+        { id: "edge:net:a:2", sources: ["port:a.a"], targets: ["port:s.s"], sections: [{ id: "s3", startPoint: { x: 30, y: 150 }, bendPoints: [{ x: 150 + dDot, y: 150 }], endPoint: { x: 150 + dDot, y: 280 } }] },
+        { id: "edge:net:c:0", sources: ["port:c.c"], targets: ["port:z.z"], sections: [{ id: "s4", startPoint: { x: 150 + dCross, y: 10 }, endPoint: { x: 150 + dCross, y: 290 } }] },
+      ],
+    });
+    const crowded = checkLayout(view, graph(12, 60));
+    expect(crowded.junctionSpacing.ok).toBe(false);
+    expect(crowded.junctionSpacing.issues[0]).toMatch(/junction dots of net:a at 150,150 and net:a at 162,150 are 12 px apart/);
+    expect(crowded.crossingClearance.ok).toBe(true);
+    const nearCross = checkLayout(view, graph(60, 10));
+    expect(nearCross.junctionSpacing.ok).toBe(true);
+    expect(nearCross.crossingClearance.ok).toBe(false);
+    expect(nearCross.crossingClearance.issues[0]).toMatch(/crossing of net:a and net:c at 160,150 is 10 px from the junction dot of net:a at 150,150/);
+    const clear = checkLayout(view, graph(20, 36));
+    expect(clear.junctionSpacing.ok).toBe(true);
+    expect(clear.crossingClearance.ok).toBe(true);
+    expect(junctionDots(clear.svg)).toHaveLength(2);
+  });
+
   it("junction dots are 2.5 times the stroke width the stylesheet draws", () => {
     const css = readFileSync(join(ROOT, "webview", "styles.css"), "utf8");
     const single = /\.schematic \.net-path \{[^}]*stroke-width: ([\d.]+)/.exec(css)?.[1];
