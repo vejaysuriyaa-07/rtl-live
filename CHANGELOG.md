@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0
+
+Readability and clarity release for first-week Verilog learners. Every fixture passes the readability checks in all three views, including four new ones (wire spacing, label clearance, junction correctness, no 4-way junctions); see docs/ACCURACY_REPORT.md.
+
+- Bit-accurate driver analysis: `assign y[5:3] = ...; assign y[2:0] = ...;` is legal and draws as one cloud per assign into a join; only bits written twice are reported, and the message names them (`y[3:2] has multiple drivers`).
+- A port swallowed by a missing comma (`input p1c p1d`) stays visible as a greyed port with a `missing ','` message, and recovered ports keep their declaration order.
+- Layout: wider wire channels and Brandes-Koepf placement (fewer crossings, no two nets closer than 8 px), junction dots 2.5 times the stroke, 4-way junctions split into two T junctions, join and split labels above their own slice wires at a 16 px pitch, width labels placed on the first spot clear of other wires and symbols.
+- Logical operators drawn the way they work: `a || b` on buses goes through "any 1?" boxes into a 1-bit OR tagged "logical"; `!a` on a bus is one "all 0?" box.
+- Every element has a plain-language tooltip (wires, buses, ports, gates, boxes, dots, crossings, bubbles, pins, slashes, ripper labels, badges) that quotes the source line it came from.
+- Legend button (key `l`) listing every symbol with its meaning, drawn with the diagram's own symbols, theme aware.
+- Focus mode: hovering a wire or symbol lights its whole net and dims the rest; Escape clears.
+- Designed empty, loading, error and stale states: one sentence each, at most one button ("Go to line N").
+- Status text in plain words; badges explain themselves on hover.
+- `npm run test:webview` writes `artifacts/contact-sheet.png` with every fixture drawn small.
+
 ## 0.2.0
 
 Accuracy, robustness and readability release. Every fixture passes the functional equivalence check (the diagram's netlist simulates like the source under Icarus) in both synthesized views; see docs/ACCURACY_REPORT.md.

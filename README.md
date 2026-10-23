@@ -2,11 +2,11 @@
 
 Live Verilog schematic viewer in the VS Code sidebar. The structural view updates as you type; the gate-level view is synthesized with Yosys (native or the bundled wasm build) whenever the file parses cleanly. Built for learning Verilog on HDLBits: type a module header and the box appears, add an `assign` and the gate appears.
 
-Screenshots are in `media/screenshots/` (vsce cannot embed images without a published repository).
+Screenshots are in `media/screenshots/` (vsce cannot embed images without a published repository): `7458.png` and `module_add.png` (the v0.3 layout), `vectorgates-logical.png` (logical OR drawn with "any 1?" boxes), `legend-dark.png` (the Legend panel), `focus-mode.png` (hovering a wire), `contact-sheet.png` (every fixture at a glance).
 
 ## First run
 
-1. Run `code --install-extension rtl-live-0.2.0.vsix --force`, then Cmd+Shift+P, "Developer: Reload Window".
+1. Run `code --install-extension rtl-live-0.3.0.vsix --force`, then Cmd+Shift+P, "Developer: Reload Window".
 2. Optional, faster synthesis: `brew install yosys`. Without it the bundled wasm engine is used, and its first run takes a few seconds.
 3. Click the RTL Live icon in the Activity Bar to open the "Schematic" view. You can drag it to the secondary side bar.
 4. 10-minute manual check using `test/fixtures/hdlbits/`:
@@ -19,7 +19,7 @@ Screenshots are in `media/screenshots/` (vsce cannot embed images without a publ
    - (1 min) Open `module_add.v`. Expect two dashed `add16` boxes, the carry wire, and `1'b0` on `cin`. In `module_add_full.v`, double-click `add16` to drill in, then use the breadcrumb to go back.
    - (1 min) Open `module_shift8.v`, `counter4.v` and `fsm_moore.v`. Expect a mux trapezoid, DFFs with clock triangles, and the adder feedback loop.
    - (1 min) Switch between a light and a dark theme (Cmd+K Cmd+T). Colours should follow.
-   - (1 min) Try the toolbar: export SVG, open in editor panel, fit.
+   - (1 min) Try the toolbar: export SVG, open in editor panel, fit, Legend. Hover a wire to focus its net; hover `||` in `vectorgates.v` to read what a logical OR does.
 5. If anything looks wrong, run "RTL Live: Show Log" and read "Known issues" in NOTES.md.
 
 If `code` is not on your PATH, run "Shell Command: Install 'code' command in PATH" from the Command Palette first, or use `"$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"`.
@@ -28,16 +28,21 @@ If `code` is not on your PATH, run "Shell Command: Install 'code' command in PAT
 
 - Structural view while typing: module box, ports with widths, wires, instances, and dashed "logic clouds" for `assign` and `always` blocks. Half-typed or broken code never blanks the view.
 - Two synthesized views, switched with the RTL / Gate toggle in the toolbar. RTL view is shaped like the source: a `case` is one N:1 mux with inputs labelled by select value, `cond ? x : y` a 2:1 mux with `0` and `1`, `if (en)` on a flop an EN pin, a synchronous reset an R pin, word-level `+`, `==`, `<` single boxes. Gate view is what synthesis builds: enables and resets become muxes in front of plain flops.
-- IEEE/ANSI gate symbols (AND, OR, XOR, NOT, BUF; NAND, NOR, XNOR with an output bubble, N inputs on one symbol), reduction gates, logical `&&` `||` `!` marked on the gate, flip-flops with a clock triangle, latches without one and with a warning badge, arithmetic and comparator boxes, constants, split/join rippers for bit-selects, part-selects, concatenation and replication.
-- Warnings on the wire: multiply driven nets and combinational loops carry a badge; the banner names the offending signal.
+- IEEE/ANSI gate symbols (AND, OR, XOR, NOT, BUF; NAND, NOR, XNOR with an output bubble, N inputs on one symbol), reduction gates, flip-flops with a clock triangle, latches without one and with a warning badge, arithmetic and comparator boxes, constants, split/join rippers for bit-selects, part-selects, concatenation and replication.
+- Logical operators drawn the way they work: `a || b` on buses goes through "any 1?" boxes (OR of all bits) into a plain 1-bit OR tagged "logical"; `!a` on a bus is one "all 0?" box; 1-bit inputs keep the plain gate.
+- Every element explains itself on hover in one plain sentence and quotes the source line it came from: wires ("3 separate wires drawn as one line (a bus)"), junction dots ("Wires connect here"), plain crossings ("These wires cross but do not connect"), bubbles, pins, slashes, ripper labels, gates, muxes, flip-flops, latches, constants, instances and black boxes.
+- Legend button (key `l`): every symbol with its meaning, drawn with the diagram's own symbols.
+- Focus mode: hover a wire or a symbol to light its whole net and dim everything else; Escape clears.
+- Readable layout: wires of different nets stay at least 8 px apart, fan-out trunks get their own channels, junction dots are 2.5 times the wire width and only ever mark a T (never a crossing, never a 4-way), join and split labels sit above their own slice wires. The accuracy suite checks all of this on every fixture in all three views.
+- Warnings on the wire: multiply driven bits (`y[3:2] has multiple drivers`; disjoint slice assigns are legal and draw as a join) and combinational loops carry a badge; the banner names the offending signal and bits.
 - Every fixture is checked for functional equivalence against its source with Icarus Verilog in both views (`docs/ACCURACY_REPORT.md`).
 - Hierarchy: instances of modules in the same file are boxes you can double-click to drill into, with a breadcrumb to go back. Modules that are not in the file (HDLBits' `mod_a`, `my_dff`, `add16`) are drawn as dashed black boxes with pin directions inferred from how they are connected.
 - Linking: the editor cursor highlights the matching nodes and nets; clicking a node jumps to its source; the error banner jumps to the error line.
-- Status badge: Structural or Editing (the text does not parse yet), RTL view / Gate view (green), Stale (amber: the last good diagram with the changed ports overlaid), plus the backend name and version.
+- Status badge: Structural or Editing (the text does not parse yet), RTL view / Gate view (green), Stale (amber: the last good diagram with the changed ports overlaid), plus the backend name and version; hover the badge for what it means. The error banner has one "Go to line N" button.
 - Syntax errors say what is missing and where, including at the end of the file (`missing ';'`, `missing ')' to close the port list`, `missing endmodule`); Verilator sharpens the message when it is installed. Ports recovered from a broken header stay visible, greyed.
 - Untitled files in Verilog mode render; untitled Plain Text that looks like Verilog gets a one-click "Set language to Verilog".
 - Export SVG (self-contained, theme colours inlined) and PNG (2x). "Open in editor panel" shows the same diagram in a full editor tab.
-- Keys inside the view: `f` fit, `+`/`-` zoom, `Backspace` drill up.
+- Keys inside the view: `f` fit, `+`/`-` zoom, `l` legend, `Escape` clear focus or close the legend, `Backspace` drill up.
 - Fully offline: no network, no telemetry.
 
 ## Settings
@@ -92,7 +97,7 @@ npm run build:grammar  # builds assets/wasm/tree-sitter-verilog.wasm (needs netw
 npm run build
 npm test               # vitest unit + golden (uses the wasm yosys)
 npm run test:integration
-npm run test:webview
+npm run test:webview   # playwright; also writes artifacts/contact-sheet.png and the layout shots
 npm run test:packaged  # packages a vsix and runs the integration suite against the unzipped copy
 npm run test:accuracy:update  # rewrite the accuracy baseline after an intended change (review the diff)
 npm run bench
