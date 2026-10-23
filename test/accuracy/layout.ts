@@ -10,6 +10,7 @@ import type { ModuleView } from "../../src/ir/types";
 import { moduleToElk } from "../../webview/layout/toElk";
 import type { ElkGraphOut } from "../../webview/layout/types";
 import { FIT_MAX_SCALE, NOMINAL_VIEWPORT, WIRE_STROKE } from "../../webview/render/geometry";
+import { expandLogicalGates } from "../../webview/render/logical";
 import { prepareLayout, renderModule } from "../../webview/render/svg";
 
 type Elk = { layout(g: unknown): Promise<unknown> };
@@ -62,6 +63,7 @@ const FONT_SIZE: Record<string, number> = {
   glyph: 12,
   "glyph small": 9,
   "ripper-label": 8.5,
+  tag: 7.5,
   label: 11,
   "label title": 11,
   "module-title": 12,
@@ -246,8 +248,9 @@ export function junctionDots(inner: string): { net: string; x: number; y: number
   return out;
 }
 
-export function checkLayout(view: ModuleView, rawLayout: ElkGraphOut): LayoutReport {
-  // The renderer rounds every coordinate and separates 4-way junctions; measure what is drawn.
+export function checkLayout(rawView: ModuleView, rawLayout: ElkGraphOut): LayoutReport {
+  // Measure what is drawn: logical gates expanded, coordinates rounded, 4-way junctions separated.
+  const view = expandLogicalGates(rawView);
   const layout = prepareLayout(rawLayout, view);
   const svg = renderModule(view, layout, { frame: true });
   const texts = textBoxes(svg.inner);

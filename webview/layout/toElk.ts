@@ -3,7 +3,8 @@
 // Node pins become ELK ports with fixed sides (inputs WEST, outputs EAST,
 // clock/select SOUTH) and explicit indices so the drawing order is stable.
 import type { ModuleView, Node, Pin, Port } from "../../src/ir/types";
-import { nodeSize, PORT_NODE_HEIGHT, portNodeWidth, RIPPER_LABEL_CHAR, textWidth } from "../render/geometry";
+import { LOGICAL_TAG_H, nodeSize, PORT_NODE_HEIGHT, portNodeWidth, RIPPER_LABEL_CHAR, textWidth } from "../render/geometry";
+import { expandLogicalGates } from "../render/logical";
 import type { ElkEdgeIn, ElkGraphIn, ElkNodeIn, ElkPortIn } from "./types";
 
 export const ROOT_LAYOUT_OPTIONS: Readonly<Record<string, string>> = {
@@ -85,6 +86,7 @@ function elkPorts(node: Node): ElkPortIn[] {
 
 /** Pins keep clear of the title row: boxes carry it at the top, flip-flops at the bottom. */
 function portSurrounding(node: Node): string | undefined {
+  if (node.kind === "gate" && node.info?.["logical"] === "1") return `[top=0,left=0,bottom=${LOGICAL_TAG_H},right=0]`;
   switch (node.kind) {
     case "instance":
     case "blackbox":
@@ -147,7 +149,8 @@ function portNode(port: Port): ElkNodeIn {
   };
 }
 
-export function moduleToElk(view: ModuleView, options?: Record<string, string>): ElkGraphIn {
+export function moduleToElk(rawView: ModuleView, options?: Record<string, string>): ElkGraphIn {
+  const view = expandLogicalGates(rawView);
   const children: ElkNodeIn[] = [];
   for (const p of view.ports) children.push(portNode(p));
   const sorted = [...view.nodes].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));

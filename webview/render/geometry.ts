@@ -47,6 +47,9 @@ function sidePins(node: Node, side: "west" | "east" | "south" | "north"): number
   return node.pins.filter((p) => p.side === side).length;
 }
 
+/** Strip under a logical gate that holds its "logical" tag. */
+export const LOGICAL_TAG_H = 10;
+
 export function nodeSize(node: Node): Size {
   const west = sidePins(node, "west");
   const east = sidePins(node, "east");
@@ -54,9 +57,9 @@ export function nodeSize(node: Node): Size {
   const rows = Math.max(west, east, 1);
   switch (node.kind) {
     case "gate":
-      return { width: GATE_W, height: Math.max(GATE_H, rows * 12 + 10) };
+      return { width: GATE_W, height: Math.max(GATE_H, rows * 12 + 10) + (node.info?.["logical"] === "1" ? LOGICAL_TAG_H : 0) };
     case "reduce":
-      return { width: GATE_W, height: GATE_H };
+      return node.info?.["logical"] === "1" ? { width: textWidth(node.label) + 14, height: 22 } : { width: GATE_W, height: GATE_H };
     case "mux":
     case "pmux":
       return { width: 30, height: Math.max(44, rows * PIN_PITCH + 12) };
