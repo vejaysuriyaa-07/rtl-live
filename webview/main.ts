@@ -30,6 +30,7 @@ const elk = new ElkRunner({ workerScriptUri: elkWorkerUri, log: (l, t) => log(l,
 const zoomer = new ZoomController(svg, viewport);
 
 let renderSeq = 0;
+let sourceLines: string[] | undefined;
 let lastRendered: { width: number; height: number; module: string } | undefined;
 let cursor: Cursor | null = null;
 let tweened = 0;
@@ -86,7 +87,7 @@ async function render(fitNow: boolean): Promise<void> {
     const layout = await elk.layout(moduleToElk(view));
     if (firstLayout) log("info", `layout engine: ${elk.mode}`);
     if (seq !== renderSeq) return; // superseded
-    rendered = renderModule(view, layout, { frame: true });
+    rendered = renderModule(view, layout, { frame: true, ...(sourceLines ? { sourceLines } : {}) });
     const t1 = performance.now();
     if (t1 - t0 > 250) log("info", `layout ${name}: ${(t1 - t0).toFixed(0)} ms (${view.nodes.length} nodes)`);
   } catch (e) {
@@ -162,6 +163,7 @@ function handle(msg: HostToWebview): void {
       const topChanged = state.doc?.top !== msg.doc.top || state.doc?.sourceUri !== msg.doc.sourceUri;
       if (state.doc?.sourceUri !== msg.doc.sourceUri) log("info", `showing ${msg.doc.sourceUri}`);
       state.doc = msg.doc;
+      sourceLines = msg.sourceLines;
       if (topChanged) state.stack = [];
       // Drop drill-down entries that no longer exist.
       state.stack = state.stack.filter((s) => msg.doc.modules[s] !== undefined);
@@ -222,7 +224,9 @@ window.addEventListener("unhandledrejection", (ev: PromiseRejectionEvent) => log
 
 window.addEventListener("keydown", (ev) => {
   if (ev.target instanceof HTMLSelectElement || ev.target instanceof HTMLInputElement) return;
-  if (ev.key === "f") fit(true);
+  if (ev.key === "Escape" && chrome.legendOpen) chrome.toggleLegend(false);
+  else if (ev.key === "l") chrome.toggleLegend();
+  else if (ev.key === "f") fit(true);
   else if (ev.key === "+" || ev.key === "=") zoomer.zoomBy(1.25);
   else if (ev.key === "-") zoomer.zoomBy(0.8);
   else if (ev.key === "Backspace" && state.stack.length > 0) {

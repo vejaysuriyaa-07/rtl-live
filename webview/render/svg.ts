@@ -4,6 +4,8 @@ import type { ModuleView, Net, Node, Pin, Port } from "../../src/ir/types";
 import type { ElkEdgeOut, ElkGraphOut, ElkNodeOut, ElkPoint, ElkPortOut } from "../layout/types";
 import { elkPortId, portNodeId } from "../layout/toElk";
 import { junctionOffset, netOfEdge, separateJunctions } from "../layout/postprocess";
+import { expandLogicalGates } from "./logical";
+import { netTooltip, nodeTooltip, portTooltip, TIP, type SourceLines } from "./tooltips";
 import { symbolMarkup } from "./symbols";
 import { frameMinWidth, junctionRadius } from "./geometry";
 
@@ -12,6 +14,8 @@ export interface RenderOptions {
   frame?: boolean;
   /** Stale (last good) rendering gets a class for dimming */
   stale?: boolean;
+  /** Lines of the source text, so tooltips can quote the line an element came from */
+  sourceLines?: readonly string[];
 }
 
 export function esc(s: string): string {
@@ -51,25 +55,27 @@ function srcAttr(src: { line: number; column: number; endLine: number; endColumn
   return ` data-line="${s.line}" data-column="${s.column}" data-end-line="${s.endLine}" data-end-column="${s.endColumn}" data-src="${all}"`;
 }
 
-function renderPortNode(port: Port, n: ElkNodeOut): string {
+/** Pentagon pointing in the flow direction; inout is a hexagon. */
+export function portShapePath(direction: Port["direction"], w: number, h: number): string {
+  return direction === "inout"
+    ? `M8,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H8 L0,${fmt(h / 2)} Z`
+    : direction === "input"
+      ? `M0,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H0 Z`
+      : `M8,0 H${fmt(w)} V${fmt(h)} H8 L0,${fmt(h / 2)} Z`;
+}
+
+function renderPortNode(port: Port, n: ElkNodeOut, lines: SourceLines): string {
   const isInput = port.direction === "input";
   const label = port.width > 1 ? `${port.name}${port.range ?? `[${port.width - 1}:0]`}` : port.name;
   const w = n.width;
   const h = n.height;
-  // Pentagon pointing in the flow direction; inout is a hexagon.
-  const shape =
-    port.direction === "inout"
-      ? `M8,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H8 L0,${fmt(h / 2)} Z`
-      : isInput
-        ? `M0,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H0 Z`
-        : `M8,0 H${fmt(w)} V${fmt(h)} H8 L0,${fmt(h / 2)} Z`;
+  const shape = portShapePath(port.direction, w, h);
   const cls = `port port-${port.direction}${port.width > 1 ? " bus" : ""}${port.ghost ? ` ghost ghost-${port.ghost}` : ""}${port.tentative ? " tentative" : ""}`;
-  const note = port.ghost === "added" ? " (added in the newer text, not synthesized yet)" : port.ghost === "removed" ? " (removed in the newer text)" : port.ghost === "changed" ? " (changed in the newer text)" : port.tentative ? " (recovered from broken text)" : "";
   return (
     `<g class="${cls}" data-port="${esc(port.name)}" data-id="${esc(portNodeId(port.name))}"${port.ghost ? ` data-ghost="${port.ghost}"` : ""}${srcAttr(port.src)} transform="translate(${fmt(n.x)},${fmt(n.y)})">` +
     `<path class="port-shape" d="${shape}"/>` +
     `<text class="port-label" x="${fmt(isInput ? 6 : w - 6)}" y="${fmt(h / 2)}" text-anchor="${isInput ? "start" : "end"}" dominant-baseline="central">${esc(label)}</text>` +
-    `<title>${esc(`${port.direction} ${label} (${port.width > 0 ? port.width : "?"} bit${port.width === 1 ? "" : "s"})${note}`)}</title>` +
+    `<title>${esc(portTooltip(port, label, lines))}</title>` +
     `</g>`
   );
 }
@@ -84,11 +90,11 @@ function pinPositions(node: Node, n: ElkNodeOut): Map<string, { x: number; y: nu
   return out;
 }
 
-function renderNode(node: Node, n: ElkNodeOut): string {
+function renderNode(node: Node, n: ElkNodeOut, lines: SourceLines): string {
   const pins = pinPositions(node, n);
   const body = symbolMarkup(node, n.width, n.height, pins);
   const cls = `node node-${node.kind}${node.op ? ` op-${node.op}` : ""}`;
-  const tip = tooltip(node);
+  const tip = nodeTooltip(node, lines);
   return (
     `<g class="${cls}" data-id="${esc(node.id)}" data-kind="${node.kind}"${node.op ? ` data-op="${esc(node.op)}"` : ""}${node.drillTarget ? ` data-drill="${esc(node.drillTarget)}"` : ""}${srcAttr(node.src)} transform="translate(${fmt(n.x)},${fmt(n.y)})">` +
     body +
@@ -97,17 +103,9 @@ function renderNode(node: Node, n: ElkNodeOut): string {
   );
 }
 
+/** Tooltip text of a node without source lines (kept for callers that have no text). */
 export function tooltip(node: Node): string {
-  const lines: string[] = [];
-  lines.push(node.label || node.kind);
-  if (node.op) lines.push(`op: ${node.op}`);
-  if (node.width > 1) lines.push(`width: ${node.width}`);
-  if (node.moduleType) lines.push(`module: ${node.moduleType}${node.kind === "blackbox" ? " (not defined in this file)" : ""}`);
-  const s = node.src[0];
-  if (s) lines.push(`line ${s.line}`);
-  if (node.info) for (const [k, v] of Object.entries(node.info)) lines.push(`${k}: ${v}`);
-  if (node.warnings && node.warnings.length > 0) lines.push(`warning: ${node.warnings.join(", ")}`);
-  return lines.join("\n");
+  return nodeTooltip(node, undefined);
 }
 
 function edgePath(e: ElkEdgeOut): string {
@@ -235,7 +233,7 @@ export function roundLayout(layout: ElkGraphOut): ElkGraphOut {
   };
 }
 
-function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rippers: ReadonlySet<string>, avoid: Avoid): { markup: string; labelled: boolean } {
+function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rippers: ReadonlySet<string>, avoid: Avoid, lines: SourceLines): { markup: string; labelled: boolean } {
   const d = edgePath(e);
   const width = net?.width ?? 1;
   const cls = `net${width > 1 ? " bus" : ""}${net?.role ? ` ${net.role}` : ""}${net?.warnings && net.warnings.length > 0 ? " warn" : ""}`;
@@ -254,12 +252,13 @@ function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rip
     const p = fromRipper || toRipper ? undefined : busLabelPos(e, mode, endIsPort, ownNet, String(width).length * BUS_WIDTH_CHAR, avoid);
     if (p) {
       label =
-        `<path class="bus-slash" d="M${fmt(p.x - 3)},${fmt(p.y + 4)} L${fmt(p.x + 3)},${fmt(p.y - 4)}"/>` +
-        `<text class="bus-width" x="${fmt(p.anchor === "end" ? p.x - 4 : p.x + 4)}" y="${fmt(p.y - 3)}" text-anchor="${p.anchor}">${width}</text>`;
+        `<g class="bus-mark"><path class="bus-slash" d="M${fmt(p.x - 3)},${fmt(p.y + 4)} L${fmt(p.x + 3)},${fmt(p.y - 4)}"/>` +
+        `<text class="bus-width" x="${fmt(p.anchor === "end" ? p.x - 4 : p.x + 4)}" y="${fmt(p.y - 3)}" text-anchor="${p.anchor}">${width}</text>` +
+        `<title>${esc(TIP.bus(width))}</title></g>`;
     }
   }
-  const title = net ? `${net.name ?? net.id}${net.aliases && net.aliases.length > 0 ? ` (also ${net.aliases.join(", ")})` : ""} (${width} bit${width === 1 ? "" : "s"})` : netId;
-  const junctions = (e.junctionPoints ?? []).map((j) => `<circle class="junction" cx="${fmt(j.x)}" cy="${fmt(j.y)}" r="${fmt(junctionRadius(width))}"/>`).join("");
+  const title = netTooltip(net, netId, lines);
+  const junctions = (e.junctionPoints ?? []).map((j) => `<circle class="junction" cx="${fmt(j.x)}" cy="${fmt(j.y)}" r="${fmt(junctionRadius(width))}"><title>${TIP.junction}</title></circle>`).join("");
   // Semantic warning badge on the first wire of the net (multiple drivers, combinational loop).
   let warn = "";
   if (showWidth && net?.warnings && net.warnings.length > 0) {
@@ -268,7 +267,7 @@ function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rip
       warn = `<g class="warn" data-warning="${esc(net.warnings.join(","))}"><path class="warn-badge" d="M${fmt(p.x)},${fmt(p.y - 13)} L${fmt(p.x + 6)},${fmt(p.y - 3)} L${fmt(p.x - 6)},${fmt(p.y - 3)} Z"/><text class="warn-badge-text" x="${fmt(p.x)}" y="${fmt(p.y - 4)}" text-anchor="middle">!</text><title>${esc(`warning: ${net.warnings.join(", ")}`)}</title></g>`;
     }
   }
-  return { markup: `<g class="${cls}" data-net="${esc(netId)}"${net ? srcAttr(net.src) : ""}><path class="net-path" d="${d}"/>${label}${junctions}${warn}<title>${esc(title)}${net?.warnings && net.warnings.length > 0 ? `\nwarning: ${net.warnings.join(", ")}` : ""}</title></g>`, labelled: label !== "" || warn !== "" };
+  return { markup: `<g class="${cls}" data-net="${esc(netId)}"${net ? srcAttr(net.src) : ""}><path class="net-path" d="${d}"/>${label}${junctions}${warn}<title>${esc(title)}</title></g>`, labelled: label !== "" || warn !== "" };
 }
 
 /** Rounds the layout to whole pixels and splits 4-way junctions; the checks measure the same result. */
@@ -292,7 +291,32 @@ function avoidance(layout: ElkGraphOut, widthOf: (net: string) => number): Avoid
   return avoid;
 }
 
-export function renderModule(view: ModuleView, rawLayout: ElkGraphOut, opts: RenderOptions = {}): RenderedSvg {
+/** Plain crossings get an invisible hit target so hovering explains that the wires do not connect. */
+function crossingMarkers(avoid: Avoid): string {
+  const out: string[] = [];
+  const segs = avoid.segs;
+  for (let i = 0; i < segs.length; i++) {
+    for (let j = i + 1; j < segs.length; j++) {
+      const p = segs[i]!;
+      const q = segs[j]!;
+      if (p.net === q.net) continue;
+      const pH = p.a.y === p.b.y;
+      const qH = q.a.y === q.b.y;
+      if (pH === qH) continue;
+      const h = pH ? p : q;
+      const v = pH ? q : p;
+      const x = v.a.x;
+      const y = h.a.y;
+      if (x <= Math.min(h.a.x, h.b.x) || x >= Math.max(h.a.x, h.b.x) || y <= Math.min(v.a.y, v.b.y) || y >= Math.max(v.a.y, v.b.y)) continue;
+      out.push(`<circle class="crossing" cx="${fmt(x)}" cy="${fmt(y)}" r="5"><title>${TIP.crossing}</title></circle>`);
+    }
+  }
+  return out.join("");
+}
+
+export function renderModule(rawView: ModuleView, rawLayout: ElkGraphOut, opts: RenderOptions = {}): RenderedSvg {
+  const view = expandLogicalGates(rawView);
+  const lines = opts.sourceLines;
   const layout = prepareLayout(rawLayout, view);
   const idx = index(layout);
   const rippers = new Set(view.nodes.filter((n) => n.kind === "split" || n.kind === "join").map((n) => n.id));
@@ -315,19 +339,20 @@ export function renderModule(view: ModuleView, rawLayout: ElkGraphOut, opts: Ren
   for (const e of layout.edges) {
     const netId = e.id.replace(/^edge:/, "").replace(/:\d+$/, "");
     // One width label per net, on the first wire that can carry it.
-    const r = renderEdge(e, netById.get(netId), !labelled.has(netId), rippers, avoid);
+    const r = renderEdge(e, netById.get(netId), !labelled.has(netId), rippers, avoid, lines);
     if (r.labelled) labelled.add(netId);
     edges.push(r.markup);
   }
   parts.push(`<g class="nets">${edges.join("")}</g>`);
+  parts.push(`<g class="crossings">${crossingMarkers(avoid)}</g>`);
   const nodes: string[] = [];
   for (const p of view.ports) {
     const n = idx.nodes.get(portNodeId(p.name));
-    if (n) nodes.push(renderPortNode(p, n));
+    if (n) nodes.push(renderPortNode(p, n, lines));
   }
   for (const n of layout.children) {
     const node = nodeById.get(n.id);
-    if (node) nodes.push(renderNode(node, n));
+    if (node) nodes.push(renderNode(node, n, lines));
   }
   parts.push(`<g class="nodes">${nodes.join("")}</g>`);
   return { inner: parts.join(""), width, height };

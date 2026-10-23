@@ -3,21 +3,26 @@
 // constant pills, instance and black-box boxes, split/join bars and clouds.
 // Every function returns markup placed inside the node's <g> (origin top-left).
 import type { Node, Pin } from "../../src/ir/types";
+import { LOGICAL_TAG_H } from "./geometry";
+import { isReduceBox } from "./logical";
 import { esc, fmt } from "./svg";
+import { pinTooltip, TIP } from "./tooltips";
 
 export type PinPos = Map<string, { x: number; y: number; pin: Pin }>;
 
 const BUBBLE_R = 3;
 
-function pinMarkers(pins: PinPos): string {
+function pinMarkers(node: Node, pins: PinPos): string {
   const out: string[] = [];
   for (const [, p] of pins) {
     const bus = p.pin.width > 1 ? " bus" : "";
     out.push(`<circle class="pin${bus}" data-pin="${esc(p.pin.id)}" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="1.4"/>`);
+    const tip = pinTooltip(node, p.pin.id, p.pin.label);
+    if (tip) out.push(`<circle class="pin-hit" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="4"><title>${esc(tip)}</title></circle>`);
     if (p.pin.inverted) {
       const dx = p.pin.side === "west" ? BUBBLE_R : p.pin.side === "east" ? -BUBBLE_R : 0;
       const dy = p.pin.side === "south" ? -BUBBLE_R : p.pin.side === "north" ? BUBBLE_R : 0;
-      out.push(`<circle class="bubble" cx="${fmt(p.x + dx)}" cy="${fmt(p.y + dy)}" r="${BUBBLE_R}"/>`);
+      out.push(`<circle class="bubble" cx="${fmt(p.x + dx)}" cy="${fmt(p.y + dy)}" r="${BUBBLE_R}"><title>${TIP.bubble}</title></circle>`);
     }
   }
   return out.join("");
@@ -37,7 +42,7 @@ function pinLabels(pins: PinPos, inset = 5): string {
 }
 
 /** Ripper labels for split/join pins, drawn just outside the bar along the wire. */
-function bitLabels(pins: PinPos): string {
+function bitLabels(node: Node, pins: PinPos): string {
   const out: string[] = [];
   for (const [, p] of pins) {
     if (!p.pin.bits) continue;
@@ -47,14 +52,20 @@ function bitLabels(pins: PinPos): string {
     const anchor = p.pin.side === "west" ? "end" : "start";
     // A repeated input shows its count; the range it fills is in the tooltip.
     const text = p.pin.label ? p.pin.label : p.pin.bits;
-    const tip = p.pin.label ? `${p.pin.bits} = ${p.pin.width} bit${p.pin.width === 1 ? "" : "s"} ${p.pin.label}` : `${p.pin.bits} (${p.pin.width} bit${p.pin.width === 1 ? "" : "s"})`;
+    const bits = `${p.pin.width} bit${p.pin.width === 1 ? "" : "s"}`;
+    const tip =
+      node.kind === "join"
+        ? p.pin.label
+          ? `These ${bits} repeated ${p.pin.label} fill bits ${p.pin.bits} of the output.`
+          : `These ${bits} become bits ${p.pin.bits} of the output.`
+        : `Bits ${p.pin.bits} taken out of the bus (${bits}).`;
     out.push(`<text class="ripper-label" x="${fmt(x)}" y="${fmt(p.y - 3)}" text-anchor="${anchor}"${p.pin.net ? ` data-net="${esc(p.pin.net)}"` : ""}><title>${esc(tip)}</title>${esc(text)}</text>`);
   }
   return out.join("");
 }
 
 function outputBubble(w: number, h: number): string {
-  return `<circle class="bubble" cx="${fmt(w - BUBBLE_R)}" cy="${fmt(h / 2)}" r="${BUBBLE_R}"/>`;
+  return `<circle class="bubble" cx="${fmt(w - BUBBLE_R)}" cy="${fmt(h / 2)}" r="${BUBBLE_R}"><title>${TIP.bubble}</title></circle>`;
 }
 
 /** Stubs from the west edge to the gate body for OR-family shapes with a concave back. */
@@ -83,8 +94,11 @@ function xorExtra(x0: number, w: number, h: number): string {
   return `<path class="gate-line" d="M${fmt(x)},0 Q${fmt(x + (w - x0) * 0.3)},${fmt(h / 2)} ${fmt(x)},${fmt(h)}"/>`;
 }
 
-function gateSymbol(node: Node, w: number, h: number, pins: PinPos): string {
+function gateSymbol(node: Node, w: number, fullH: number, pins: PinPos): string {
   const op = node.op ?? "and";
+  const logical = node.info?.["logical"] === "1";
+  // A logical gate keeps a strip under the body for its "logical" tag (bug 17).
+  const h = logical ? fullH - LOGICAL_TAG_H : fullH;
   const bubbleOut = op === "nand" || op === "nor" || op === "xnor" || op === "not";
   const bodyW = bubbleOut ? w - BUBBLE_R * 2 : w;
   const x0 = 6; // leave room for input bubbles
@@ -110,7 +124,18 @@ function gateSymbol(node: Node, w: number, h: number, pins: PinPos): string {
       body = `<rect class="gate-body" x="${fmt(x0)}" y="0" width="${fmt(bodyW - x0)}" height="${fmt(h)}" rx="3"/><text class="label" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(op)}</text>`;
   }
   const stubTo = op === "xor" || op === "xnor" ? x0 + 1 : x0 + 2;
-  return westStubs(pins, stubTo) + body + (bubbleOut ? outputBubble(w, h) : "") + (node.info?.["logical"] ? `<text class="glyph small" x="${fmt(w / 2 + 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${op === "and" ? "&amp;&amp;" : "||"}</text>` : "") + pinMarkers(pins);
+  const glyph = logical ? `<text class="glyph small" x="${fmt(w / 2 + 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${op === "and" ? "&amp;&amp;" : op === "or" ? "||" : "!"}</text>` : "";
+  const tag = logical ? `<text class="tag" x="${fmt(w / 2)}" y="${fmt(fullH - 2)}" text-anchor="middle">logical</text>` : "";
+  return westStubs(pins, stubTo) + body + (bubbleOut ? outputBubble(w, h) : "") + glyph + tag + pinMarkers(node, pins);
+}
+
+/** "any 1?" and "all 0?" boxes that stand in front of a logical gate on a bus. */
+function reduceBoxSymbol(node: Node, w: number, h: number, pins: PinPos): string {
+  return (
+    `<rect class="body reduce-box" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="4"/>` +
+    `<text class="label" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(node.label)}</text>` +
+    pinMarkers(node, pins)
+  );
 }
 
 const REDUCE_GLYPH: Record<string, string> = { and: "&amp;", or: "|", xor: "^", xnor: "~^", nand: "~&amp;", nor: "~|" };
@@ -126,14 +151,13 @@ function reduceSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   else if (base === "or") body = `<path class="gate-body" d="${orPath(x0, bodyW, h)}"/>`;
   else body = `<path class="gate-body" d="${orPath(x0 + 4, bodyW, h)}"/>${xorExtra(x0 + 4, bodyW, h)}`;
   const glyph = `<text class="glyph" x="${fmt(x0 + (bodyW - x0) * 0.5)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${REDUCE_GLYPH[op] ?? op}</text>`;
-  return westStubs(pins, x0 + 2) + body + glyph + (bubbleOut ? outputBubble(w, h) : "") + pinMarkers(pins);
+  return westStubs(pins, x0 + 2) + body + glyph + (bubbleOut ? outputBubble(w, h) : "") + pinMarkers(node, pins);
 }
 
 function muxSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   const inset = h * 0.18;
   const body = `<path class="body" d="M0,0 L${fmt(w)},${fmt(inset)} L${fmt(w)},${fmt(h - inset)} L0,${fmt(h)} Z"/>`;
-  void node;
-  return body + pinLabels(pins, 4) + pinMarkers(pins);
+  return body + pinLabels(pins, 4) + pinMarkers(node, pins);
 }
 
 function dffSymbol(node: Node, w: number, h: number, pins: PinPos): string {
@@ -141,12 +165,12 @@ function dffSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   for (const [, p] of pins) {
     if (p.pin.id === "CLK") {
       // Clock triangle pointing into the box from the bottom edge.
-      parts.push(`<path class="clk-tri" d="M${fmt(p.x - 4.5)},${fmt(p.y)} L${fmt(p.x)},${fmt(p.y - 6)} L${fmt(p.x + 4.5)},${fmt(p.y)}"/>`);
+      parts.push(`<path class="clk-tri" d="M${fmt(p.x - 4.5)},${fmt(p.y)} L${fmt(p.x)},${fmt(p.y - 6)} L${fmt(p.x + 4.5)},${fmt(p.y)}"><title>${TIP.clock}</title></path>`);
     }
   }
   parts.push(`<text class="label title" x="${fmt(w / 2)}" y="11" text-anchor="middle">${esc(node.label)}</text>`);
   parts.push(pinLabels(pins));
-  parts.push(pinMarkers(pins));
+  parts.push(pinMarkers(node, pins));
   return parts.join("");
 }
 
@@ -154,12 +178,12 @@ function glyphBoxSymbol(node: Node, w: number, h: number, pins: PinPos): string 
   return (
     `<rect class="body" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="4"/>` +
     `<text class="glyph" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(node.label)}</text>` +
-    pinMarkers(pins)
+    pinMarkers(node, pins)
   );
 }
 
-function splitJoinSymbol(_node: Node, w: number, h: number, pins: PinPos): string {
-  return `<rect class="ripper" x="${fmt(w / 2 - 2)}" y="0" width="4" height="${fmt(h)}" rx="1"/>` + bitLabels(pins) + pinMarkers(pins);
+function splitJoinSymbol(node: Node, w: number, h: number, pins: PinPos): string {
+  return `<rect class="ripper" x="${fmt(w / 2 - 2)}" y="0" width="4" height="${fmt(h)}" rx="1"/>` + bitLabels(node, pins) + pinMarkers(node, pins);
 }
 
 function boxSymbol(node: Node, w: number, h: number, pins: PinPos, extraClass: string, dashed: boolean): string {
@@ -167,7 +191,7 @@ function boxSymbol(node: Node, w: number, h: number, pins: PinPos, extraClass: s
     `<rect class="body ${extraClass}${dashed ? " dashed" : ""}" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="3"/>` +
     `<text class="label title" x="${fmt(w / 2)}" y="11" text-anchor="middle">${esc(node.label)}</text>` +
     pinLabels(pins) +
-    pinMarkers(pins)
+    pinMarkers(node, pins)
   );
 }
 
@@ -175,7 +199,7 @@ function cloudSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   return (
     `<rect class="body cloud dashed" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="10"/>` +
     `<text class="label" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(node.label)}</text>` +
-    pinMarkers(pins)
+    pinMarkers(node, pins)
   );
 }
 
@@ -183,7 +207,7 @@ function constSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   return (
     `<rect class="body const" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="${fmt(h / 2)}"/>` +
     `<text class="label" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(node.label)}</text>` +
-    pinMarkers(pins)
+    pinMarkers(node, pins)
   );
 }
 
@@ -192,7 +216,7 @@ function genericSymbol(node: Node, w: number, h: number, pins: PinPos): string {
     `<rect class="body generic dashed" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="3"/>` +
     `<text class="label title" x="${fmt(w / 2)}" y="11" text-anchor="middle">${esc(node.label)}</text>` +
     pinLabels(pins) +
-    pinMarkers(pins)
+    pinMarkers(node, pins)
   );
 }
 
@@ -201,7 +225,8 @@ function warningBadge(node: Node, w: number): string {
   if (!node.warnings || node.warnings.length === 0) return "";
   const x = w - 7;
   const y = 7;
-  return `<g class="warn" data-warning="${esc(node.warnings.join(","))}"><path class="warn-badge" d="M${fmt(x)},${fmt(y - 6)} L${fmt(x + 6)},${fmt(y + 4)} L${fmt(x - 6)},${fmt(y + 4)} Z"/><text class="warn-badge-text" x="${fmt(x)}" y="${fmt(y + 3)}" text-anchor="middle">!</text><title>${esc(`warning: ${node.warnings.join(", ")}`)}</title></g>`;
+  const text = node.warnings.map((wn) => (wn === "latch" ? TIP.latch : `Warning: ${wn}.`)).join("\n");
+  return `<g class="warn" data-warning="${esc(node.warnings.join(","))}"><path class="warn-badge" d="M${fmt(x)},${fmt(y - 6)} L${fmt(x + 6)},${fmt(y + 4)} L${fmt(x - 6)},${fmt(y + 4)} Z"/><text class="warn-badge-text" x="${fmt(x)}" y="${fmt(y + 3)}" text-anchor="middle">!</text><title>${esc(text)}</title></g>`;
 }
 
 export function symbolMarkup(node: Node, w: number, h: number, pins: PinPos): string {
@@ -213,7 +238,7 @@ function symbolBody(node: Node, w: number, h: number, pins: PinPos): string {
     case "gate":
       return gateSymbol(node, w, h, pins);
     case "reduce":
-      return reduceSymbol(node, w, h, pins);
+      return isReduceBox(node) ? reduceBoxSymbol(node, w, h, pins) : reduceSymbol(node, w, h, pins);
     case "mux":
     case "pmux":
       return muxSymbol(node, w, h, pins);

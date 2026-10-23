@@ -221,9 +221,9 @@ export class Controller implements vscode.Disposable {
     const good = st?.lastGood[view];
     if (doc && st?.structural && good && !st.structural.file.hasErrors) {
       const generation = this.scheduler.currentGeneration(this.key(doc));
-      this.postRender(generation, { ...good, generation });
+      this.postRender(generation, { ...good, generation }, st.structural.text);
       this.provider.post({ type: "error", generation, error: null });
-      this.postStatus({ fidelity: "synthesized", editing: false, message: "cached" });
+      this.postStatus({ fidelity: "synthesized", editing: false, message: "ready, from cache" });
       return;
     }
     this.rerunActive();
@@ -314,8 +314,10 @@ export class Controller implements vscode.Disposable {
     this.provider.post({ type: "status", generation: gen, status: this.status });
   }
 
-  private postRender(generation: number, doc: SchematicDoc): void {
-    this.provider.post({ type: "render", generation, doc, fitOnRender: false });
+  private postRender(generation: number, doc: SchematicDoc, text?: string): void {
+    // Tooltips quote the line an element came from; the newest text is close enough while editing.
+    const sourceLines = text?.split(/\r?\n/);
+    this.provider.post({ type: "render", generation, doc, fitOnRender: false, ...(sourceLines ? { sourceLines } : {}) });
     this.lastRender = { generation, doc };
     this.renderEmitter.fire(this.lastRender);
   }
@@ -349,15 +351,15 @@ export class Controller implements vscode.Disposable {
         // the newer text, and say so in the badge text. The render and the badge move together.
         const overlay = overlayStructural(lastGood!, ir, job.generation);
         const changes = overlaySummaryText(overlay.summary);
-        this.postRender(job.generation, overlay.doc);
+        this.postRender(job.generation, overlay.doc, job.text);
         this.provider.post({ type: "error", generation: job.generation, error });
-        const base = file.hasErrors ? "last good diagram, fix the error to resynthesize" : synthOn ? "last good diagram, synthesizing" : modCount;
+        const base = file.hasErrors ? "showing the last good diagram; fix the error to update it" : synthOn ? "showing the last good diagram; synthesizing the new code" : modCount;
         this.postStatus({ fidelity: "stale", editing: false, message: changes ? `${base}; ${changes}` : base });
         if (!file.hasErrors) this.scheduler.requestSynth(job.docKey, job.generation, job.text);
       } else {
-        this.postRender(job.generation, ir);
+        this.postRender(job.generation, ir, job.text);
         this.provider.post({ type: "error", generation: job.generation, error });
-        this.postStatus({ fidelity: "structural", editing: file.hasErrors, message: file.hasErrors ? `${modCount}, ${file.errors.length} syntax error${file.errors.length === 1 ? "" : "s"}` : synthOn && top !== "" ? "synthesizing" : modCount });
+        this.postStatus({ fidelity: "structural", editing: file.hasErrors, message: file.hasErrors ? `${modCount}, ${file.errors.length} syntax error${file.errors.length === 1 ? "" : "s"}` : synthOn && top !== "" ? "synthesizing (turning the code into gates)" : modCount });
         if (!file.hasErrors && synthOn && top !== "") this.scheduler.requestSynth(job.docKey, job.generation, job.text);
       }
       if (t1 - t0 > 100) log.warn(`structural pass took ${(t1 - t0).toFixed(1)} ms`);
@@ -415,9 +417,9 @@ export class Controller implements vscode.Disposable {
       this.synth.stats.cacheHits++;
       const out: SchematicDoc = { ...cached.doc, generation: job.generation, sourceUri, moduleNames };
       st.lastGood[view] = out;
-      this.postRender(job.generation, out);
+      this.postRender(job.generation, out, job.text);
       this.provider.post({ type: "error", generation: job.generation, error: null });
-      this.postStatus({ fidelity: "synthesized", editing: false, message: "cached" });
+      this.postStatus({ fidelity: "synthesized", editing: false, message: "ready, from cache" });
       void this.prepareOtherView(job, structural, view);
       return;
     }
@@ -430,14 +432,14 @@ export class Controller implements vscode.Disposable {
       if (res.ok && res.doc) {
         if (res.doc.modules[structural.top] && res.doc.modules[structural.top]!.nodes.length > 2000) {
           log.warn(`synthesized netlist has ${res.doc.modules[structural.top]!.nodes.length} nodes; showing the structural view`);
-          this.postStatus({ fidelity: "structural", message: "netlist too large for the synthesized views (over 2,000 nodes)" });
+          this.postStatus({ fidelity: "structural", message: "too big to draw as gates (over 2,000 cells); showing the code outline" });
           return;
         }
         this.synth.cache.set(key, { doc: res.doc, unknownCellTypes: res.unknownCellTypes });
         st.lastGood[view] = res.doc;
-        this.postRender(job.generation, res.doc);
+        this.postRender(job.generation, res.doc, job.text);
         this.provider.post({ type: "error", generation: job.generation, error: null });
-        this.postStatus({ fidelity: "synthesized", editing: false, message: `${res.elapsedMs.toFixed(0)} ms` });
+        this.postStatus({ fidelity: "synthesized", editing: false, message: `synthesized in ${res.elapsedMs.toFixed(0)} ms` });
         for (const d of res.diagnostics) log.warn(`synth: ${d.message}`);
         void this.prepareOtherView(job, structural, view);
       } else {
@@ -453,7 +455,7 @@ export class Controller implements vscode.Disposable {
         }
         log.warn(`synthesis failed: ${err.message}${res.stderr ? `\n${res.stderr.trim()}` : ""}`);
         this.provider.post({ type: "error", generation: job.generation, error: err });
-        this.postStatus({ fidelity: st.lastGood[view] ? "stale" : "structural", message: res.timedOut ? "synthesis timed out" : "synthesis failed" });
+        this.postStatus({ fidelity: st.lastGood[view] ? "stale" : "structural", message: res.timedOut ? "synthesis took too long; see the message above" : "synthesis failed; see the message above" });
       }
     } catch (e) {
       log.error("synthesis crashed", e);

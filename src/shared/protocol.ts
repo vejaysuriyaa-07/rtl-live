@@ -42,7 +42,7 @@ export type ThemeKind = "light" | "dark" | "highContrast" | "highContrastLight";
 
 // Host -> webview
 export type HostToWebview =
-  | { type: "render"; generation: number; doc: SchematicDoc; fitOnRender: boolean }
+  | { type: "render"; generation: number; doc: SchematicDoc; fitOnRender: boolean; sourceLines?: string[] }
   | { type: "status"; generation: number; status: StatusInfo }
   | { type: "cursor"; generation: number; cursor: CursorInfo | null }
   | { type: "theme"; generation: number; theme: ThemeKind }

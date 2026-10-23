@@ -44,6 +44,6 @@ test("M5: counter4 has a DFF with a clock triangle and the adder feedback", asyn
 test("M5: fsm_moore state register tooltip lists A and B", async ({ page }) => {
   await page.goto(`${harness.url}/`);
   await postRender(page, goldenDoc("fsm_moore"));
-  const title = await page.locator("g.node-dff title").textContent();
+  const title = await page.locator("g.node-dff > title").textContent();
   expect(title).toContain("states: A = 1'b0, B = 1'b1");
 });
