@@ -34,7 +34,8 @@ test("M10: hovering a wire focuses its net and dims the rest; Escape clears", as
   await expect(diagram.locator('g.port[data-port="p1a"]')).toHaveClass(/focused/);
   await expect(diagram.locator('g.port[data-port="p2a"]')).not.toHaveClass(/focused/);
   // The dim is a 120 ms transition, so poll the computed opacity.
-  await expect.poll(() => diagram.locator('g.net[data-net="net:p2a"]').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThan(0.5);
+  const opacity = (el: unknown): number => Number((globalThis as unknown as { getComputedStyle(e: unknown): { opacity: string } }).getComputedStyle(el).opacity);
+  await expect.poll(() => diagram.locator('g.net[data-net="net:p2a"]').evaluate(opacity)).toBeLessThan(0.5);
   await page.screenshot({ path: join(ART, "m10-focus.png") });
   await page.keyboard.press("Escape");
   await expect(diagram).not.toHaveClass(/focus/);
@@ -94,7 +95,7 @@ test("M10: contact sheet of every fixture", async ({ page }) => {
   await page.goto(`file://${file}`);
   expect(await page.locator("figure").count()).toBe(tiles.length);
   expect(tiles.length).toBeGreaterThanOrEqual(40);
-  const height = await page.evaluate(() => document.body.scrollHeight);
+  const height = await page.evaluate(() => (globalThis as unknown as { document: { body: { scrollHeight: number } } }).document.body.scrollHeight);
   await page.setViewportSize({ width: 1200, height: Math.min(height + 24, 6000) });
   await page.screenshot({ path: join(ART, "contact-sheet.png") });
 });

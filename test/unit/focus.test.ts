@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { SchematicDoc } from "../../src/ir/types";
-import { focusNets, focusSymbols } from "../../webview/interaction/focus";
+import { focusNets, focusSymbols } from "../../webview/interaction/focusModel";
 import { ROOT } from "./helpers";
 
 const doc = JSON.parse(readFileSync(join(ROOT, "test", "golden", "7458.ir.json"), "utf8")) as SchematicDoc;
