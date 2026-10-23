@@ -3,7 +3,7 @@
 import type { ModuleView, Net, Node, Pin, Port } from "../../src/ir/types";
 import type { ElkEdgeOut, ElkGraphOut, ElkNodeOut, ElkPoint, ElkPortOut } from "../layout/types";
 import { elkPortId, portNodeId } from "../layout/toElk";
-import { junctionOffset, netOfEdge, separateJunctions } from "../layout/postprocess";
+import { crossingPoints, junctionOffset, netOfEdge, separateJunctions } from "../layout/postprocess";
 import { expandLogicalGates } from "./logical";
 import { netTooltip, nodeTooltip, portTooltip, TIP, type SourceLines } from "./tooltips";
 import { symbolMarkup } from "./symbols";
@@ -131,11 +131,38 @@ interface Box {
   h: number;
 }
 
+interface AvoidSeg {
+  net: string;
+  a: ElkPoint;
+  b: ElkPoint;
+}
+
 /** What a wire label must keep clear of: other nets' wires, every symbol, and its own net's dots. */
 export interface Avoid {
-  segs: { net: string; a: ElkPoint; b: ElkPoint }[];
+  segs: AvoidSeg[];
   boxes: Box[];
   dots: { net: string; x: number; y: number; r: number }[];
+  /** Segments by the 64 px cells they pass through, so a label checks only the wires near it. */
+  cells: Map<number, AvoidSeg[]>;
+}
+
+const CELL = 64;
+const cellKey = (cx: number, cy: number): number => cx * 1_000_003 + cy;
+
+function cellsOf(x0: number, y0: number, x1: number, y1: number, fn: (key: number) => void): void {
+  for (let cx = Math.floor(Math.min(x0, x1) / CELL); cx <= Math.floor(Math.max(x0, x1) / CELL); cx++) {
+    for (let cy = Math.floor(Math.min(y0, y1) / CELL); cy <= Math.floor(Math.max(y0, y1) / CELL); cy++) fn(cellKey(cx, cy));
+  }
+}
+
+/** Segments whose cells overlap the box (a segment spanning several cells is seen once per cell; callers tolerate repeats). */
+function segsNear(avoid: Avoid, box: Box, fn: (s: AvoidSeg) => boolean): boolean {
+  let hit = false;
+  cellsOf(box.x, box.y, box.x + box.w, box.y + box.h, (k) => {
+    if (hit) return;
+    for (const s of avoid.cells.get(k) ?? []) if (fn(s)) hit = true;
+  });
+  return hit;
 }
 
 const BUS_WIDTH_CHAR = 9 * 0.6;
@@ -150,11 +177,12 @@ function labelBox(p: BusLabel, textW: number): Box {
 }
 
 function isClear(box: Box, net: string, avoid: Avoid): boolean {
-  for (const s of avoid.segs) {
-    if (s.net === net) continue;
+  const blocked = segsNear(avoid, { x: box.x - 1, y: box.y - 1, w: box.w + 2, h: box.h + 2 }, (s) => {
+    if (s.net === net) return false;
     const r: Box = { x: Math.min(s.a.x, s.b.x) - 1, y: Math.min(s.a.y, s.b.y) - 1, w: Math.abs(s.a.x - s.b.x) + 2, h: Math.abs(s.a.y - s.b.y) + 2 };
-    if (boxesTouch(box, r)) return false;
-  }
+    return boxesTouch(box, r);
+  });
+  if (blocked) return false;
   for (const b of avoid.boxes) if (boxesTouch(box, b)) return false;
   for (const d of avoid.dots) if (d.net === net && boxesTouch(box, { x: d.x - d.r, y: d.y - d.r, w: 2 * d.r, h: 2 * d.r })) return false;
   return true;
@@ -278,12 +306,20 @@ export function prepareLayout(rawLayout: ElkGraphOut, view: ModuleView): ElkGrap
 
 /** Everything a wire label must stay clear of, collected once per render. */
 function avoidance(layout: ElkGraphOut, widthOf: (net: string) => number): Avoid {
-  const avoid: Avoid = { segs: [], boxes: [], dots: [] };
+  const avoid: Avoid = { segs: [], boxes: [], dots: [], cells: new Map() };
   for (const e of layout.edges) {
     const net = netOfEdge(e.id);
     for (const s of e.sections ?? []) {
       const pts = [s.startPoint, ...(s.bendPoints ?? []), s.endPoint];
-      for (let i = 0; i + 1 < pts.length; i++) avoid.segs.push({ net, a: pts[i]!, b: pts[i + 1]! });
+      for (let i = 0; i + 1 < pts.length; i++) {
+        const seg: AvoidSeg = { net, a: pts[i]!, b: pts[i + 1]! };
+        avoid.segs.push(seg);
+        cellsOf(seg.a.x, seg.a.y, seg.b.x, seg.b.y, (k) => {
+          const list = avoid.cells.get(k);
+          if (list) list.push(seg);
+          else avoid.cells.set(k, [seg]);
+        });
+      }
     }
     for (const j of e.junctionPoints ?? []) avoid.dots.push({ net, x: j.x, y: j.y, r: junctionRadius(widthOf(net)) });
   }
@@ -293,25 +329,9 @@ function avoidance(layout: ElkGraphOut, widthOf: (net: string) => number): Avoid
 
 /** Plain crossings get an invisible hit target so hovering explains that the wires do not connect. */
 function crossingMarkers(avoid: Avoid): string {
-  const out: string[] = [];
-  const segs = avoid.segs;
-  for (let i = 0; i < segs.length; i++) {
-    for (let j = i + 1; j < segs.length; j++) {
-      const p = segs[i]!;
-      const q = segs[j]!;
-      if (p.net === q.net) continue;
-      const pH = p.a.y === p.b.y;
-      const qH = q.a.y === q.b.y;
-      if (pH === qH) continue;
-      const h = pH ? p : q;
-      const v = pH ? q : p;
-      const x = v.a.x;
-      const y = h.a.y;
-      if (x <= Math.min(h.a.x, h.b.x) || x >= Math.max(h.a.x, h.b.x) || y <= Math.min(v.a.y, v.b.y) || y >= Math.max(v.a.y, v.b.y)) continue;
-      out.push(`<circle class="crossing" cx="${fmt(x)}" cy="${fmt(y)}" r="5"><title>${TIP.crossing}</title></circle>`);
-    }
-  }
-  return out.join("");
+  return crossingPoints(avoid.segs)
+    .map((c) => `<circle class="crossing" cx="${fmt(c.x)}" cy="${fmt(c.y)}" r="5"><title>${TIP.crossing}</title></circle>`)
+    .join("");
 }
 
 export function renderModule(rawView: ModuleView, rawLayout: ElkGraphOut, opts: RenderOptions = {}): RenderedSvg {

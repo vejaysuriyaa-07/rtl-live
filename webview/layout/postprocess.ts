@@ -65,10 +65,91 @@ function allSegments(edges: ElkEdgeOut[]): NetSeg[] {
 
 type Dir = "N" | "S" | "E" | "W";
 
+/** Coordinates are whole pixels after roundLayout; EPS-equal values share a key. */
+const coord = (v: number): number => Math.round(v * 100);
+const pointKey = (p: ElkPoint): number => coord(p.x) * 4_000_037 + coord(p.y);
+
+/** Segments bucketed by the coordinate they run along, so a point or a range finds its few candidates. */
+class SegIndex {
+  /** Horizontal segments by y. */
+  readonly byY = new Map<number, NetSeg[]>();
+  /** Vertical segments by x. */
+  readonly byX = new Map<number, NetSeg[]>();
+  private xs: number[] | undefined;
+  private ys: number[] | undefined;
+
+  constructor(segs: readonly NetSeg[]) {
+    for (const sg of segs) this.add(sg);
+  }
+
+  add(sg: NetSeg): void {
+    const horizontal = Math.abs(sg.a.y - sg.b.y) < EPS;
+    const map = horizontal ? this.byY : this.byX;
+    const k = coord(horizontal ? sg.a.y : sg.a.x);
+    const list = map.get(k);
+    if (list) list.push(sg);
+    else {
+      map.set(k, [sg]);
+      if (horizontal) this.ys = undefined;
+      else this.xs = undefined;
+    }
+  }
+
+  /** Removes the segment with the same ends and net, if present. */
+  remove(sg: NetSeg): void {
+    const horizontal = Math.abs(sg.a.y - sg.b.y) < EPS;
+    const map = horizontal ? this.byY : this.byX;
+    const k = coord(horizontal ? sg.a.y : sg.a.x);
+    const list = map.get(k);
+    if (!list) return;
+    const key = segKey(sg);
+    const i = list.findIndex((o) => o.net === sg.net && segKey(o) === key);
+    if (i >= 0) list.splice(i, 1);
+    if (list.length === 0) {
+      map.delete(k);
+      if (horizontal) this.ys = undefined;
+      else this.xs = undefined;
+    }
+  }
+
+  /** Segments that pass through `pt` (either orientation). */
+  at(pt: ElkPoint): NetSeg[] {
+    return [...(this.byY.get(coord(pt.y)) ?? []), ...(this.byX.get(coord(pt.x)) ?? [])];
+  }
+
+  /** Calls `fn` for every vertical segment whose x lies strictly inside (lo, hi). */
+  eachVerticalBetween(lo: number, hi: number, fn: (s: NetSeg) => void): void {
+    this.xs ??= [...this.byX.keys()].sort((a, b) => a - b);
+    this.range(this.xs, this.byX, lo, hi, fn);
+  }
+
+  /** Calls `fn` for every horizontal segment whose y lies strictly inside (lo, hi). */
+  eachHorizontalBetween(lo: number, hi: number, fn: (s: NetSeg) => void): void {
+    this.ys ??= [...this.byY.keys()].sort((a, b) => a - b);
+    this.range(this.ys, this.byY, lo, hi, fn);
+  }
+
+  private range(keys: number[], map: Map<number, NetSeg[]>, lo: number, hi: number, fn: (s: NetSeg) => void): void {
+    let i = lowerBound(keys, coord(lo + EPS) + 1);
+    for (; i < keys.length && keys[i]! < coord(hi - EPS); i++) for (const s of map.get(keys[i]!)!) fn(s);
+  }
+}
+
+function lowerBound(keys: number[], v: number): number {
+  let lo = 0;
+  let hi = keys.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (keys[mid]! < v) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
 /** Directions in which wires leave a point, with the longest run available in each. */
-function runsAt(segs: Seg[], pt: ElkPoint): Map<Dir, number> {
+function runsAtIndexed(index: SegIndex, pt: ElkPoint): Map<Dir, number> {
   const runs = new Map<Dir, number>();
-  for (const s of segs) {
+  for (const s of index.at(pt)) {
     const horizontal = Math.abs(s.a.y - s.b.y) < EPS;
     const onSeg = horizontal
       ? Math.abs(s.a.y - pt.y) < EPS && pt.x >= Math.min(s.a.x, s.b.x) - EPS && pt.x <= Math.max(s.a.x, s.b.x) + EPS
@@ -84,6 +165,73 @@ function runsAt(segs: Seg[], pt: ElkPoint): Map<Dir, number> {
   return runs;
 }
 
+interface Entry {
+  p: ElkPoint;
+  /** How many records (crossing pairs, or dots) sit at this point. */
+  n: number;
+}
+
+/**
+ * Distinct points with a count of the records that make them, bucketed in square cells so
+ * "anything within `gap`" scans nine cells. Records can be removed again, so the set follows
+ * accepted moves instead of being rebuilt.
+ */
+class PointSet {
+  private readonly entries = new Map<number, Entry>();
+  private readonly cells = new Map<number, Set<Entry>>();
+  constructor(
+    points: readonly ElkPoint[],
+    private readonly cell: number,
+  ) {
+    for (const p of points) this.add(p);
+  }
+  private cellKey(p: ElkPoint): number {
+    return Math.floor(p.x / this.cell) * 1_000_003 + Math.floor(p.y / this.cell);
+  }
+  add(p: ElkPoint): void {
+    const k = pointKey(p);
+    const e = this.entries.get(k);
+    if (e) {
+      e.n++;
+      return;
+    }
+    const entry = { p: { x: p.x, y: p.y }, n: 1 };
+    this.entries.set(k, entry);
+    const c = this.cellKey(p);
+    const set = this.cells.get(c);
+    if (set) set.add(entry);
+    else this.cells.set(c, new Set([entry]));
+  }
+  remove(p: ElkPoint): void {
+    const k = pointKey(p);
+    const e = this.entries.get(k);
+    if (!e) return;
+    if (--e.n > 0) return;
+    this.entries.delete(k);
+    this.cells.get(this.cellKey(p))?.delete(e);
+  }
+  /** True when records other than the `exclude` count at that point remain. */
+  has(p: ElkPoint, exclude?: ReadonlyMap<number, number>): boolean {
+    const e = this.entries.get(pointKey(p));
+    return e !== undefined && e.n - (exclude?.get(pointKey(p)) ?? 0) > 0;
+  }
+  /** Distinct points strictly closer than `gap` to `p` (not `p` itself), ignoring records counted in `exclude`. */
+  countWithin(p: ElkPoint, gap: number, exclude?: ReadonlyMap<number, number>): number {
+    let n = 0;
+    const cx = Math.floor(p.x / this.cell);
+    const cy = Math.floor(p.y / this.cell);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (const e of this.cells.get((cx + dx) * 1_000_003 + (cy + dy)) ?? []) {
+          if (exclude && e.n - (exclude.get(pointKey(e.p)) ?? 0) <= 0) continue;
+          if (!same(e.p, p) && Math.hypot(e.p.x - p.x, e.p.y - p.y) < gap - EPS) n++;
+        }
+      }
+    }
+    return n;
+  }
+}
+
 function cloneEdges(edges: ElkEdgeOut[]): ElkEdgeOut[] {
   return edges.map((e) => ({
     ...e,
@@ -94,41 +242,14 @@ function cloneEdges(edges: ElkEdgeOut[]): ElkEdgeOut[] {
   }));
 }
 
-/** True when the segment keeps CLEARANCE from every parallel segment and crossing of another net. */
-function clearOfOthers(seg: Seg, net: string, others: NetSeg[]): boolean {
-  const vertical = Math.abs(seg.a.x - seg.b.x) < EPS;
-  const lo = vertical ? Math.min(seg.a.y, seg.b.y) : Math.min(seg.a.x, seg.b.x);
-  const hi = vertical ? Math.max(seg.a.y, seg.b.y) : Math.max(seg.a.x, seg.b.x);
-  const at = vertical ? seg.a.x : seg.a.y;
-  for (const o of others) {
-    if (o.net === net) continue;
-    const oVertical = Math.abs(o.a.x - o.b.x) < EPS;
-    if (oVertical === vertical) {
-      const oLo = vertical ? Math.min(o.a.y, o.b.y) : Math.min(o.a.x, o.b.x);
-      const oHi = vertical ? Math.max(o.a.y, o.b.y) : Math.max(o.a.x, o.b.x);
-      const oAt = vertical ? o.a.x : o.a.y;
-      if (Math.min(hi, oHi) - Math.max(lo, oLo) > -CLEARANCE && Math.abs(at - oAt) < CLEARANCE - EPS) return false;
-    } else {
-      // A perpendicular wire of another net must not pass through either end of the moved leg.
-      const oAt = oVertical ? o.a.x : o.a.y;
-      const oLo = oVertical ? Math.min(o.a.y, o.b.y) : Math.min(o.a.x, o.b.x);
-      const oHi = oVertical ? Math.max(o.a.y, o.b.y) : Math.max(o.a.x, o.b.x);
-      for (const end of [seg.a, seg.b]) {
-        const endAlong = vertical ? end.y : end.x;
-        const endAcross = vertical ? end.x : end.y;
-        if (Math.abs(endAcross - oAt) < CLEARANCE - EPS && endAlong > oLo - CLEARANCE && endAlong < oHi + CLEARANCE) return false;
-      }
-    }
-  }
-  return true;
-}
-
 /** Every point of a net where three or more wires meet. */
 function dotsOf(net: string, netEdges: ElkEdgeOut[]): Dot[] {
-  const segs = segmentsOf(netEdges);
-  const seen: ElkPoint[] = [];
-  for (const e of netEdges) for (const pts of pointsOf(e)) for (const p of pts) if (!seen.some((q) => same(p, q))) seen.push(p);
-  return seen.filter((p) => runsAt(segs, p).size >= 3).map((p) => ({ net, x: p.x, y: p.y }));
+  const index = new SegIndex(segmentsOf(netEdges).map((sg) => ({ ...sg, net })));
+  const seen = new Map<number, ElkPoint>();
+  for (const e of netEdges) for (const pts of pointsOf(e)) for (const p of pts) if (!seen.has(pointKey(p))) seen.set(pointKey(p), p);
+  const out: Dot[] = [];
+  for (const p of seen.values()) if (runsAtIndexed(index, p).size >= 3) out.push({ net, x: p.x, y: p.y });
+  return out;
 }
 
 /** Junction dots recomputed from the geometry. */
@@ -140,40 +261,170 @@ function rebuildJunctions(net: string, netEdges: ElkEdgeOut[]): void {
   });
 }
 
-/** Points where a horizontal and a vertical wire of different nets cross in their interiors. */
-function crossingsOf(segs: NetSeg[]): ElkPoint[] {
-  const out: ElkPoint[] = [];
-  for (let i = 0; i < segs.length; i++) {
-    for (let j = i + 1; j < segs.length; j++) {
-      const p = segs[i]!;
-      const q = segs[j]!;
-      if (p.net === q.net) continue;
-      const pH = Math.abs(p.a.y - p.b.y) < EPS;
-      const qH = Math.abs(q.a.y - q.b.y) < EPS;
-      if (pH === qH) continue;
-      const h = pH ? p : q;
-      const v = pH ? q : p;
-      const x = v.a.x;
-      const y = h.a.y;
-      if (x <= Math.min(h.a.x, h.b.x) + EPS || x >= Math.max(h.a.x, h.b.x) - EPS || y <= Math.min(v.a.y, v.b.y) + EPS || y >= Math.max(v.a.y, v.b.y) - EPS) continue;
-      if (!out.some((c) => same(c, { x, y }))) out.push({ x, y });
+interface Crossing extends ElkPoint {
+  netA: string;
+  netB: string;
+  /** Keys of the horizontal (A) and vertical (B) segments that cross. */
+  keyA: string;
+  keyB: string;
+}
+
+/** Interior crossings between `segs` and the segments in `others` (other nets only). */
+function crossingsAgainst(segs: readonly NetSeg[], others: SegIndex): Crossing[] {
+  const out: Crossing[] = [];
+  for (const sg of segs) {
+    if (Math.abs(sg.a.y - sg.b.y) < EPS) {
+      const y = sg.a.y;
+      others.eachVerticalBetween(Math.min(sg.a.x, sg.b.x), Math.max(sg.a.x, sg.b.x), (v) => {
+        if (v.net === sg.net) return;
+        if (y <= Math.min(v.a.y, v.b.y) + EPS || y >= Math.max(v.a.y, v.b.y) - EPS) return;
+        out.push({ x: v.a.x, y, netA: sg.net, netB: v.net, keyA: segKey(sg), keyB: segKey(v) });
+      });
+    } else {
+      const x = sg.a.x;
+      others.eachHorizontalBetween(Math.min(sg.a.y, sg.b.y), Math.max(sg.a.y, sg.b.y), (h) => {
+        if (h.net === sg.net) return;
+        if (x <= Math.min(h.a.x, h.b.x) + EPS || x >= Math.max(h.a.x, h.b.x) - EPS) return;
+        out.push({ x, y: h.a.y, netA: h.net, netB: sg.net, keyA: segKey(h), keyB: segKey(sg) });
+      });
     }
   }
   return out;
 }
 
-/** Number of dot pairs under MIN_DOT_GAP plus dot-crossing pairs under MIN_CROSSING_GAP. */
-function crowding(dots: Dot[], crossings: ElkPoint[]): number {
-  let n = 0;
-  for (let i = 0; i < dots.length; i++) {
-    for (let j = i + 1; j < dots.length; j++) if (Math.hypot(dots[i]!.x - dots[j]!.x, dots[i]!.y - dots[j]!.y) < MIN_DOT_GAP - EPS) n++;
-    for (const c of crossings) if (Math.hypot(dots[i]!.x - c.x, dots[i]!.y - c.y) < MIN_CROSSING_GAP - EPS) n++;
+/** Distinct points where wires of different nets cross in their interiors (for the renderer). */
+export function crossingPoints(segs: readonly { net: string; a: ElkPoint; b: ElkPoint }[]): ElkPoint[] {
+  const index = new SegIndex(segs);
+  const seen = new Set<number>();
+  const out: ElkPoint[] = [];
+  for (const sg of segs) {
+    if (Math.abs(sg.a.y - sg.b.y) >= EPS) continue; // each pair once, from its horizontal
+    for (const r of crossingsAgainst([sg], index)) {
+      const k = pointKey(r);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push({ x: r.x, y: r.y });
+    }
   }
-  return n;
+  return out;
 }
 
-function isCrowded(d: Dot, dots: Dot[], crossings: ElkPoint[]): boolean {
-  return dots.some((o) => o !== d && Math.hypot(o.x - d.x, o.y - d.y) < MIN_DOT_GAP - EPS) || crossings.some((c) => Math.hypot(c.x - d.x, c.y - d.y) < MIN_CROSSING_GAP - EPS);
+/** clearOfOthers over an index: only segments within CLEARANCE of the leg are looked at. */
+function clearOfOthersIndexed(seg: Seg, net: string, others: SegIndex): boolean {
+  const vertical = Math.abs(seg.a.x - seg.b.x) < EPS;
+  const lo = vertical ? Math.min(seg.a.y, seg.b.y) : Math.min(seg.a.x, seg.b.x);
+  const hi = vertical ? Math.max(seg.a.y, seg.b.y) : Math.max(seg.a.x, seg.b.x);
+  const at = vertical ? seg.a.x : seg.a.y;
+  let clear = true;
+  const parallel = (o: NetSeg): void => {
+    if (!clear || o.net === net) return;
+    const oLo = vertical ? Math.min(o.a.y, o.b.y) : Math.min(o.a.x, o.b.x);
+    const oHi = vertical ? Math.max(o.a.y, o.b.y) : Math.max(o.a.x, o.b.x);
+    if (Math.min(hi, oHi) - Math.max(lo, oLo) > -CLEARANCE) clear = false;
+  };
+  if (vertical) others.eachVerticalBetween(at - CLEARANCE, at + CLEARANCE, parallel);
+  else others.eachHorizontalBetween(at - CLEARANCE, at + CLEARANCE, parallel);
+  if (!clear) return false;
+  // A perpendicular wire of another net must not pass through either end of the moved leg.
+  for (const end of [seg.a, seg.b]) {
+    const endAlong = vertical ? end.y : end.x;
+    const endAcross = vertical ? end.x : end.y;
+    const perpendicular = (o: NetSeg): void => {
+      if (!clear || o.net === net) return;
+      const oLo = vertical ? Math.min(o.a.x, o.b.x) : Math.min(o.a.y, o.b.y);
+      const oHi = vertical ? Math.max(o.a.x, o.b.x) : Math.max(o.a.y, o.b.y);
+      if (endAlong > oLo - CLEARANCE && endAlong < oHi + CLEARANCE) clear = false;
+    };
+    if (vertical) others.eachHorizontalBetween(endAcross - CLEARANCE, endAcross + CLEARANCE, perpendicular);
+    else others.eachVerticalBetween(endAcross - CLEARANCE, endAcross + CLEARANCE, perpendicular);
+    if (!clear) return false;
+  }
+  return true;
+}
+
+const tooClose = (a: ElkPoint, b: ElkPoint, gap: number): boolean => Math.hypot(a.x - b.x, a.y - b.y) < gap - EPS;
+
+const segKey = (sg: Seg): string => `${pointKey(sg.a)}|${pointKey(sg.b)}`;
+
+/** True when `pt` lies on the segment (same test as runsAtIndexed). */
+function onSegment(sg: Seg, pt: ElkPoint): boolean {
+  const horizontal = Math.abs(sg.a.y - sg.b.y) < EPS;
+  return horizontal
+    ? Math.abs(sg.a.y - pt.y) < EPS && pt.x >= Math.min(sg.a.x, sg.b.x) - EPS && pt.x <= Math.max(sg.a.x, sg.b.x) + EPS
+    : Math.abs(sg.a.x - pt.x) < EPS && pt.y >= Math.min(sg.a.y, sg.b.y) - EPS && pt.y <= Math.max(sg.a.y, sg.b.y) + EPS;
+}
+
+/** Every distinct point of a net's wires with how many section points sit there. */
+function pointCounts(netEdges: ElkEdgeOut[]): Map<number, { p: ElkPoint; n: number }> {
+  const out = new Map<number, { p: ElkPoint; n: number }>();
+  for (const e of netEdges) {
+    for (const pts of pointsOf(e)) {
+      for (const p of pts) {
+        const k = pointKey(p);
+        const e2 = out.get(k);
+        if (e2) e2.n++;
+        else out.set(k, { p, n: 1 });
+      }
+    }
+  }
+  return out;
+}
+
+/** Runs at `pt` over `index` with the replaced segments taken out and the added ones put in. */
+function runsAfter(index: SegIndex, pt: ElkPoint, change: Change): Map<Dir, number> {
+  const replaced = new Set(change.replaced.map(segKey));
+  const runs = new Map<Dir, number>();
+  const consider = (s: Seg): void => {
+    const horizontal = Math.abs(s.a.y - s.b.y) < EPS;
+    if (!onSegment(s, pt)) return;
+    for (const end of [s.a, s.b]) {
+      if (same(end, pt)) continue;
+      const dir: Dir = horizontal ? (end.x > pt.x ? "E" : "W") : end.y > pt.y ? "S" : "N";
+      const len = horizontal ? Math.abs(end.x - pt.x) : Math.abs(end.y - pt.y);
+      runs.set(dir, Math.max(runs.get(dir) ?? 0, len));
+    }
+  };
+  for (const s of index.at(pt)) if (!replaced.has(segKey(s))) consider(s);
+  for (const s of change.added) if (!same(s.a, s.b)) consider(s);
+  return runs;
+}
+
+/**
+ * The net's junction dots after a slide, from the dots before it: only points on a replaced
+ * or added segment can change, so only those are re-examined.
+ */
+function dotsAfter(net: string, index: SegIndex, points: ReadonlyMap<number, { p: ElkPoint; n: number }>, before: readonly Dot[], change: Change): Dot[] {
+  const touched = [...change.replaced, ...change.added].filter((sg) => !same(sg.a, sg.b));
+  const candidates = new Map<number, ElkPoint>();
+  for (const { p } of points.values()) if (touched.some((sg) => onSegment(sg, p))) candidates.set(pointKey(p), p);
+  for (const sg of change.replaced) for (const p of [sg.a, sg.b]) candidates.set(pointKey(p), p);
+  for (const sg of change.added) for (const p of [sg.a, sg.b]) candidates.set(pointKey(p), p);
+  // The moved section no longer sits at the old bend and its leg end, and now sits at the new ones.
+  const adjust = new Map<number, number>();
+  const bump = (p: ElkPoint, d: number): void => {
+    adjust.set(pointKey(p), (adjust.get(pointKey(p)) ?? 0) + d);
+  };
+  bump(change.replaced[1]!.a, -1);
+  bump(change.replaced[1]!.b, -1);
+  bump(change.added[1]!.a, 1);
+  bump(change.added[1]!.b, 1);
+  const present = (k: number): boolean => (points.get(k)?.n ?? 0) + (adjust.get(k) ?? 0) > 0;
+  const out: Dot[] = before.filter((d) => !candidates.has(pointKey(d)));
+  for (const [k, p] of candidates) if (present(k) && runsAfter(index, p, change).size >= 3) out.push({ net, x: p.x, y: p.y });
+  return out;
+}
+
+function countAt(records: readonly ElkPoint[]): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const r of records) out.set(pointKey(r), (out.get(pointKey(r)) ?? 0) + 1);
+  return out;
+}
+
+/** Pairs within `gap` between every point of `xs` and every point of `ys` (plain loops; both lists are small). */
+function pairs(xs: readonly ElkPoint[], ys: readonly ElkPoint[], gap: number): number {
+  let n = 0;
+  for (const x of xs) for (const y of ys) if (tooClose(x, y, gap)) n++;
+  return n;
 }
 
 /**
@@ -194,12 +445,16 @@ export function separateJunctions(layout: ElkGraphOut, offsetOf: (netId: string)
     const offset = offsetOf(net);
     for (let guard = 0; guard < 16; guard++) {
       const segs = segmentsOf(netEdges);
-      const others = allSegments(edges);
-      const fourWay = segs.flatMap((s) => [s.a, s.b]).filter((p, i, arr) => arr.findIndex((q) => same(p, q)) === i && runsAt(segs, p).size >= 4);
+      const index = new SegIndex(segs.map((sg) => ({ ...sg, net })));
+      const seen = new Set<number>();
+      const fourWay: ElkPoint[] = [];
+      for (const sg of segs) for (const p of [sg.a, sg.b]) if (!seen.has(pointKey(p)) && seen.add(pointKey(p)) && runsAtIndexed(index, p).size >= 4) fourWay.push(p);
+      if (fourWay.length === 0) break;
+      const others = new SegIndex(allSegments(edges));
       let moved = false;
       for (const j of fourWay) {
         const deltas = [1, 2, 3].flatMap((m) => [offset * m, -offset * m]);
-        if (slideBranch(netEdges, net, j, runsAt(segs, j), deltas, TRUNK_MARGIN, (leg) => clearOfOthers(leg, net, others))) {
+        if (slideBranch(netEdges, net, j, runsAtIndexed(index, j), deltas, TRUNK_MARGIN, (leg) => clearOfOthersIndexed(leg, net, others))) {
           moved = true;
           touched.add(net);
           break;
@@ -215,39 +470,167 @@ export function separateJunctions(layout: ElkGraphOut, offsetOf: (netId: string)
   return { ...layout, edges };
 }
 
-/** Slides crowded dots clear of other dots and crossings, one move at a time, while any move helps. */
+/**
+ * Slides crowded dots clear of other dots and crossings, one move at a time, while any move
+ * helps: a move is accepted when the number of dot pairs under MIN_DOT_GAP plus dot-crossing
+ * pairs under MIN_CROSSING_GAP goes down. Every index (segments, dots, crossings, the
+ * crossings per segment and which dots are crowded) is built once and follows each accepted
+ * move, and an attempt scores only what it changes (one or two dots and the crossings of
+ * three segments), which keeps a 100-node diagram inside the render budget.
+ */
 function spreadJunctions(edges: ElkEdgeOut[], byNet: Map<string, ElkEdgeOut[]>, touched: Set<string>): void {
   const stuck: Dot[] = [];
+  const dotsByNet = new Map<string, Dot[]>();
+  for (const [net, netEdges] of byNet) dotsByNet.set(net, dotsOf(net, netEdges));
+  const index = new SegIndex(allSegments(edges));
+  // Crossings per segment per net; each record sits under both of its segments and is
+  // counted once in `crossings` (from its horizontal segment).
+  const bySeg = new Map<string, Map<string, Crossing[]>>();
+  const entry = (net: string, key: string): Crossing[] => {
+    const m = bySeg.get(net) ?? bySeg.set(net, new Map()).get(net)!;
+    return m.get(key) ?? m.set(key, []).get(key)!;
+  };
+  const crossings = new PointSet([], MIN_CROSSING_GAP);
+  for (const list of index.byY.values()) {
+    for (const h of list) {
+      for (const r of crossingsAgainst([h], index)) {
+        crossings.add(r);
+        entry(r.netA, r.keyA).push(r);
+        entry(r.netB, r.keyB).push(r);
+      }
+    }
+  }
+  for (const list of index.byX.values()) for (const v of list) entry(v.net, segKey(v));
+  const dotSet = new PointSet([...dotsByNet.values()].flat(), MIN_DOT_GAP);
+  const none = new Map<number, number>();
+  const crowdedNow = (d: Dot): boolean => dotSet.countWithin(d, MIN_DOT_GAP) > 0 || crossings.countWithin(d, MIN_CROSSING_GAP, none) > 0;
+  const flags = new Map<Dot, boolean>();
+  const near = (d: ElkPoint, pts: readonly ElkPoint[]): boolean => pts.some((p) => Math.hypot(p.x - d.x, p.y - d.y) < Math.max(MIN_DOT_GAP, MIN_CROSSING_GAP) + 1);
   for (let guard = 0; guard < 64; guard++) {
-    const all = allSegments(edges);
-    const dots = [...byNet].flatMap(([net, netEdges]) => dotsOf(net, netEdges));
-    const crossings = crossingsOf(all);
-    const before = crowding(dots, crossings);
-    const crowded = dots.find((d) => isCrowded(d, dots, crossings) && !stuck.some((s) => s.net === d.net && same(s, d)));
+    let crowded: Dot | undefined;
+    for (const list of dotsByNet.values()) {
+      for (const d of list) {
+        let f = flags.get(d);
+        if (f === undefined) flags.set(d, (f = crowdedNow(d)));
+        if (f && !stuck.some((st) => st.net === d.net && same(st, d))) {
+          crowded = d;
+          break;
+        }
+      }
+      if (crowded) break;
+    }
     if (!crowded) break;
-    const netEdges = byNet.get(crowded.net)!;
-    const runs = runsAt(segmentsOf(netEdges), crowded);
-    const ok = slideBranch(netEdges, crowded.net, crowded, runs, CROWD_SLIDES, TRUNK_MARGIN, (leg, movedJ) => {
-      if (!clearOfOthers(leg, crowded.net, all)) return false;
-      const dotsAfter = [...byNet].flatMap(([net, ne]) => dotsOf(net, ne));
-      const crossingsAfter = crossingsOf(allSegments(edges));
-      const moved = dotsAfter.find((d) => d.net === crowded.net && same(d, movedJ));
-      // The moved dot must still be a T of its own net (not slid onto another branch), be clear
-      // itself, and leave the drawing less crowded than before.
-      if (!moved || runsAt(segmentsOf(netEdges), movedJ).size !== 3) return false;
-      return !isCrowded(moved, dotsAfter, crossingsAfter) && crowding(dotsAfter, crossingsAfter) < before;
+    const net = crowded.net;
+    const netEdges = byNet.get(net)!;
+    const mineBySeg = bySeg.get(net) ?? new Map<string, Crossing[]>();
+    const mineAll = [...mineBySeg.values()].flat();
+    const mineCount = countAt(mineAll);
+    // Crossing points only this net makes (no other pair of nets crosses there).
+    const ownBefore = new PointSet([], MIN_CROSSING_GAP);
+    const ownKeys = new Set<number>();
+    for (const r of mineAll) {
+      if (ownKeys.has(pointKey(r)) || crossings.has(r, mineCount)) continue;
+      ownKeys.add(pointKey(r));
+      ownBefore.add(r);
+    }
+    const dotsBefore = dotsByNet.get(net)!;
+    const dotExclude = countAt(dotsBefore);
+    const netIndex = new SegIndex(segmentsOf(netEdges).map((sg) => ({ ...sg, net })));
+    const points = pointCounts(netEdges);
+    const runs = runsAtIndexed(netIndex, crowded);
+    let accepted: { netDots: Dot[]; removedDots: Dot[]; addedDots: Dot[]; replaced: Crossing[]; addedBySeg: Map<string, Crossing[]>; vanished: ElkPoint[]; appeared: ElkPoint[]; change: Change } | undefined;
+    const ok = slideBranch(netEdges, net, crowded, runs, CROWD_SLIDES, TRUNK_MARGIN, (leg, movedJ, change) => {
+      if (!clearOfOthersIndexed(leg, net, index)) return false;
+      const dotsAfterMove = dotsAfter(net, netIndex, points, dotsBefore, change);
+      const moved = dotsAfterMove.find((d) => same(d, movedJ));
+      // The moved dot must still be a T of its own net (not slid onto another branch).
+      if (!moved || runsAfter(netIndex, movedJ, change).size !== 3) return false;
+      const replacedKeys = new Set(change.replaced.map(segKey));
+      const replaced = [...mineBySeg].filter(([k]) => replacedKeys.has(k)).flatMap(([, v]) => v);
+      const addedBySeg = new Map<string, Crossing[]>();
+      for (const sg of change.added) if (!same(sg.a, sg.b)) addedBySeg.set(segKey(sg), crossingsAgainst([{ ...sg, net }], index));
+      const added = [...addedBySeg.values()].flat();
+      // Dots that leave and arrive.
+      const afterKeys = new Set(dotsAfterMove.map(pointKey));
+      const beforeKeys = new Set(dotsBefore.map(pointKey));
+      const removedDots = dotsBefore.filter((d) => !afterKeys.has(pointKey(d)));
+      const addedDots = dotsAfterMove.filter((d) => !beforeKeys.has(pointKey(d)));
+      const kept = dotsAfterMove.filter((d) => beforeKeys.has(pointKey(d)));
+      // Own crossing points that vanish and appear.
+      const removedAt = countAt(replaced);
+      const addedAt = countAt(added);
+      const changedKeys = new Set([...removedAt.keys(), ...addedAt.keys()]);
+      const vanished: ElkPoint[] = [];
+      const appeared: ElkPoint[] = [];
+      for (const k of changedKeys) {
+        const sample = replaced.find((r) => pointKey(r) === k) ?? added.find((r) => pointKey(r) === k)!;
+        if (crossings.has(sample, mineCount)) continue;
+        const was = (mineCount.get(k) ?? 0) > 0;
+        const is = (mineCount.get(k) ?? 0) - (removedAt.get(k) ?? 0) + (addedAt.get(k) ?? 0) > 0;
+        if (was && !is) vanished.push(sample);
+        if (!was && is) appeared.push(sample);
+      }
+      // The moved dot itself must be clear of every dot and crossing after the move.
+      const dotsNearMoved = dotSet.countWithin(moved, MIN_DOT_GAP, dotExclude) + pairs([moved], dotsAfterMove.filter((d) => d !== moved), MIN_DOT_GAP);
+      const crossingsNearMoved = crossings.countWithin(moved, MIN_CROSSING_GAP, none) - pairs([moved], vanished, MIN_CROSSING_GAP) + pairs([moved], appeared, MIN_CROSSING_GAP);
+      if (dotsNearMoved > 0 || crossingsNearMoved > 0) return false;
+      // Change in the crowding count, from what moved: dots that left or arrived, and the net's
+      // own crossing points that vanished or appeared.
+      let delta = 0;
+      for (const a of addedDots) delta += pairs([a], kept, MIN_DOT_GAP) + dotSet.countWithin(a, MIN_DOT_GAP, dotExclude);
+      delta += pairs(addedDots, addedDots, MIN_DOT_GAP) / 2;
+      for (const r of removedDots) delta -= pairs([r], kept, MIN_DOT_GAP) + dotSet.countWithin(r, MIN_DOT_GAP, dotExclude);
+      delta -= pairs(removedDots, removedDots, MIN_DOT_GAP) / 2;
+      for (const a of addedDots) delta += ownBefore.countWithin(a, MIN_CROSSING_GAP) - pairs([a], vanished, MIN_CROSSING_GAP) + pairs([a], appeared, MIN_CROSSING_GAP);
+      for (const r of removedDots) delta -= ownBefore.countWithin(r, MIN_CROSSING_GAP);
+      delta += pairs(kept, appeared, MIN_CROSSING_GAP) - pairs(kept, vanished, MIN_CROSSING_GAP);
+      for (const c of appeared) delta += dotSet.countWithin(c, MIN_CROSSING_GAP, dotExclude);
+      for (const c of vanished) delta -= dotSet.countWithin(c, MIN_CROSSING_GAP, dotExclude);
+      if (delta >= 0) return false;
+      accepted = { netDots: dotsAfterMove, removedDots, addedDots, replaced, addedBySeg, vanished, appeared, change };
+      return true;
     });
-    if (ok) touched.add(crowded.net);
-    else stuck.push(crowded);
+    if (ok && accepted) {
+      touched.add(net);
+      const { change, replaced, addedBySeg, removedDots, addedDots, vanished, appeared } = accepted;
+      dotsByNet.set(net, accepted.netDots);
+      // Segments: the three replaced go out of the index, the three added go in.
+      for (const sg of change.replaced) if (!same(sg.a, sg.b)) index.remove({ ...sg, net });
+      for (const sg of change.added) if (!same(sg.a, sg.b)) index.add({ ...sg, net });
+      // Crossings: records of the replaced segments leave both nets' tables and the point set.
+      const replacedKeys = new Set(change.replaced.map(segKey));
+      for (const r of replaced) {
+        crossings.remove(r);
+        const other = r.netA === net ? r.netB : r.netA;
+        const otherKey = r.netA === net ? r.keyB : r.keyA;
+        const list = bySeg.get(other)?.get(otherKey);
+        if (list) list.splice(list.indexOf(r), 1);
+      }
+      const mine = bySeg.get(net) ?? bySeg.set(net, new Map()).get(net)!;
+      for (const k of replacedKeys) mine.delete(k);
+      for (const [k, list] of addedBySeg) {
+        mine.set(k, list);
+        for (const r of list) {
+          crossings.add(r);
+          entry(r.netA === net ? r.netB : r.netA, r.netA === net ? r.keyB : r.keyA).push(r);
+        }
+      }
+      // Dots: the point set and the crowded flags of every dot near a change.
+      for (const d of removedDots) dotSet.remove(d);
+      for (const d of addedDots) dotSet.add(d);
+      const changed = [...removedDots, ...addedDots, ...vanished, ...appeared];
+      for (const list of dotsByNet.values()) for (const d of list) if (near(d, changed)) flags.delete(d);
+    } else stuck.push(crowded);
   }
 }
 
-/**
- * Moves one branch bend at `j` along the trunk by the first delta whose moved leg passes
- * `accept`; the trunk must run `margin` beyond the moved point. The move is applied in
- * place while `accept` runs and reverted when it is refused.
- */
-function slideBranch(netEdges: ElkEdgeOut[], _net: string, j: ElkPoint, runs: Map<Dir, number>, deltas: number[], margin: number, accept: (leg: Seg, movedJ: ElkPoint) => boolean): boolean {
+/** Segments a slide replaces and the ones it adds, so callers can update their indexes in place. */
+interface Change {
+  replaced: Seg[];
+  added: Seg[];
+}
+
+function slideBranch(netEdges: ElkEdgeOut[], _net: string, j: ElkPoint, runs: Map<Dir, number>, deltas: number[], margin: number, accept: (leg: Seg, movedJ: ElkPoint, change: Change) => boolean): boolean {
   for (const e of netEdges) {
     for (const s of e.sections ?? []) {
       const pts = [s.startPoint, ...(s.bendPoints ?? []), s.endPoint];
@@ -267,11 +650,16 @@ function slideBranch(netEdges: ElkEdgeOut[], _net: string, j: ElkPoint, runs: Ma
           const movedJ = trunkHorizontal ? { x: j.x + d, y: j.y } : { x: j.x, y: j.y + d };
           const movedNext = trunkHorizontal ? { x: next.x + d, y: next.y } : { x: next.x, y: next.y + d };
           const saved = { jx: pts[k]!.x, jy: pts[k]!.y, nx: pts[k + 1]!.x, ny: pts[k + 1]!.y };
+          const after = { ...pts[k + 2]! };
+          const change: Change = {
+            replaced: [{ a: { ...prev }, b: { ...j } }, { a: { ...j }, b: { ...next } }, { a: { ...next }, b: after }],
+            added: [{ a: { ...prev }, b: movedJ }, { a: movedJ, b: movedNext }, { a: movedNext, b: after }],
+          };
           pts[k]!.x = movedJ.x;
           pts[k]!.y = movedJ.y;
           pts[k + 1]!.x = movedNext.x;
           pts[k + 1]!.y = movedNext.y;
-          if (accept({ a: movedJ, b: movedNext }, movedJ)) return true;
+          if (accept({ a: movedJ, b: movedNext }, movedJ, change)) return true;
           pts[k]!.x = saved.jx;
           pts[k]!.y = saved.jy;
           pts[k + 1]!.x = saved.nx;

@@ -198,6 +198,7 @@
     "test:packaged": "node scripts/test-packaged.mjs",
     "test:webview": "npm run build && playwright test",
     "test:mutation": "npm run build && VITE_CONFIG_NATIVE_IGNORE_WARNING=true stryker run",
+    "test:perf": "VITE_CONFIG_NATIVE_IGNORE_WARNING=true vitest run --config vitest.perf.config.mts",
     "bench": "node scripts/bench.mjs",
     "package": "npm run build:prod && vsce package --no-dependencies",
     "vscode:prepublish": "npm run build:prod"
