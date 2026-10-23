@@ -4,8 +4,9 @@
 // Every function returns markup placed inside the node's <g> (origin top-left).
 import type { Node, Pin } from "../../src/ir/types";
 import { LOGICAL_TAG_H } from "./geometry";
+import { RADIUS } from "./tokens";
 import { isReduceBox } from "./logical";
-import { esc, fmt } from "./svg";
+import { esc, fmt, roundedPolygonPath } from "./svg";
 import { pinTooltip, TIP } from "./tooltips";
 
 export type PinPos = Map<string, { x: number; y: number; pin: Pin }>;
@@ -121,7 +122,7 @@ function gateSymbol(node: Node, w: number, fullH: number, pins: PinPos): string 
       body = `<path class="gate-body" d="M${fmt(x0)},0 L${fmt(bodyW)},${fmt(h / 2)} L${fmt(x0)},${fmt(h)} Z"/>`;
       break;
     default:
-      body = `<rect class="gate-body" x="${fmt(x0)}" y="0" width="${fmt(bodyW - x0)}" height="${fmt(h)}" rx="3"/><text class="label" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(op)}</text>`;
+      body = `<rect class="gate-body" x="${fmt(x0)}" y="0" width="${fmt(bodyW - x0)}" height="${fmt(h)}" rx="${RADIUS.node}"/><text class="label" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(op)}</text>`;
   }
   const stubTo = op === "xor" || op === "xnor" ? x0 + 1 : x0 + 2;
   const glyph = logical ? `<text class="glyph small" x="${fmt(w / 2 + 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${op === "and" ? "&amp;&amp;" : op === "or" ? "||" : "!"}</text>` : "";
@@ -132,7 +133,7 @@ function gateSymbol(node: Node, w: number, fullH: number, pins: PinPos): string 
 /** "any 1?" and "all 0?" boxes that stand in front of a logical gate on a bus. */
 function reduceBoxSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   return (
-    `<rect class="body reduce-box" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="4"/>` +
+    `<rect class="body reduce-box" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="${RADIUS.node}"/>` +
     `<text class="label" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(node.label)}</text>` +
     pinMarkers(node, pins)
   );
@@ -156,12 +157,12 @@ function reduceSymbol(node: Node, w: number, h: number, pins: PinPos): string {
 
 function muxSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   const inset = h * 0.18;
-  const body = `<path class="body" d="M0,0 L${fmt(w)},${fmt(inset)} L${fmt(w)},${fmt(h - inset)} L0,${fmt(h)} Z"/>`;
+  const body = `<path class="body" d="${roundedPolygonPath([{ x: 0, y: 0 }, { x: w, y: inset }, { x: w, y: h - inset }, { x: 0, y: h }], RADIUS.node / 2)}"/>`;
   return body + pinLabels(pins, 4) + pinMarkers(node, pins);
 }
 
 function dffSymbol(node: Node, w: number, h: number, pins: PinPos): string {
-  const parts: string[] = [`<rect class="body" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="2"/>`];
+  const parts: string[] = [`<rect class="body" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="${RADIUS.node}"/>`];
   for (const [, p] of pins) {
     if (p.pin.id === "CLK") {
       // Clock triangle pointing into the box from the bottom edge.
@@ -176,7 +177,7 @@ function dffSymbol(node: Node, w: number, h: number, pins: PinPos): string {
 
 function glyphBoxSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   return (
-    `<rect class="body" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="4"/>` +
+    `<rect class="body" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="${RADIUS.node}"/>` +
     `<text class="glyph" x="${fmt(w / 2)}" y="${fmt(h / 2)}" text-anchor="middle" dominant-baseline="central">${esc(node.label)}</text>` +
     pinMarkers(node, pins)
   );
@@ -188,7 +189,7 @@ function splitJoinSymbol(node: Node, w: number, h: number, pins: PinPos): string
 
 function boxSymbol(node: Node, w: number, h: number, pins: PinPos, extraClass: string, dashed: boolean): string {
   return (
-    `<rect class="body ${extraClass}${dashed ? " dashed" : ""}" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="3"/>` +
+    `<rect class="body ${extraClass}${dashed ? " dashed" : ""}" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="${RADIUS.node}"/>` +
     `<text class="label title" x="${fmt(w / 2)}" y="11" text-anchor="middle">${esc(node.label)}</text>` +
     pinLabels(pins) +
     pinMarkers(node, pins)
@@ -213,7 +214,7 @@ function constSymbol(node: Node, w: number, h: number, pins: PinPos): string {
 
 function genericSymbol(node: Node, w: number, h: number, pins: PinPos): string {
   return (
-    `<rect class="body generic dashed" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="3"/>` +
+    `<rect class="body generic dashed" x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" rx="${RADIUS.node}"/>` +
     `<text class="label title" x="${fmt(w / 2)}" y="11" text-anchor="middle">${esc(node.label)}</text>` +
     pinLabels(pins) +
     pinMarkers(node, pins)

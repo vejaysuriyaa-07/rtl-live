@@ -78,6 +78,10 @@ export function webviewOptions(production) {
     outfile: "dist/webview.js",
     format: "iife",
     platform: "browser",
+    // The stylesheet references the codicon font; esbuild copies it to dist/codicon.ttf and
+    // rewrites the url so the webview's font-src (its own resources) covers it.
+    loader: { ".ttf": "file" },
+    assetNames: "[name]",
   };
 }
 

@@ -1,18 +1,20 @@
 // Node sizing shared by the layout (ELK needs sizes) and the renderer.
 import type { Node, Port } from "../../src/ir/types";
+import { FONT_PX, JUNCTION_FACTOR, STROKE } from "./tokens";
 
-export const CHAR_W = 6.6; // approx width of one character at 11px UI font
+/** Width of one character of the 11 px monospace label font (0.6 em). */
+export const CHAR_W = FONT_PX.label * 0.6;
 export const PIN_PITCH = 16;
 /** Pitch of slice pins on split and join bars. */
 export const RIPPER_PITCH = 16;
-/** Ripper label font is 8.5 px (webview/styles.css .ripper-label). */
-export const RIPPER_LABEL_CHAR = 8.5 * 0.6;
+/** Ripper labels use the small monospace size (tokens.ts FONT_PX.small). */
+export const RIPPER_LABEL_CHAR = FONT_PX.small * 0.6;
 export const PORT_NODE_HEIGHT = 20;
 export const GATE_W = 48;
-/** Wire stroke widths (webview/styles.css .net-path); junction dots are 2.5 times the stroke. */
-export const WIRE_STROKE = { single: 1.2, bus: 2.4 } as const;
+/** Wire stroke widths (tokens.ts STROKE); junction dots are JUNCTION_FACTOR times the stroke. */
+export const WIRE_STROKE = { single: STROKE.wire, bus: STROKE.bus } as const;
 export function junctionRadius(width: number): number {
-  return 2.5 * (width > 1 ? WIRE_STROKE.bus : WIRE_STROKE.single);
+  return JUNCTION_FACTOR * (width > 1 ? WIRE_STROKE.bus : WIRE_STROKE.single);
 }
 export const GATE_H = 30;
 /** Fit never zooms past this factor (text keeps its designed size; 1 means at most 100%). */
@@ -24,8 +26,8 @@ export function textWidth(s: string, charW = CHAR_W): number {
   return Math.ceil(s.length * charW);
 }
 
-/** Module title font (12 px sans) and the frame padding around it. */
-export const TITLE_CHAR_W = 12 * 0.6;
+/** Module title font (FONT_PX.title sans, semibold) and the frame padding around it. */
+export const TITLE_CHAR_W = FONT_PX.title * 0.62;
 export const TITLE_PAD = 24;
 
 /** Width a module frame needs to hold its title, whatever the layout size. */

@@ -3,6 +3,7 @@
 !dist/yosysWorker.mjs
 !dist/webview.js
 !dist/webview.css
+!dist/codicon.ttf
 !dist/elkWorker.js
 !dist/web-tree-sitter.wasm
 !dist/tree-sitter-verilog.wasm

@@ -10,7 +10,7 @@ import type { HostToWebview } from "../../src/shared/protocol";
 export const ROOT = resolve(__dirname, "..", "..");
 export const DIST = join(ROOT, "dist");
 
-const THEMES: Record<string, string> = {
+export const THEMES: Record<string, string> = {
   dark: `--vscode-editor-foreground:#d4d4d4;--vscode-editor-background:#1e1e1e;--vscode-charts-blue:#3794ff;--vscode-editorError-foreground:#f14c4c;--vscode-focusBorder:#007fd4;--vscode-descriptionForeground:#9d9d9d;--vscode-font-family:-apple-system,system-ui,sans-serif;--vscode-font-size:13px;--vscode-charts-yellow:#cca700;--vscode-charts-green:#89d185;`,
   light: `--vscode-editor-foreground:#000000;--vscode-editor-background:#ffffff;--vscode-charts-blue:#1a85ff;--vscode-editorError-foreground:#e51400;--vscode-focusBorder:#0090f1;--vscode-descriptionForeground:#717171;--vscode-font-family:-apple-system,system-ui,sans-serif;--vscode-font-size:13px;--vscode-charts-yellow:#bf8803;--vscode-charts-green:#388a34;`,
   hc: `--vscode-editor-foreground:#ffffff;--vscode-editor-background:#000000;--vscode-charts-blue:#3794ff;--vscode-editorError-foreground:#f48771;--vscode-focusBorder:#f38518;--vscode-descriptionForeground:#ffffff;--vscode-font-family:-apple-system,system-ui,sans-serif;--vscode-font-size:13px;--vscode-charts-yellow:#ffd700;--vscode-charts-green:#89d185;`,

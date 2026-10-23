@@ -25,6 +25,24 @@ function button(label: string, title: string, onClick: () => void, cls = ""): HT
   return b;
 }
 
+/** Square toolbar button showing one codicon; the label is read by assistive tech and the tooltip. */
+function iconButton(icon: string, label: string, title: string, onClick: () => void, cls = ""): HTMLButtonElement {
+  const b = button("", title, onClick, `icon ${cls}`.trim());
+  b.setAttribute("aria-label", label);
+  const i = document.createElement("span");
+  i.className = `codicon codicon-${icon}`;
+  i.setAttribute("aria-hidden", "true");
+  b.append(i);
+  return b;
+}
+
+function group(...children: HTMLElement[]): HTMLSpanElement {
+  const g = document.createElement("span");
+  g.className = "tb-group";
+  g.append(...children);
+  return g;
+}
+
 export class Chrome {
   private readonly topSelect: HTMLSelectElement;
   private readonly viewButtons: Record<"rtl" | "gate", HTMLButtonElement>;
@@ -52,16 +70,21 @@ export class Chrome {
     this.bannerEl.insertAdjacentElement("afterend", this.hintEl);
 
     toolbar.append(
-      button("Fit", "Fit the whole diagram in the view (f)", () => handlers.onFit()),
-      button("+", "Zoom in (+)", () => handlers.onZoomIn()),
-      button("−", "Zoom out (-)", () => handlers.onZoomOut()),
+      group(
+        iconButton("screen-full", "Fit", "Fit the whole diagram in the view (f)", () => handlers.onFit(), "fit-btn"),
+        iconButton("zoom-in", "Zoom in", "Zoom in (+)", () => handlers.onZoomIn()),
+        iconButton("zoom-out", "Zoom out", "Zoom out (-)", () => handlers.onZoomOut()),
+      ),
     );
+    // RTL and Gate are one segmented control.
     this.viewButtons = {
       rtl: button("RTL", "RTL view: drawn the way the code reads (a case is one mux, an enable stays a pin)", () => handlers.onSetView("rtl"), "view-btn"),
       gate: button("Gate", "Gate view: what synthesis builds (enables and resets become muxes)", () => handlers.onSetView("gate"), "view-btn"),
     };
     const views = document.createElement("span");
     views.className = "tb-views";
+    views.setAttribute("role", "group");
+    views.setAttribute("aria-label", "View");
     views.append(this.viewButtons.rtl, this.viewButtons.gate);
     toolbar.append(views);
     this.setView("rtl");
@@ -76,10 +99,9 @@ export class Chrome {
     this.legendBtn = button("Legend", "What every symbol means (l)", () => this.toggleLegend(), "legend-btn");
     this.legendBtn.setAttribute("aria-pressed", "false");
     toolbar.append(
-      this.legendBtn,
-      button("SVG", "Save the diagram as an SVG file", () => handlers.onExport("svg")),
-      button("PNG", "Save the diagram as a PNG image (2x)", () => handlers.onExport("png")),
-      button("↗", "Open in an editor tab", () => handlers.onOpenInPanel()),
+      group(this.legendBtn),
+      group(button("SVG", "Save the diagram as an SVG file", () => handlers.onExport("svg")), button("PNG", "Save the diagram as a PNG image (2x)", () => handlers.onExport("png"))),
+      group(iconButton("open-preview", "Open in editor tab", "Open in an editor tab", () => handlers.onOpenInPanel())),
     );
     this.legendEl = document.createElement("div");
     this.legendEl.id = "legend";

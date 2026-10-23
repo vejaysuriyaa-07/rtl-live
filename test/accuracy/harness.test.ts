@@ -7,6 +7,7 @@ import type { ElkGraphOut } from "../../webview/layout/types";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { FIT_MAX_SCALE, junctionRadius, WIRE_STROKE } from "../../webview/render/geometry";
+import { fmt } from "../../webview/render/svg";
 import { HDLBITS, ROOT, makeTreeSitterParser, readFixture } from "../unit/helpers";
 import { disposeTestBackend, synthFixture } from "../unit/synthHelpers";
 import { buildTestbench, checkEquivalence, clockInputs, compareOutputs, icarusAvailable } from "./equivalence";
@@ -243,7 +244,7 @@ describe("L3 harness", () => {
     expect(rep.junctions.issues[0]).toMatch(/4-way junction of net:a at 150,150/);
     const tee: ElkGraphOut = { ...cross, edges: cross.edges.slice(0, 2) };
     expect(checkLayout(view, tee).junctions.ok).toBe(true);
-    expect(junctionDots(checkLayout(view, tee).svg)).toEqual([{ net: "net:a", x: 150, y: 150, r: 3 }]);
+    expect(junctionDots(checkLayout(view, tee).svg)).toEqual([{ net: "net:a", x: 150, y: 150, r: Number(fmt(junctionRadius(1))) }]);
   });
 
   it("finds the junction dots of a bus net whose group holds nested groups", () => {
@@ -267,7 +268,7 @@ describe("L3 harness", () => {
     const rep = checkLayout(view, tee);
     // The bus slash and width label sit in a nested group before the dot; the dot must still be found.
     expect(rep.svg).toMatch(/<g class="bus-mark">/);
-    expect(junctionDots(rep.svg)).toEqual([{ net: "net:a", x: 150, y: 150, r: 6 }]);
+    expect(junctionDots(rep.svg)).toEqual([{ net: "net:a", x: 150, y: 150, r: Number(fmt(junctionRadius(8))) }]);
     expect(rep.junctions.ok).toBe(true);
   });
 
@@ -312,10 +313,14 @@ describe("L3 harness", () => {
 
   it("junction dots are 2.5 times the stroke width the stylesheet draws", () => {
     const css = readFileSync(join(ROOT, "webview", "styles.css"), "utf8");
-    const single = /\.schematic \.net-path \{[^}]*stroke-width: ([\d.]+)/.exec(css)?.[1];
-    const bus = /\.schematic \.net\.bus \.net-path \{[^}]*stroke-width: ([\d.]+)/.exec(css)?.[1];
-    expect(Number(single)).toBe(WIRE_STROKE.single);
-    expect(Number(bus)).toBe(WIRE_STROKE.bus);
+    // The stylesheet names a token; its value sits on :root.
+    const token = (rule: RegExp): number => {
+      const name = new RegExp(`${rule.source}[^}]*stroke-width: var\\((--rl-stroke-[a-z]+)\\)`).exec(css)?.[1];
+      const value = new RegExp(`${name}: ([\\d.]+)px;`).exec(css)?.[1];
+      return Number(value);
+    };
+    expect(token(/\.schematic \.net-path \{/)).toBe(WIRE_STROKE.single);
+    expect(token(/\.schematic \.net\.bus \.net-path \{/)).toBe(WIRE_STROKE.bus);
     expect(junctionRadius(1)).toBe(2.5 * WIRE_STROKE.single);
     expect(junctionRadius(8)).toBe(2.5 * WIRE_STROKE.bus);
   });

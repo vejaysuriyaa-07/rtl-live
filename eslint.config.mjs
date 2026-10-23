@@ -3,7 +3,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "node_modules/**", ".vscode-test/**", "artifacts/**", "assets/**", "**/*.mjs", "**/*.js"],
+    ignores: ["dist/**", "node_modules/**", ".vscode-test/**", ".stryker-tmp/**", "reports/**", "artifacts/**", "assets/**", "**/*.mjs", "**/*.js"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

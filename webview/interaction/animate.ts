@@ -1,7 +1,9 @@
 // 150 ms tween for nodes and ports that moved between renders. Positions are
 // captured from the transform attribute before the DOM is replaced; moved
 // elements get a CSS transform that undoes the move and then transition to none.
-const DURATION_MS = 150;
+import { MOTION_MS } from "../render/tokens";
+
+const DURATION_MS = MOTION_MS;
 
 export type Positions = Map<string, { x: number; y: number }>;
 

@@ -8,6 +8,7 @@ import { expandLogicalGates } from "./logical";
 import { netTooltip, nodeTooltip, portTooltip, TIP, type SourceLines } from "./tooltips";
 import { symbolMarkup } from "./symbols";
 import { frameMinWidth, junctionRadius } from "./geometry";
+import { RADIUS } from "./tokens";
 
 export interface RenderOptions {
   /** Show the module frame and title */
@@ -55,13 +56,42 @@ function srcAttr(src: { line: number; column: number; endLine: number; endColumn
   return ` data-line="${s.line}" data-column="${s.column}" data-end-line="${s.endLine}" data-end-column="${s.endColumn}" data-src="${all}"`;
 }
 
-/** Pentagon pointing in the flow direction; inout is a hexagon. */
+/**
+ * Closed polygon with every corner rounded by a quadratic arc of radius `r` (shrunk on
+ * short edges so neighbouring arcs never overlap). A radius of 0 gives the plain polygon.
+ */
+export function roundedPolygonPath(points: readonly ElkPoint[], r: number): string {
+  const n = points.length;
+  const parts: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const p = points[i]!;
+    const prev = points[(i + n - 1) % n]!;
+    const next = points[(i + 1) % n]!;
+    const d1 = Math.hypot(p.x - prev.x, p.y - prev.y);
+    const d2 = Math.hypot(next.x - p.x, next.y - p.y);
+    const ri = Math.min(r, d1 / 2, d2 / 2);
+    const cmd = i === 0 ? "M" : "L";
+    if (ri <= 0 || d1 === 0 || d2 === 0) {
+      parts.push(`${cmd}${fmt(p.x)},${fmt(p.y)}`);
+      continue;
+    }
+    const a = { x: p.x - ((p.x - prev.x) / d1) * ri, y: p.y - ((p.y - prev.y) / d1) * ri };
+    const b = { x: p.x + ((next.x - p.x) / d2) * ri, y: p.y + ((next.y - p.y) / d2) * ri };
+    parts.push(`${cmd}${fmt(a.x)},${fmt(a.y)} Q${fmt(p.x)},${fmt(p.y)} ${fmt(b.x)},${fmt(b.y)}`);
+  }
+  return `${parts.join(" ")} Z`;
+}
+
+/** Pentagon pointing in the flow direction; inout is a hexagon. Corners are rounded (tokens.ts RADIUS.port). */
 export function portShapePath(direction: Port["direction"], w: number, h: number): string {
-  return direction === "inout"
-    ? `M8,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H8 L0,${fmt(h / 2)} Z`
-    : direction === "input"
-      ? `M0,0 H${fmt(w - 8)} L${fmt(w)},${fmt(h / 2)} L${fmt(w - 8)},${fmt(h)} H0 Z`
-      : `M8,0 H${fmt(w)} V${fmt(h)} H8 L0,${fmt(h / 2)} Z`;
+  const tip = 8;
+  const pts: ElkPoint[] =
+    direction === "inout"
+      ? [{ x: tip, y: 0 }, { x: w - tip, y: 0 }, { x: w, y: h / 2 }, { x: w - tip, y: h }, { x: tip, y: h }, { x: 0, y: h / 2 }]
+      : direction === "input"
+        ? [{ x: 0, y: 0 }, { x: w - tip, y: 0 }, { x: w, y: h / 2 }, { x: w - tip, y: h }, { x: 0, y: h }]
+        : [{ x: tip, y: 0 }, { x: w, y: 0 }, { x: w, y: h }, { x: tip, y: h }, { x: 0, y: h / 2 }];
+  return roundedPolygonPath(pts, RADIUS.port);
 }
 
 function renderPortNode(port: Port, n: ElkNodeOut, lines: SourceLines): string {
@@ -108,11 +138,36 @@ export function tooltip(node: Node): string {
   return nodeTooltip(node, undefined);
 }
 
-function edgePath(e: ElkEdgeOut): string {
+function near(a: ElkPoint, b: ElkPoint, dist: number): boolean {
+  return Math.hypot(a.x - b.x, a.y - b.y) < dist;
+}
+
+/**
+ * Wire path with a small arc at each bend (tokens.ts RADIUS.bend). A bend within
+ * RADIUS.bendGuard of a junction dot of the net (`guards`) or of either end of the wire
+ * stays sharp, so a rounded corner can never be mistaken for a connection or a pin.
+ */
+export function edgePath(e: ElkEdgeOut, guards: readonly ElkPoint[]): string {
   const parts: string[] = [];
   for (const s of e.sections ?? []) {
-    parts.push(`M${fmt(s.startPoint.x)},${fmt(s.startPoint.y)}`);
-    for (const b of s.bendPoints ?? []) parts.push(`L${fmt(b.x)},${fmt(b.y)}`);
+    const pts = [s.startPoint, ...(s.bendPoints ?? []), s.endPoint];
+    parts.push(`M${fmt(pts[0]!.x)},${fmt(pts[0]!.y)}`);
+    for (let i = 1; i + 1 < pts.length; i++) {
+      const p = pts[i]!;
+      const prev = pts[i - 1]!;
+      const next = pts[i + 1]!;
+      const d1 = Math.hypot(p.x - prev.x, p.y - prev.y);
+      const d2 = Math.hypot(next.x - p.x, next.y - p.y);
+      const r = Math.min(RADIUS.bend, d1 / 2, d2 / 2);
+      const sharp = r < 0.5 || near(p, s.startPoint, RADIUS.bendGuard) || near(p, s.endPoint, RADIUS.bendGuard) || guards.some((g) => near(p, g, RADIUS.bendGuard));
+      if (sharp) {
+        parts.push(`L${fmt(p.x)},${fmt(p.y)}`);
+        continue;
+      }
+      const a = { x: p.x - ((p.x - prev.x) / d1) * r, y: p.y - ((p.y - prev.y) / d1) * r };
+      const b = { x: p.x + ((next.x - p.x) / d2) * r, y: p.y + ((next.y - p.y) / d2) * r };
+      parts.push(`L${fmt(a.x)},${fmt(a.y)} Q${fmt(p.x)},${fmt(p.y)} ${fmt(b.x)},${fmt(b.y)}`);
+    }
     parts.push(`L${fmt(s.endPoint.x)},${fmt(s.endPoint.y)}`);
   }
   return parts.join(" ");
@@ -261,8 +316,8 @@ export function roundLayout(layout: ElkGraphOut): ElkGraphOut {
   };
 }
 
-function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rippers: ReadonlySet<string>, avoid: Avoid, lines: SourceLines): { markup: string; labelled: boolean } {
-  const d = edgePath(e);
+function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rippers: ReadonlySet<string>, avoid: Avoid, guards: readonly ElkPoint[], lines: SourceLines): { markup: string; labelled: boolean } {
+  const d = edgePath(e, guards);
   const width = net?.width ?? 1;
   const cls = `net${width > 1 ? " bus" : ""}${net?.role ? ` ${net.role}` : ""}${net?.warnings && net.warnings.length > 0 ? " warn" : ""}`;
   const netId = net?.id ?? e.id;
@@ -356,10 +411,17 @@ export function renderModule(rawView: ModuleView, rawLayout: ElkGraphOut, opts: 
   // Edges below nodes.
   const edges: string[] = [];
   const labelled = new Set<string>();
+  // Every junction dot of a net keeps the bends of all its wires sharp nearby.
+  const dotsByNet = new Map<string, ElkPoint[]>();
+  for (const d of avoid.dots) {
+    const list = dotsByNet.get(d.net) ?? [];
+    list.push({ x: d.x, y: d.y });
+    dotsByNet.set(d.net, list);
+  }
   for (const e of layout.edges) {
     const netId = e.id.replace(/^edge:/, "").replace(/:\d+$/, "");
     // One width label per net, on the first wire that can carry it.
-    const r = renderEdge(e, netById.get(netId), !labelled.has(netId), rippers, avoid, lines);
+    const r = renderEdge(e, netById.get(netId), !labelled.has(netId), rippers, avoid, dotsByNet.get(netOfEdge(e.id)) ?? [], lines);
     if (r.labelled) labelled.add(netId);
     edges.push(r.markup);
   }

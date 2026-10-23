@@ -9,6 +9,7 @@ RTL Live bundles or depends on the following open source software.
 | tree-sitter-verilog | 1.0.0 | MIT | Verilog grammar compiled to `dist/tree-sitter-verilog.wasm` (see `assets/wasm/provenance.json`) |
 | elkjs (Eclipse Layout Kernel) | 0.12.0 | EPL-2.0 | layered layout (`dist/elkWorker.js` and bundled into `dist/webview.js`) |
 | d3-selection, d3-zoom | 3.0.0 | ISC | pan and zoom (bundled into `dist/webview.js`) |
+| @vscode/codicons | 0.0.46 | CC-BY-4.0 | toolbar icons (`dist/codicon.ttf`; the five glyph classes used are declared in `webview/styles.css`) |
 
 Full license texts are in `node_modules/<package>/LICENSE` after `npm install` and in each project's repository:
 
@@ -18,9 +19,12 @@ Full license texts are in `node_modules/<package>/LICENSE` after `npm install` a
 - tree-sitter-verilog: https://github.com/tree-sitter/tree-sitter-verilog (MIT)
 - elkjs: https://github.com/kieler/elkjs (EPL-2.0)
 - d3: https://github.com/d3 (ISC)
+- codicons: https://github.com/microsoft/vscode-codicons (CC-BY-4.0)
 
 ## Algorithms
 
 `src/ir/fromYosys.ts` reconstructs bus-level nets from Yosys bit ids and inserts split/join nodes for slices and concatenations. The idea follows netlistsvg (https://github.com/nturley/netlistsvg, MIT); no netlistsvg code was copied.
 
 The gate symbol shapes in `webview/render/symbols.ts` are original drawings of the IEEE/ANSI distinctive shapes.
+
+The v0.4 visual design studied netlistsvg (MIT), DigitalJS (BSD-2-Clause), d3-hwschematic (MIT) and HDElk (MIT) for their look: muted wires, rounded orthogonal bends, a single accent for ports and junctions, calm fills. No code, symbol or stylesheet from any of them was copied; every value is in `webview/render/tokens.ts`.
