@@ -13,9 +13,9 @@ Levels:
 
 | view | L1 | L2 | L3 |
 | --- | --- | --- | --- |
-| structural | 4/44 | 44/44 | 43/44 |
-| rtl | 44/44 | 44/44 | 43/44 |
-| gate | 44/44 | 5/5 | 43/44 |
+| structural | 4/44 | 44/44 | 44/44 |
+| rtl | 44/44 | 44/44 | 44/44 |
+| gate | 44/44 | 5/5 | 44/44 |
 
 ## Per fixture
 
@@ -135,9 +135,9 @@ Levels:
 | vector5.v | structural | FAIL | pass | pass |
 | vector5.v | rtl | pass | pass | pass |
 | vector5.v | gate | pass | n/a | pass |
-| vectorgates_slices.v | structural | FAIL | pass | FAIL |
-| vectorgates_slices.v | rtl | pass | pass | FAIL |
-| vectorgates_slices.v | gate | pass | n/a | FAIL |
+| vectorgates_slices.v | structural | FAIL | pass | pass |
+| vectorgates_slices.v | rtl | pass | pass | pass |
+| vectorgates_slices.v | gate | pass | n/a | pass |
 | vectorgates.v | structural | FAIL | pass | pass |
 | vectorgates.v | rtl | pass | pass | pass |
 | vectorgates.v | gate | pass | n/a | pass |
@@ -191,9 +191,6 @@ Levels:
 - vector4.v, structural view, L1: not exportable: logic cloud "out = {{24{in[7]}}, in}" has no netlist semantics (cloud:assign:out)
 - vector5.v, structural view, L1: not exportable: logic cloud "out = ~{{5{a}}, {5{b}}, {5{…" has no netlist semantics (cloud:assign:out)
 - vectorgates_slices.v, structural view, L1: not exportable: logic cloud "out_or_bitwise = a | b" has no netlist semantics (cloud:assign:out_or_bitwise)
-- vectorgates_slices.v, structural view, L3: labelsInside: "out_not[2:0] = ~a" (label) spills out of cloud:assign:out_not (cloud 133x34, text 112x11); busLabels: net out_not (6 bits) has no width label
-- vectorgates_slices.v, rtl view, L3: noOverlap: "!" (warn-badge-text) overlaps "[5:3]" (ripper-label) near 247,90 (+1)
-- vectorgates_slices.v, gate view, L3: noOverlap: "!" (warn-badge-text) overlaps "[5:3]" (ripper-label) near 247,90 (+1)
 - vectorgates.v, structural view, L1: not exportable: logic cloud "out_or_bitwise = a | b" has no netlist semantics (cloud:assign:out_or_bitwise)
 - vectorr.v, structural view, L1: not exportable: logic cloud "out = {in[0], in[1], in[2],…" has no netlist semantics (cloud:assign:out)
 - wire.v, structural view, L1: not exportable: logic cloud "out = in" has no netlist semantics (cloud:assign:out)

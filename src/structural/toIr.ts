@@ -13,9 +13,10 @@ import {
   type SchematicDoc,
   type SrcRange,
 } from "../ir/types";
-import type { SConnection, SInstance, SModule, StructuralFile } from "./types";
+import type { SAssign, SConnection, SInstance, SModule, StructuralFile } from "./types";
 import { literalWidth, selectWidth } from "./width";
 import { annotateSemantics } from "../ir/semantics";
+import { parseLvalue } from "./lvalues";
 
 export interface ToIrOptions {
   sourceUri: string;
@@ -167,6 +168,53 @@ function instanceNode(
   return node;
 }
 
+interface SliceWrite {
+  assign: SAssign;
+  netName: string;
+  bits: string;
+  width: number;
+  msb: number;
+  lsb: number;
+}
+
+interface SliceAssignNets {
+  /** Signal name -> its slice writes, MSB first (the join's pin order) */
+  bySignal: Map<string, SliceWrite[]>;
+  byAssign: Map<SAssign, Map<string, SliceWrite>>;
+}
+
+/** Signals written only by two or more assigns, each to a literal slice, with no two slices overlapping. */
+function sliceAssignNets(m: SModule, symbols: Map<string, SymbolInfo>): SliceAssignNets {
+  const candidates = new Map<string, SliceWrite[]>();
+  const whole = new Set<string>();
+  for (const a of m.assigns) {
+    const targets = parseLvalue(a.lhsText);
+    for (const l of a.lhs) if (!targets.some((t) => t.name === l)) whole.add(l);
+    for (const t of targets) {
+      if (t.msb === undefined || t.lsb === undefined) {
+        whole.add(t.name);
+        continue;
+      }
+      const bits = t.msb === t.lsb ? `[${t.msb}]` : `[${t.msb}:${t.lsb}]`;
+      const list = candidates.get(t.name) ?? candidates.set(t.name, []).get(t.name)!;
+      list.push({ assign: a, netName: `${t.name}${bits}`, bits, width: t.msb - t.lsb + 1, msb: t.msb, lsb: t.lsb });
+    }
+  }
+  for (const al of m.always) for (const l of al.assigned) whole.add(l);
+  const bySignal = new Map<string, SliceWrite[]>();
+  const byAssign = new Map<SAssign, Map<string, SliceWrite>>();
+  for (const [name, list] of candidates) {
+    if (list.length < 2 || whole.has(name) || !symbols.has(name)) continue;
+    const sorted = [...list].sort((x, y) => y.msb - x.msb);
+    let disjoint = true;
+    for (let i = 1; i < sorted.length; i++) if (sorted[i]!.msb >= sorted[i - 1]!.lsb) disjoint = false;
+    if (!disjoint) continue;
+    bySignal.set(name, sorted);
+    for (const sl of sorted) (byAssign.get(sl.assign) ?? byAssign.set(sl.assign, new Map()).get(sl.assign)!).set(name, sl);
+  }
+  return { bySignal, byAssign };
+}
+
 export function structuralToIr(file: StructuralFile, opts: ToIrOptions): SchematicDoc {
   const labelLength = opts.labelLength ?? CLOUD_LABEL;
   const diagnostics: Diagnostic[] = file.errors.slice(0, 20).map((e) => ({
@@ -225,9 +273,28 @@ function moduleToView(m: SModule, file: StructuralFile, labelLength: number): Mo
 
   const isSignal = (id: string): boolean => symbols.has(id);
 
+  // Several assigns that write literal, disjoint slices of one vector (assign y[5:3] = ...;
+  // assign y[2:0] = ...;) each drive a slice net, and a join rebuilds the vector.
+  const sliceNetOf = sliceAssignNets(m, symbols);
+  for (const [name, slices] of sliceNetOf.bySignal) {
+    const id = `join:${name}`;
+    const width = symbols.get(name)?.width ?? 1;
+    const pins: Pin[] = slices.map((sl) => {
+      nets.nets.set(sl.netName, { id: `net:${sl.netName}`, name: sl.netName, width: sl.width, driver: null, sinks: [{ node: id, pin: `in:${sl.netName}` }], src: [sl.assign.src] });
+      return { id: `in:${sl.netName}`, label: "", direction: "in", side: "west", width: sl.width, net: sl.netName, bits: sl.bits };
+    });
+    pins.push({ id: "out", label: "", direction: "out", side: "east", width, net: name });
+    nets.drive(name, { node: id, pin: "out" }, symbols.get(name)?.src);
+    nodes.push({ id, kind: "join", width, pins, label: "", src: slices.map((sl) => sl.assign.src) });
+  }
+
   // Assign clouds.
+  const cloudIds = new Map<string, number>();
   m.assigns.forEach((a, i) => {
-    const id = `cloud:assign:${a.lhs.join(",") || i}`;
+    const base = `cloud:assign:${a.lhs.join(",") || i}`;
+    const ordinal = cloudIds.get(base) ?? 0;
+    cloudIds.set(base, ordinal + 1);
+    const id = ordinal === 0 ? base : `${base}#${ordinal}`;
     const reads = a.rhs.filter(isSignal).filter((r) => !a.lhs.includes(r) || true);
     const pins: Pin[] = [];
     reads.forEach((r) => {
@@ -235,6 +302,12 @@ function moduleToView(m: SModule, file: StructuralFile, labelLength: number): Mo
       nets.sink(r, { node: id, pin: `in:${r}` }, a.src);
     });
     a.lhs.forEach((l) => {
+      const slice = sliceNetOf.byAssign.get(a)?.get(l);
+      if (slice) {
+        pins.push({ id: `out:${l}`, label: "", direction: "out", side: "east", width: slice.width, net: slice.netName });
+        nets.nets.get(slice.netName)!.driver = { node: id, pin: `out:${l}` };
+        return;
+      }
       pins.push({ id: `out:${l}`, label: "", direction: "out", side: "east", width: symbols.get(l)?.width ?? 1, net: l });
       nets.drive(l, { node: id, pin: `out:${l}` }, a.src);
     });

@@ -2,21 +2,132 @@
 // more than one statement, and a combinational loop. Both views get the
 // badges: the structural layer finds the multiple drivers (Yosys silently
 // merges them), the graph walk finds loops in whichever view is drawn.
+import { parseLvalue, type LvalueTarget } from "../structural/lvalues";
 import type { SModule } from "../structural/types";
-import type { Diagnostic, ModuleView, Net } from "./types";
+import { parseRange } from "../structural/width";
+import type { Diagnostic, ModuleView, Net, SrcRange } from "./types";
 
 export const MULTIPLE_DRIVERS = "multiple drivers";
 export const COMBINATIONAL_LOOP = "combinational loop";
 
-/** Signals assigned by more than one assign or always block. */
-export function multiplyDrivenSignals(m: SModule): string[] {
-  const count = new Map<string, number>();
-  const bump = (name: string): void => {
-    count.set(name, (count.get(name) ?? 0) + 1);
+/** Bits a statement writes: a literal range, or the whole signal when nothing narrower is known. */
+type BitSet = "all" | Set<number>;
+
+interface Driver {
+  bits: BitSet;
+  src: SrcRange;
+}
+
+function declaredRange(m: SModule, name: string): { msb: number; lsb: number } | undefined {
+  const sym = m.ports.find((p) => p.name === name) ?? m.decls.find((d) => d.name === name);
+  if (!sym) return undefined;
+  const r = parseRange(sym.range);
+  if (r && r.width > 0) {
+    const [a, b] = r.range.slice(1, -1).split(":").map(Number);
+    return a !== undefined && b !== undefined ? { msb: Math.max(a, b), lsb: Math.min(a, b) } : undefined;
+  }
+  return sym.width > 0 ? { msb: sym.width - 1, lsb: 0 } : undefined;
+}
+
+function bitsOf(target: LvalueTarget): BitSet {
+  if (target.msb === undefined || target.lsb === undefined) return "all";
+  const out = new Set<number>();
+  for (let b = target.lsb; b <= target.msb; b++) out.add(b);
+  return out;
+}
+
+function overlap(a: BitSet, b: BitSet, whole: { msb: number; lsb: number } | undefined): BitSet | undefined {
+  if (a === "all" && b === "all") return "all";
+  if (a === "all" || b === "all") {
+    const set = a === "all" ? (b as Set<number>) : (a as Set<number>);
+    if (!whole) return set.size > 0 ? set : undefined;
+    const inside = new Set([...set].filter((x) => x >= whole.lsb && x <= whole.msb));
+    return inside.size > 0 ? inside : undefined;
+  }
+  const both = new Set([...a].filter((x) => b.has(x)));
+  return both.size > 0 ? both : undefined;
+}
+
+/** "[6:5], [0]" for the bits 6, 5 and 0. */
+function formatBits(bits: Set<number>): string {
+  const sorted = [...bits].sort((x, y) => y - x);
+  const ranges: string[] = [];
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    while (j + 1 < sorted.length && sorted[j + 1] === sorted[j]! - 1) j++;
+    ranges.push(sorted[i] === sorted[j] ? `[${sorted[i]}]` : `[${sorted[i]}:${sorted[j]}]`);
+    i = j + 1;
+  }
+  return ranges.join(", ");
+}
+
+export interface MultipleDriverFinding {
+  name: string;
+  /** Overlapping bit ranges, e.g. "[3:2]"; absent when whole-signal writes clash */
+  bits?: string;
+  /** Source of every clashing statement, in order */
+  srcs: SrcRange[];
+}
+
+/**
+ * Signals with more than one driver on the same bit. Each assign and each always
+ * block is one driver; writes to disjoint bit ranges of one vector are legal.
+ */
+export function multipleDriverReport(m: SModule): MultipleDriverFinding[] {
+  const drivers = new Map<string, Driver[]>();
+  const add = (name: string, bits: BitSet, src: SrcRange): void => {
+    const list = drivers.get(name) ?? drivers.set(name, []).get(name)!;
+    const same = list.find((d) => d.src === src);
+    if (!same) {
+      list.push({ bits, src });
+      return;
+    }
+    // Several writes in one statement or block are one driver: merge the bits.
+    if (same.bits === "all" || bits === "all") same.bits = "all";
+    else for (const b of bits) same.bits.add(b);
   };
-  for (const a of m.assigns) for (const l of new Set(a.lhs)) bump(l);
-  for (const al of m.always) for (const l of new Set(al.assigned)) bump(l);
-  return [...count.entries()].filter(([, n]) => n > 1).map(([name]) => name);
+  for (const a of m.assigns) {
+    const targets = parseLvalue(a.lhsText);
+    const seen = new Set(targets.map((t) => t.name));
+    for (const t of targets) add(t.name, bitsOf(t), a.src);
+    for (const l of a.lhs) if (!seen.has(l)) add(l, "all", a.src);
+  }
+  for (const al of m.always) {
+    const targets = (al.lhsTexts ?? []).flatMap((t) => parseLvalue(t));
+    const seen = new Set(targets.map((t) => t.name));
+    for (const t of targets) add(t.name, bitsOf(t), al.src);
+    for (const l of al.assigned) if (!seen.has(l)) add(l, "all", al.src);
+  }
+  const out: MultipleDriverFinding[] = [];
+  for (const [name, list] of drivers) {
+    if (list.length < 2) continue;
+    const whole = declaredRange(m, name);
+    let clash: BitSet | undefined;
+    const srcs = new Set<SrcRange>();
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const o = overlap(list[i]!.bits, list[j]!.bits, whole);
+        if (!o) continue;
+        srcs.add(list[i]!.src);
+        srcs.add(list[j]!.src);
+        if (clash === undefined) clash = o === "all" ? "all" : new Set(o);
+        else if (clash !== "all") {
+          if (o === "all") clash = "all";
+          else for (const b of o) clash.add(b);
+        }
+      }
+    }
+    if (!clash) continue;
+    const coversAll = clash !== "all" && whole !== undefined && clash.size === whole.msb - whole.lsb + 1;
+    out.push({ name, ...(clash === "all" || coversAll ? {} : { bits: formatBits(clash) }), srcs: [...srcs].sort((a, b) => a.line - b.line || a.column - b.column) });
+  }
+  return out;
+}
+
+/** Names of signals with multiple drivers on at least one bit. */
+export function multiplyDrivenSignals(m: SModule): string[] {
+  return multipleDriverReport(m).map((f) => f.name);
 }
 
 /** Node kinds that break a combinational path. Instances may hide flops, so they count as barriers. */
@@ -70,11 +181,12 @@ function addWarning(net: Net, w: string): void {
 export function annotateSemantics(view: ModuleView, module: SModule | undefined): Diagnostic[] {
   const out: Diagnostic[] = [];
   if (module) {
-    for (const name of multiplyDrivenSignals(module)) {
-      const net = view.nets.find((n) => n.name === name || n.aliases?.includes(name));
-      if (net) addWarning(net, MULTIPLE_DRIVERS);
-      const src = module.assigns.filter((a) => a.lhs.includes(name)).map((a) => a.src)[1] ?? module.src;
-      out.push({ severity: "error", message: `${name} has multiple drivers`, line: src.line, column: src.column, source: "structural" });
+    for (const f of multipleDriverReport(module)) {
+      const net = view.nets.find((n) => n.name === f.name || n.aliases?.includes(f.name));
+      const where = f.bits ? `${f.name}${f.bits.includes(",") ? ` bits ${f.bits}` : f.bits}` : f.name;
+      if (net) addWarning(net, f.bits ? `${MULTIPLE_DRIVERS} on ${where}` : MULTIPLE_DRIVERS);
+      const src = f.srcs[1] ?? f.srcs[0] ?? module.src;
+      out.push({ severity: "error", message: `${where} has multiple drivers`, line: src.line, column: src.column, source: "structural" });
     }
   }
   const loops = combinationalLoopNets(view);

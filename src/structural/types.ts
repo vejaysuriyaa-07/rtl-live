@@ -41,6 +41,8 @@ export interface SAlways {
   sensitivity: string;
   /** Identifiers assigned anywhere inside the block */
   assigned: string[];
+  /** Left-hand side text of every assignment inside the block, in order (e.g. "q[3:0]", "{c, s}") */
+  lhsTexts?: string[];
   /** Identifiers read inside the block (excluding ones only assigned) */
   read: string[];
   /** Clock signal names from posedge/negedge terms (seq only) */

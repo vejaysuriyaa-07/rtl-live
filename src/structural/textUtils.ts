@@ -138,11 +138,16 @@ export function analyzeAlwaysText(text: string, src: SrcRange): SAlways {
   }
   const body = at ? clean.slice((at.index ?? 0) + at[0].length) : clean.replace(/^\s*always\w*\b/, "");
   const assigned: string[] = [];
+  const lhsTexts: string[] = [];
   for (const m of body.matchAll(CONCAT_LVALUE_RE)) {
     for (const id of extractIdentifiers(m[1] ?? "")) assigned.push(id);
+    lhsTexts.push(`{${(m[1] ?? "").trim()}}`);
   }
   for (const m of body.matchAll(LVALUE_RE)) {
-    if (m[1]) assigned.push(m[1]);
+    if (m[1]) {
+      assigned.push(m[1]);
+      lhsTexts.push(m[0].replace(/\s*<?=$/, "").trim());
+    }
   }
   // Reads: every identifier in the body once the left sides are blanked out.
   // A signal that is both assigned and read (counters: q <= q + 1) stays in read.
@@ -153,6 +158,7 @@ export function analyzeAlwaysText(text: string, src: SrcRange): SAlways {
     kind,
     sensitivity,
     assigned: uniq(assigned),
+    lhsTexts,
     read: [...readSet],
     clocks: uniq(clocks),
     src,
