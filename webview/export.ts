@@ -1,41 +1,43 @@
-// SVG and PNG export. The SVG is self-contained: theme colours are resolved
-// from the computed styles and inlined, so it has no external references.
-import { fmt } from "./render/svg";
+// SVG and PNG export. The print palette (dark lines on white) is the default; the theme
+// palette resolves the live theme colours from the computed styles and pins them.
+import { diagramCssRules, exportDocument, FONT_FALLBACK, PRINT_COLORS, type ExportColors, type ExportPalette } from "./render/exportDoc";
 
-const EXPORT_PROPS = ["--rl-fg", "--rl-bg", "--rl-accent", "--rl-error", "--rl-focus", "--rl-muted", "--rl-font"];
+/** Every rule of the loaded stylesheets the diagram uses, as text. */
+function diagramCss(): string {
+  const rules = Array.from(document.styleSheets).flatMap((s) => {
+    try {
+      return Array.from(s.cssRules).map((r) => r.cssText);
+    } catch {
+      return [];
+    }
+  });
+  return diagramCssRules(rules).join("\n");
+}
 
-export function resolvedThemeCss(): string {
+function themeColors(): ExportColors {
   const cs = getComputedStyle(document.body);
-  const vars = EXPORT_PROPS.map((p) => `${p}: ${cs.getPropertyValue(p).trim() || "#888"};`).join(" ");
-  const sheet = Array.from(document.styleSheets)
-    .flatMap((s) => {
-      try {
-        return Array.from(s.cssRules);
-      } catch {
-        return [];
-      }
-    })
-    .filter((r) => r.cssText.includes(".schematic") || r.cssText.includes(".node") || r.cssText.includes(".net") || r.cssText.includes(".port") || r.cssText.includes(".module"))
-    .map((r) => r.cssText)
-    .join("\n");
-  return `:root, svg { ${vars} } ${sheet}`;
+  const v = (p: string, fallback: string): string => cs.getPropertyValue(p).trim() || fallback;
+  return {
+    fg: v("--rl-fg", PRINT_COLORS.fg),
+    bg: v("--rl-bg", PRINT_COLORS.bg),
+    accent: v("--rl-accent", PRINT_COLORS.accent),
+    muted: v("--rl-muted", PRINT_COLORS.muted),
+    warn: v("--rl-warn", PRINT_COLORS.warn),
+    error: v("--rl-error", PRINT_COLORS.error),
+    focus: v("--rl-focus", PRINT_COLORS.focus),
+    font: `${v("--rl-font", "")}, ${FONT_FALLBACK.font}`.replace(/^, /, ""),
+    mono: `${v("--rl-mono", "")}, ${FONT_FALLBACK.mono}`.replace(/^, /, ""),
+  };
 }
 
-export function exportSvg(viewport: SVGGElement, size: { width: number; height: number } | undefined): string | undefined {
+export function exportSvg(viewport: SVGGElement, size: { width: number; height: number } | undefined, palette: ExportPalette = "print"): string | undefined {
   if (!size) return undefined;
-  const css = resolvedThemeCss();
-  const bg = getComputedStyle(document.body).getPropertyValue("--rl-bg").trim() || "#1e1e1e";
-  return (
-    `<svg xmlns="http://www.w3.org/2000/svg" class="schematic" width="${fmt(size.width)}" height="${fmt(size.height)}" viewBox="0 0 ${fmt(size.width)} ${fmt(size.height)}">` +
-    `<style>${css}</style>` +
-    `<rect width="100%" height="100%" fill="${bg}"/>` +
-    `<g class="viewport">${viewport.innerHTML}</g>` +
-    `</svg>`
-  );
+  const colors = palette === "theme" ? themeColors() : PRINT_COLORS;
+  return exportDocument({ inner: viewport.innerHTML, width: size.width, height: size.height }, diagramCss(), colors);
 }
 
-export async function exportPng(viewport: SVGGElement, size: { width: number; height: number } | undefined): Promise<string | undefined> {
-  const svgText = exportSvg(viewport, size);
+export async function exportPng(viewport: SVGGElement, size: { width: number; height: number } | undefined, palette: ExportPalette = "print"): Promise<string | undefined> {
+  const svgText = exportSvg(viewport, size, palette);
   if (!svgText || !size) return undefined;
   const scale = 2;
   const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
@@ -48,8 +50,11 @@ export async function exportPng(viewport: SVGGElement, size: { width: number; he
       img.src = url;
     });
     const c = document.createElement("canvas");
-    c.width = Math.ceil(size.width * scale);
-    c.height = Math.ceil(size.height * scale);
+    const m = (svgText.match(/width="([\d.]+)" height="([\d.]+)"/) ?? []) as string[];
+    const w = Number(m[1] ?? size.width);
+    const h = Number(m[2] ?? size.height);
+    c.width = Math.ceil(w * scale);
+    c.height = Math.ceil(h * scale);
     const ctx = c.getContext("2d");
     if (!ctx) return undefined;
     ctx.scale(scale, scale);

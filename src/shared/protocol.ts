@@ -40,6 +40,14 @@ export interface CursorInfo {
 
 export type ThemeKind = "light" | "dark" | "highContrast" | "highContrastLight";
 
+/** Export colours: dark lines on white (print) or the live theme's colours. */
+export type ExportPalette = "print" | "theme";
+
+/** Settings the webview needs; sent on ready and whenever they change. */
+export interface ViewConfig {
+  exportPalette: ExportPalette;
+}
+
 // Host -> webview
 export type HostToWebview =
   | { type: "render"; generation: number; doc: SchematicDoc; fitOnRender: boolean; sourceLines?: string[] }
@@ -52,7 +60,8 @@ export type HostToWebview =
   | { type: "fit"; generation: number }
   | { type: "drillUp"; generation: number }
   | { type: "ping"; generation: number; id: number }
-  | { type: "hint"; generation: number; hint: HintInfo | null };
+  | { type: "hint"; generation: number; hint: HintInfo | null }
+  | { type: "config"; generation: number; config: ViewConfig };
 
 // Webview -> host
 export type WebviewToHost =
@@ -82,6 +91,7 @@ const HOST_TYPES: ReadonlySet<string> = new Set([
   "drillUp",
   "ping",
   "hint",
+  "config",
 ]);
 const WEBVIEW_TYPES: ReadonlySet<string> = new Set([
   "ready",

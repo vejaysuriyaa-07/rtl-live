@@ -175,6 +175,15 @@
           "minimum": 0,
           "description": "Delay in milliseconds between the last keystroke and a synthesis run."
         },
+        "rtlLive.exportPalette": {
+          "type": "string",
+          "enum": [
+            "print",
+            "theme"
+          ],
+          "default": "print",
+          "description": "Colours of exported SVG and PNG files: print is dark lines on white with a 24 px margin; theme keeps the current editor colours."
+        },
         "rtlLive.lintWithVerilator": {
           "type": "boolean",
           "default": true,

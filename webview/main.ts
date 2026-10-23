@@ -1,5 +1,5 @@
 import type { SchematicDoc } from "../src/ir/types";
-import { isHostToWebview, type HostToWebview } from "../src/shared/protocol";
+import { isHostToWebview, type HostToWebview, type ViewConfig } from "../src/shared/protocol";
 import { postToHost, vscodeApi } from "./vscodeApi";
 import { initialState, currentModuleName, type ViewState } from "./state";
 import { ElkRunner } from "./layout/elkRunner";
@@ -36,6 +36,7 @@ let sourceLines: string[] | undefined;
 let lastRendered: { width: number; height: number; module: string } | undefined;
 let cursor: Cursor | null = null;
 let tweened = 0;
+let config: ViewConfig = { exportPalette: "print" };
 
 const chrome = new Chrome(app, {
   onFit: () => fit(true),
@@ -151,7 +152,7 @@ function wireInteractions(): void {
 
 async function exportDiagram(format: "svg" | "png"): Promise<void> {
   const { exportSvg, exportPng } = await import("./export");
-  const data = format === "svg" ? exportSvg(viewport, lastRendered) : await exportPng(viewport, lastRendered);
+  const data = format === "svg" ? exportSvg(viewport, lastRendered, config.exportPalette) : await exportPng(viewport, lastRendered, config.exportPalette);
   if (data) postToHost({ type: "export", generation: state.generation, format, data });
 }
 
@@ -168,7 +169,7 @@ function handle(msg: HostToWebview): void {
     postToHost({ type: "pong", generation: state.generation, id: msg.id });
     return;
   }
-  if (msg.generation < state.generation && msg.type !== "fit" && msg.type !== "export" && msg.type !== "drillUp" && msg.type !== "theme" && msg.type !== "hint") return;
+  if (msg.generation < state.generation && msg.type !== "fit" && msg.type !== "export" && msg.type !== "drillUp" && msg.type !== "theme" && msg.type !== "hint" && msg.type !== "config") return;
   if (msg.generation > state.generation) state.generation = msg.generation;
   switch (msg.type) {
     case "render": {
@@ -216,6 +217,9 @@ function handle(msg: HostToWebview): void {
       break;
     case "hint":
       chrome.setHint(msg.hint);
+      break;
+    case "config":
+      config = msg.config;
       break;
   }
 }

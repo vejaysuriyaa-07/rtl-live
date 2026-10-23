@@ -285,7 +285,7 @@ export class SchematicViewProvider implements vscode.WebviewViewProvider, vscode
   post(message: HostToWebview): void {
     const msg: HostToWebview = { ...message, generation: ++this.postSeq };
     // "render" and "status" are replayable state; transient commands are not.
-    if (msg.type === "render" || msg.type === "status" || msg.type === "error" || msg.type === "theme" || msg.type === "hint") {
+    if (msg.type === "render" || msg.type === "status" || msg.type === "error" || msg.type === "theme" || msg.type === "hint" || msg.type === "config") {
       this.lastMessages.set(msg.type, msg);
     }
     for (const t of this.targets()) {

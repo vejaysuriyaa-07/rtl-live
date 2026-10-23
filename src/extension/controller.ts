@@ -6,7 +6,7 @@ import { overlayStructural, overlaySummaryText } from "../ir/overlay";
 import { structuralToIr } from "../structural/toIr";
 import { selectTop } from "../structural/topSelect";
 import type { StructuralFile } from "../structural/types";
-import type { BannerError, StatusInfo, ThemeKind } from "../shared/protocol";
+import type { BannerError, StatusInfo, ThemeKind, ViewConfig } from "../shared/protocol";
 import { log } from "./log";
 import { Scheduler, type StructuralJob, type SynthJob } from "./scheduler";
 import type { SchematicViewProvider } from "./schematicView";
@@ -30,6 +30,11 @@ export function isVerilogDocument(doc: vscode.TextDocument): boolean {
 /** Plain Text that is probably Verilog: a module header plus one more Verilog keyword. */
 export function looksLikeVerilog(text: string): boolean {
   return /\bmodule\s+[A-Za-z_][\w$]*/.test(text) && /\b(endmodule|input|output|inout|assign|always|wire|reg|logic)\b/.test(text);
+}
+
+function viewConfig(): ViewConfig {
+  const c = vscode.workspace.getConfiguration("rtlLive");
+  return { exportPalette: c.get<string>("exportPalette", "print") === "theme" ? "theme" : "print" };
 }
 
 function schedulerSettings(): { structuralDebounceMs: number; synthDebounceMs: number } {
@@ -122,6 +127,7 @@ export class Controller implements vscode.Disposable {
         if (ev.affectsConfiguration("rtlLive")) {
           this.scheduler.updateOptions(schedulerSettings());
           this.synth.applySettings(readSynthSettings());
+          this.provider.post({ type: "config", generation: 0, config: viewConfig() });
           log.info("settings updated");
           this.rerunActive();
         }
@@ -129,6 +135,7 @@ export class Controller implements vscode.Disposable {
       vscode.window.onDidChangeActiveColorTheme((t) => this.provider.post({ type: "theme", generation: 0, theme: themeKind(t.kind) })),
       provider.onDidBecomeReady(() => {
         this.provider.post({ type: "theme", generation: 0, theme: themeKind(vscode.window.activeColorTheme.kind) });
+        this.provider.post({ type: "config", generation: 0, config: viewConfig() });
         this.postStatus();
         this.rerunActive();
       }),
