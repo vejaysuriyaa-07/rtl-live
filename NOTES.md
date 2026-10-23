@@ -650,3 +650,35 @@ Remaining known issues: tooltip source lines come from the newest text while a s
 5. docs/ACCURACY_REPORT.md: structural L1 4/44 (clouds have no netlist, deferred), L2 44/44, L3 44/44; rtl L1 44/44, L2 44/44, L3 44/44; gate L1 44/44, L2 5/5 asserted, L3 44/44, with the four new L3 checks.
 6. Every docs/BUGS.md item is fixed with a commit hash in the v0.3 summary table above.
 7. vsix 0.3.0 built, installed into `~/Applications/Visual Studio Code.app` with its bundled CLI, verified with `--list-extensions --show-versions`.
+
+## v0.3.1 work log (2026-10-23)
+
+Scope: docs/BUGS.md items 19 and 20. Baseline at `21e9e52`: unit, golden and accuracy 604 passing (31 files); integration 17; webview 63; packaged 17.
+
+### Bug 19: crowded fan-out hub (fixed `9bfb574`)
+
+- Tests first: `harness.test.ts` feeds the checker two T junctions 12 px apart and a crossing 10 px from a dot; `postprocess.test.ts` asks the post-pass to slide a dot clear of a crossing and clear of another net's dot, and to leave a fenced-in dot alone.
+- Checker blind spot: `junctionDots` matched a net group up to the first `</g>`, and bus groups hold a nested slash-and-width group before the dots, so dots on bus wires were never measured (vectorgates reported none). It now walks group depth. New L3 checks `junctionSpacing` (dots at least 20 px apart, any nets) and `crossingClearance` (plain crossings at least 16 px from any dot) run on every fixture in all three views. With the parser fixed and the checks added, 20 fixture views failed: arith_compare, compare4, inverted_gates and vectorgates in all three views, mux2_always, nand_nor, vectorgates_slices and xnor_misc in rtl and gate.
+- Root causes in vectorgates (raw ELK output): both `b` branches left the trunk at x=127 (a 4-way the old pass could not split, because it required the trunk to run two offsets past the move), and OR gate inputs sat 11.7 px apart (`rows * 12 + 10` spread evenly by ELK), so the crossing of `a`'s vertical with `b`'s wire into the same gate was always one pin pitch, 12 px, from `a`'s dot. The 14 px and 15 px cases on arith and mux boxes were the same thing: ELK spread pins evenly over the node height, so the pitch was h/(rows+1), never 16.
+- Fix: node pins are ELK `FIXED_POS` ports in IR order at exactly PIN_PITCH (16 px), centred in the pin band (title rows excluded); gate height is `(inputs - 1) * 16 + 14`, so two inputs still fit the 30 px symbol and three take 46 px as before. `junctionOffset` is at least `MIN_DOT_GAP` (20) and the 4-way split only needs an 8 px trunk margin beyond the moved dot. A new spread phase in `separateJunctions` slides any dot closer than 20 px to another dot or 16 px to a crossing along its trunk (4 to 32 px, nearest first), accepting a move only when the moved leg keeps 8 px from other nets, the dot is still a T, it is clear itself, and the drawing is less crowded than before; dots nothing can fix are left and reported by the checker.
+- After the fix: 0 failures, every fixture view passes all ten L3 checks. Changed expectations: the post-pass offset tests asked for 8 and 14 px between the two dots of a split 4-way and now assert 20; the toElk port test asserted FIXED_ORDER and now asserts fixed positions one pitch apart.
+
+### Bug 20: legend labels (fixed `87afe2b`)
+
+- Cause: `svg.schematic { width: 100%; height: 100% }` applied to the legend samples too, so a 32 px wide join sample was scaled three times into the 96 px column, and its ripper labels (drawn outside the sample's viewBox) spilled into the text column (split) or were clipped by the panel edge (join, showing `:0]`).
+- Fix: `sample()` adds the room the range labels need beside a ripper bar to the sample box; the panel's svg viewBox is as wide as the picture column (`LEGEND_PIC_W` = 120, matched by `.legend-pic` in the stylesheet) so one unit is one pixel, with the sample centred; the panel is 320 px wide.
+- Tests: `legend.test.ts` measures every sample's text boxes (inside the sample, no two overlapping, sample narrower than the column) and checks the stylesheet width against the constant. `m9.legend.spec.ts` measures the rendered panel in light and dark: svg scale exactly 1, every label inside the picture column and clear of the text column, ripper labels at the diagram's font size; writes `artifacts/m9-legend-panel-{light,dark}.png` and `m9-legend-{join,split}-{light,dark}.png`.
+
+### Release
+
+- `c00542e`: version 0.3.1, CHANGELOG, README (pin pitch and dot rules), screenshots regenerated once (`7458.png`, `module_add.png`, `vectorgates-logical.png`, `legend-dark.png`, `focus-mode.png`, `contact-sheet.png`).
+- `npm run package`: `rtl-live-0.3.1.vsix`, 21 files, 17.44 MB. `npm run test:packaged`: 17 passing. Installed with the bundled CLI of `~/Applications/Visual Studio Code.app`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.3.1`. Running windows need "Developer: Reload Window".
+- Test counts: unit, golden and accuracy 612 passing (31 files); integration 17; webview 65; packaged 17. Accuracy report unchanged in pass counts (structural L1 4/44, everything else 44/44 or 5/5 asserted) with the two new L3 checks.
+- Hygiene check passed. No file under `test/fixtures/` changed. Nothing pushed.
+
+| Bug | Final status |
+| --- | --- |
+| 19 crowded fan-out hub | fixed `9bfb574` (test: accuracy L3 `junctionSpacing` and `crossingClearance` on every fixture and view; `harness.test.ts`; `postprocess.test.ts`; `toElk.test.ts` pin pitch) |
+| 20 legend labels | fixed `87afe2b` (test: `legend.test.ts` sample layout; `m9.legend.spec.ts` rendered scale and overlap, light and dark) |
+
+Known issue: `docs/BUGS.md` items 13 to 18 were only in this log until `7299f8f`; the tracked list now carries 1 to 20.
