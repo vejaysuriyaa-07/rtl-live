@@ -110,9 +110,12 @@ export class TreeSitterStructuralParser implements StructuralParser {
     this.lines = new LineIndex(text);
     const root = tree.rootNode;
     const spans = this.moduleSpans(root, text.length);
-    const errors = refineErrors(text, collectErrors(root));
-    const modules = spans.map((s) => this.buildModule(root, s, text));
-    return { modules, errors, hasErrors: hasRealError(root), parser: "tree-sitter" };
+    const extra: SError[] = [];
+    const typedefs = new Set([...text.matchAll(/\btypedef\b[^;]*?([A-Za-z_][\w$]*)\s*;/g)].map((m) => m[1] ?? ""));
+    const modules = spans.map((s) => this.buildModule(root, s, text, typedefs, extra));
+    const merged = refineErrors(text, [...collectErrors(root), ...extra]).sort((a, b) => a.line - b.line || a.column - b.column);
+    const errors = merged.filter((e, i) => !merged.slice(0, i).some((o) => o.line === e.line && o.column === e.column && o.message === e.message));
+    return { modules, errors, hasErrors: hasRealError(root) || extra.length > 0, parser: "tree-sitter" };
   }
 
   private moduleSpans(root: TsNode, textLength: number): ModuleSpan[] {
@@ -135,13 +138,15 @@ export class TreeSitterStructuralParser implements StructuralParser {
     return spans;
   }
 
-  private buildModule(root: TsNode, span: ModuleSpan, text: string): SModule {
+  private buildModule(root: TsNode, span: ModuleSpan, text: string, typedefs: Set<string>, errors: SError[]): SModule {
     const inSpan = (n: TsNode): boolean => n.startIndex >= span.start && n.endIndex <= span.end;
     const nodes: TsNode[] = [];
     for (const n of walk(root)) if (inSpan(n)) nodes.push(n);
 
-    const ports = extractPorts(nodes, span);
-    if (span.hasErrors) {
+    const before = errors.length;
+    const ports = extractPorts(nodes, span, typedefs, errors);
+    const swallowed = errors.length > before;
+    if (span.hasErrors || swallowed) {
       // The tree loses ports near the break ("output b" at the end of an unclosed list);
       // read the header text itself and add what the tree missed, greyed out.
       const seen = new Set(ports.map((p) => p.name));
@@ -150,13 +155,15 @@ export class TreeSitterStructuralParser implements StructuralParser {
         seen.add(r.name);
         ports.push(r);
       }
+      // Recovered ports carry their own position; keep the list in text order.
+      ports.sort((a, b) => a.src.line - b.src.line || a.src.column - b.src.column);
     }
     const decls = extractDecls(nodes);
     const assigns = extractAssigns(nodes, decls);
     const always = extractAlways(nodes, this.lines);
     const instances = extractInstances(nodes, this.lines);
     const localparams = extractParams(nodes);
-    const hasErrors = span.hasErrors || nodes.some((n) => n.type === "ERROR" || (n.isMissing && !isGrammarQuirkMissing(n)));
+    const hasErrors = span.hasErrors || swallowed || nodes.some((n) => n.type === "ERROR" || (n.isMissing && !isGrammarQuirkMissing(n)));
     const src: SrcRange = span.declNode
       ? rangeOf(span.declNode)
       : {
@@ -283,7 +290,28 @@ export function recoverHeaderPorts(text: string, start: number, end: number, lin
   return out;
 }
 
-function extractPorts(nodes: TsNode[], span: ModuleSpan): SPort[] {
+const TYPE_WORDS = new Set(["wire", "reg", "logic", "bit", "byte", "int", "integer", "shortint", "longint", "tri", "tri0", "tri1", "wand", "wor", "supply0", "supply1", "signed", "unsigned", "var", "real", "time"]);
+
+/** Identifiers that sit in the type position of an ANSI port declaration ("input p1c p1d": p1c). */
+function swallowedPortNames(decl: TsNode): { name: string; node: TsNode }[] {
+  const out: { name: string; node: TsNode }[] = [];
+  const header = directChildOfType(decl, "net_port_header1") ?? directChildOfType(decl, "variable_port_header");
+  if (!header) return out;
+  for (const n of walk(header)) {
+    if (n.type !== "simple_identifier") continue;
+    let inDimension = false;
+    for (let p: TsNode | null = n.parent; p && p !== header; p = p.parent) {
+      if (p.type.includes("dimension") || p.type.includes("range") || p.type === "port_identifier") inDimension = true;
+    }
+    if (inDimension) continue;
+    const name = n.text;
+    if (RESERVED.has(name) || TYPE_WORDS.has(name)) continue;
+    out.push({ name, node: n });
+  }
+  return out;
+}
+
+function extractPorts(nodes: TsNode[], span: ModuleSpan, typedefs: Set<string>, errors: SError[]): SPort[] {
   const ports: SPort[] = [];
   const seen = new Map<string, SPort>();
   const push = (p: SPort): void => {
@@ -316,10 +344,19 @@ function extractPorts(nodes: TsNode[], span: ModuleSpan): SPort[] {
     }
     const broken = inErrorContext(a);
     const treeName = identName(directChildOfType(a, "port_identifier") ?? firstOfType(a, "port_identifier"));
-    const name = broken ? (recoveredPortName(a.text) ?? (treeName && !RESERVED.has(treeName) ? treeName : undefined)) : treeName;
-    if (!name) continue;
     const r = parseRange(lastRange);
-    push({ name, direction: lastDir, width: r ? r.width : 1, ...(r ? { range: r.range } : {}), src: rangeOf(a), ...(broken ? { tentative: true } : {}) });
+    // A missing comma makes tree-sitter read "p1c p1d" as type p1c, port p1d. An identifier
+    // in the type position that is not a typedef of this file is a port whose comma is missing.
+    const swallowed = broken ? [] : swallowedPortNames(a).filter((x) => !typedefs.has(x.name));
+    const portIdent = directChildOfType(a, "port_identifier") ?? firstOfType(a, "port_identifier");
+    for (const x of swallowed) {
+      push({ name: x.name, direction: lastDir, width: r ? r.width : 1, ...(r ? { range: r.range } : {}), src: rangeOf(x.node), tentative: true });
+      const at = portIdent ?? x.node;
+      errors.push({ line: at.startPosition.row + 1, column: at.startPosition.column + 1, message: `missing ',' before '${portIdent ? portIdent.text : x.name}'` });
+    }
+    const name = broken ? (recoveredPortName(a.text) ?? (treeName && !RESERVED.has(treeName) ? treeName : undefined)) : treeName && !RESERVED.has(treeName) ? treeName : undefined;
+    if (!name) continue;
+    push({ name, direction: lastDir, width: r ? r.width : 1, ...(r ? { range: r.range } : {}), src: rangeOf(a), ...(broken || swallowed.length > 0 ? { tentative: true } : {}) });
   }
 
   // Header fragments under ERROR: a dangling "output" with no identifier is ignored,
