@@ -1,0 +1,71 @@
+{
+  "top": "top_module",
+  "ports": [
+    {
+      "name": "a",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "b",
+      "direction": "input",
+      "width": 3
+    },
+    {
+      "name": "out_or_bitwise",
+      "direction": "output",
+      "width": 3
+    },
+    {
+      "name": "out_or_logical",
+      "direction": "output",
+      "width": 1
+    },
+    {
+      "name": "out_not",
+      "direction": "output",
+      "width": 6
+    }
+  ],
+  "synth": {
+    "rtl": {
+      "count": {
+        "gate:or": 2,
+        "gate:not": 2,
+        "join": 1
+      },
+      "nodes": [
+        {
+          "kind": "gate",
+          "op": "or",
+          "width": 3
+        },
+        {
+          "kind": "gate",
+          "op": "or",
+          "width": 1,
+          "pins": [
+            {
+              "id": "A",
+              "width": 3
+            },
+            {
+              "id": "Y",
+              "width": 1
+            }
+          ]
+        },
+        {
+          "kind": "gate",
+          "op": "not",
+          "width": 3
+        }
+      ],
+      "netWidth": {
+        "out_not": 6,
+        "out_or_bitwise": 3
+      },
+      "logicNodes": 4
+    }
+  }
+}

@@ -511,3 +511,38 @@ The spec documents arrived during this phase (`fd5eca0`). Items that were PARTIA
 | BUG_HUNT Part C | out of scope except search and trace as a stretch |
 
 Exact next step: bug 1. Add a unit test that lays out `structuralToIr` of `module top_module(` and asserts the title text box fits the module frame and that `FIT_MAX_SCALE === 1`; then set the cap, size the frame to the title, and run `npm run test:accuracy:update` (the L3 "fit" entries disappear from `known-failures.json`; review the diff). Then bugs 10, 7, 8 in that order, each test first, then update docs/ACCURACY_REPORT.md and this section, and close Phase 3 with the full suite and `npm run test:packaged`.
+
+## v0.3 work log (2026-10-22)
+
+### Phase 0: baseline and triage
+
+Baseline at `38c9bfa` (full suite, native Yosys): build, typecheck and lint clean; unit, golden and accuracy 570 passing (25 files); integration 17; webview 53; packaged 17. Accuracy report: structural L1 4/43, L2 43/43, L3 43/43; rtl L1 43/43, L2 43/43, L3 43/43; gate L1 43/43, L2 5/5 asserted, L3 43/43.
+
+docs/BUGS.md items 13 to 18 were pasted by VJ at the start of the session and written into the tracked file. `.plan/RESEARCH.md` does not exist.
+
+Triage of every BUGS.md item against the baseline build:
+
+| Bug | Status | How checked |
+| --- | --- | --- |
+| 1 title overflows, Fit above 100% | fixed in v0.2.0 (test: `moduleFrame.test.ts` "grows to fit a long title", "never zooms past 100 percent") | unit |
+| 2 badge and drawing disagree | fixed in v0.2.0 (test: `m8.editing.test.ts` "bug 2", `overlay.test.ts`) | integration |
+| 3 vague error messages, dropped ports | fixed in v0.2.0 (test: `errorMessages.test.ts`, `m8.editing.test.ts` "bug 3"); the dropped-port part regressed as bug 13 | integration |
+| 4 sidebar stuck after sleep | fixed in v0.2.0 (test: `lifecycle.test.ts`, `m7.lifecycle.test.ts` "hiding and showing the view resyncs") | integration |
+| 5 logical vs bitwise | fixed in v0.2.0 (test: `synth.test.ts` logical rows, `bitwise_vs_logical` fixture L2); glyph readability is bug 17 | accuracy |
+| 6 structural overlay on stale | fixed in v0.2.0 (test: `overlay.test.ts`, `m7.states.spec.ts` ghost overlay) | webview |
+| 7 replicated groups | fixed in v0.2.0 (test: `synth.test.ts` "bug 7") | unit |
+| 8 bus label on the chevron | fixed in v0.2.0 (test: accuracy L3 `noOverlap` 2b on every fixture) | accuracy |
+| 9 untitled files | fixed in v0.2.0 (test: `m8.editing.test.ts` "bug 9") | integration |
+| 10 ports in a grid | fixed in v0.2.0 (test: `portPlacement.test.ts`) | unit |
+| 11 blank webview in a new window | fixed in v0.2.0 (test: `m7.lifecycle.test.ts` "a page that never posts ready") | integration |
+| 12 tests share the real profile | fixed in v0.2.0 (test: `isolation.test.ts`) | unit |
+| 13 port vanishes during recovery | still reproduces: `input p1a, p1b, p1c p1d p1e, p1f,` parses to p1a p1b p1d p1f ... p1e (tentative); p1c is gone and the w2 cloud reads only p1a and p1b. Fixture `test/fixtures/partial/p9_two_missing_commas.v` | scratch parse of the fixture |
+| 14 crowded fan-out | still reproduces: in vectorgates (rtl view) the nearest parallel segments of different nets (`a`, `b` trunks) are 6 px apart; junction dots are r 2.5 on a 3 px bus stroke | scratch layout metrics |
+| 15 join labels cramped | still reproduces: `[5:3]` and `[2:0]` on the out_not join are 8.5 px text 12 px apart (3 px gap), no own label space | scratch layout metrics |
+| 16 dashed yellow segment | still reproduces with the HDLBits solution form `assign out_not[5:3] = ~b; assign out_not[2:0] = ~a;`: `multiplyDrivenSignals` counts names, so disjoint slices of one vector get the "multiple drivers" badge (the dashed warning style) and an error in the banner. The tracked `vectorgates.v` uses one concatenation assign and shows nothing. New fixture `test/fixtures/hdlbits/vectorgates_slices.v` (expected JSON copied from vectorgates) | scratch synth of the new fixture |
+| 17 logical OR glyph | still reproduces by design: `||` glyph inside an OR gate, tooltip says `logical: 1` | scratch render titles |
+| 18 explanations for every symbol | still reproduces: tooltips exist on nets, ports and nodes but read as data (`op: not`, `width: 3`); none on junctions, crossings, bubbles, slashes; no legend | scratch render titles |
+
+The new vectorgates_slices fixture also fails structural L3 (the cloud for two slice assigns to `out_not` is sized for one line and shows the second assign's text; `out_not` has no width label) and rtl and gate L3 (the false warning badge sits on the `[5:3]` ripper label). All four are in `known-failures.json` for Phase 1 to clear.
+
+Gate: triage table above; fixtures `p9_two_missing_commas.v`, `vectorgates_slices.v` with expected JSON committed.
