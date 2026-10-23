@@ -682,3 +682,63 @@ Scope: docs/BUGS.md items 19 and 20. Baseline at `21e9e52`: unit, golden and acc
 | 20 legend labels | fixed `87afe2b` (test: `legend.test.ts` sample layout; `m9.legend.spec.ts` rendered scale and overlap, light and dark) |
 
 Known issue: `docs/BUGS.md` items 13 to 18 were only in this log until `7299f8f`; the tracked list now carries 1 to 20.
+
+## v0.4 work log (2026-10-23)
+
+Scope: the v0.4 brief, a premium visual design pass. Baseline at `a5bb707` (v0.3.1 plus the Stryker mutation-testing setup): unit, golden and accuracy 617 passing; integration 17; webview 65; packaged 17.
+
+### References
+
+Studied for look only, no code copied (THIRD_PARTY_NOTICES.md records this): netlistsvg (MIT) for hand-drawn symbol skins and muted wires, DigitalJS (BSD-2-Clause) for rounded orthogonal wires and port dots, d3-hwschematic (MIT) for hierarchy expand and net highlight, HDElk (MIT) for the calm single-accent palette and label placement. The one asset taken in is the codicon font (`@vscode/codicons`, CC-BY-4.0) for the toolbar, credited in the notices.
+
+### Tokens (`webview/render/tokens.ts`)
+
+- One source of truth: `STROKE` (wire 1.25, bus 2.5, symbol 1.75, frame 1, detail 1.25, high contrast 2), `RADIUS` (node 6, port 4, bend 4, bend guard 8), `FILL_PERCENT` (body 6, frame 3, dashed 0, port 12), `OPACITY` (wire 0.7, faded 0.35), `FONT_PX` (label 11, title 12, small 10, tag 8), `JUNCTION_FACTOR` 2.5, `GLOW_PX` 2, `MOTION_MS` 150, `EXPORT_MARGIN` 24, and `CSS_TOKENS`, the same values as the `--rl-*` custom properties.
+- `webview/styles.css` repeats them on `:root` (a stylesheet cannot import a module). `test/unit/tokens.test.ts` parses the `:root` block and fails when any token differs, checks that every `stroke-width` outside `:root` is a `var(--rl-stroke-*)`, and that `geometry.ts` draws wires and dots from the same numbers. `harness.test.ts` resolves the wire strokes through the token the stylesheet names instead of a literal.
+- Colours: `--rl-accent` is the theme link colour (`--vscode-textLink-foreground`, falling back to charts blue); wires are `color-mix(fg 70%, bg)`; fills are `color-mix(fg 6%, bg)` and `color-mix(fg 3%, bg)`; high contrast themes override the tokens on `body[data-theme]` (no fills, no glow, no shadows, 2 px borders, `--vscode-contrastActiveBorder` as the accent, `--vscode-contrastBorder` for lines).
+- Type: `--rl-mono` is the editor font (`--vscode-editor-font-family`) with a monospace fallback stack; labels, pin labels, widths and slice ranges use it; module titles, box titles, operator glyphs and tags use the UI font. `CHAR_W` is `11 * 0.6` (unchanged in value), `RIPPER_LABEL_CHAR` and the bus width char are `10 * 0.6`.
+
+### Shapes
+
+- Wire bends: `edgePath(e, guards)` puts a quadratic arc of radius 4 at every bend, shrunk on short segments so two arcs never meet, and keeps a bend sharp within 8 px of a junction dot of the net or of either end of the wire (a pin or a port), so a rounded corner can never read as a connection. The guards are every junction dot of the net across all its wires, because the T of one wire is a bend of the branch wire. `test/unit/shapes.test.ts`.
+- `roundedPolygonPath(points, r)` rounds every corner of a closed polygon; port chevrons use it with radius 4, the mux trapezoid with 3. Rectangular bodies use `rx` 6 (`RADIUS.node`); the constant pill and the cloud keep their own radii.
+- Junction dots take the accent; pins, pin stubs and bus slashes take the wire colour; bubbles and the clock triangle keep the detail stroke.
+- Hover: `filter: drop-shadow(0 0 2px accent)` on the hovered node, port or wire, no colour change; the editor cursor match takes the accent stroke plus the glow. Focus mode fades to `--rl-faded` (0.35). Transitions use `--rl-motion` and are off under `prefers-reduced-motion`.
+- Static node shadow A/B (`artifacts/v04-ab/`): `drop-shadow(0 1px 1.5px rgba(0,0,0,0.28))` on every body measured 60 fps against 60 fps plain over 40 zoom steps in both themes, so cost was not the deciding factor; at the sidebar's size the shadow was barely visible in light and invisible in dark, and it adds a compositing layer per node. Decision: no static shadow.
+
+### Toolbar, states, export
+
+- Toolbar: 22 px controls, icon buttons 24 px square with codicons (screen-full, zoom-in, zoom-out, open-preview) and `aria-label`, RTL and Gate as one bordered segmented control (`role="group"`), groups 8 px apart. The codicon font is referenced from the stylesheet; esbuild's file loader copies it to `dist/codicon.ttf` (`assetNames: "[name]"`) so the webview's `font-src` covers it.
+- Packaging catch: `.vscodeignore` is an allowlist, so the first `npm run test:packaged` showed `Webview.loadLocalResource - Error using fileReader ... dist/codicon.ttf` in the VS Code log (the icons would have fallen back to blank squares in the installed extension while every test in the dev tree passed). `m0.sidebar.test.ts` now asserts that the font the stylesheet references exists in the extension, which fails against the unpacked vsix until `!dist/codicon.ttf` is listed; the same guard pattern caught the 0.1.0 grammar bug.
+- Badges, banner, hint, breadcrumb, Legend panel and the empty, loading, error and stale states use the same line, chip and shadow tokens.
+- Export: `webview/render/exportDoc.ts` is a pure builder (unit tested): 24 px margin on every side, opaque background, the diagram stylesheet rules (the `:root` token block and the `.schematic` rules, nothing else) inlined, and the palette pinned after them so it wins. `PRINT_COLORS` is dark lines on white with safe font stacks; the theme palette resolves the live `--rl-*` values (they come back as the substituted text, for example `#1e1e1e`, not rgb) and appends fallbacks to the fonts. `rtlLive.exportPalette` (`print` default, `theme`) travels in a new `config` host message, replayed to late webviews like `theme`. PNG export reads its size from the SVG so the margin is included.
+
+### Performance
+
+- The render budget test (`test/unit/renderPerf.test.ts`, 100 gates with fan-out, 201 edges, 153 junction points) found `renderModule` taking 2261 ms, of which 1326 ms was `separateJunctions` and the rest its crowding bookkeeping: every slide attempt recomputed every junction dot and every crossing of the whole drawing (O(wires squared) per attempt, up to 1024 attempts).
+- Fix in `webview/layout/postprocess.ts`, same acceptance rules, same results on every fixture (the post-pass and accuracy suites are unchanged): segments are indexed by the coordinate they run along (`SegIndex`, with range queries over sorted keys), dots and crossings live in counted point sets bucketed by cell (`PointSet`), crossings are kept per segment per net, which dots are crowded is cached and only re-evaluated near a change, and a slide attempt scores the change in the crowding count from what it touches (one or two dots and the crossings of three segments) instead of recounting. The 4-way phase builds its index only when a net has a 4-way. The renderer's crossing markers use the same index, and width labels check only the wires in the 64 px cells around them.
+- Quiet-CPU numbers (mutation workers paused): `separateJunctions` 7.7 ms, `renderModule` 12.9 ms best of 10 for the 100-node view (from 2261 ms). The test (`test/perf/renderPerf.test.ts`, `npm run test:perf`) asserts the best of 40 runs under 16 ms and runs on its own: inside the full vitest run, eight worker processes share the cores and the same best of 40 measured 20 ms, so the budget is checked without that contention, the way `npm run bench` is. ELK itself for the same view takes 266 to 376 ms in node (it runs in a worker in the webview and was never inside a 16 ms budget; the brief's "layout plus render" is met for the render half, and ELK is unchanged).
+- Zoom and scroll stay at 60 fps (the A/B measurement above).
+
+### Proof
+
+- `artifacts/v04-before/` (rendered at `a5bb707` before any change) and `artifacts/v04-after/`: `test/webview/v04.visual.spec.ts` with `RTL_LIVE_V04_DIR` writes a contact sheet of every fixture in light and dark, and vectorgates, 7458, module_add, module_shift8, counter4, fsm_moore and the Legend in light, dark and high contrast. `scripts/v04-compare.mjs` writes `compare-<name>-<theme>.png` pairs.
+- Review rounds: (1) first tokens pass: wires, dots and type right; port labels bold mono readable; ripper bars now the darkest mark on the page, kept as symbols. (2) After shapes and toolbar: rounded bends visible and never near a dot; bus junction dots (radius 6.25) read heavy next to a 2.5 px bus but follow the v0.3 rule, kept; icon buttons sit flat in the toolbar like VS Code's own; dark theme dashed boxes and muted pin labels clear. (3) counter4 and module_shift8 dark, Legend in high contrast: nothing left to change; high contrast uses the focus border fallback for the accent in the harness and `contrastActiveBorder` in VS Code.
+- `test/webview/v04.hover.spec.ts`: hover adds a drop-shadow and keeps the outline stroke and width; focus fades to 0.35; high contrast has no fills, 2 px outlines and a zero-radius glow; the export is print by default and theme after a `config` message.
+
+### Release
+
+- Commits: `970c11a` perf(layout) post-pass indexes and the render budget; `9726833` feat(webview) tokens, palette, shapes, type, toolbar, high contrast, the visual proof spec and the shipped-font guard; `b240255` feat(export) print palette, margin, fonts, `rtlLive.exportPalette`; `3b4861c` version 0.4.0, CHANGELOG, README, screenshots (`7458.png`, `module_add.png`, `before-after.png`, `vectorgates-logical.png`, `legend-dark.png`, `focus-mode.png`, `contact-sheet.png`), `scripts/v04-compare.mjs`.
+- Gates on the final tree: unit, golden and accuracy 630 passing (35 files); `npm run test:perf` 1 passing (best of 40 under 16 ms with the mutation workers paused); integration 18 (the font guard is new); webview 92; packaged 18 against the vsix; typecheck and lint clean; hygiene check passed; no file under `test/fixtures/` changed; nothing pushed.
+- `npm run package`: `rtl-live-0.4.0.vsix`, 22 files, 17.52 MB (the 22nd is `dist/codicon.ttf`). Installed with the bundled CLI of `~/Applications/Visual Studio Code.app`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.4.0`. Running windows need "Developer: Reload Window".
+- The Stryker run started before this work (`a5bb707`, 11350 mutants over the pre-v0.4 tree) kept running throughout; its workers were paused with SIGSTOP for the timing measurements and the full vitest gate, a few minutes in all, so a handful of in-flight mutants may be recorded as timeouts. Its report and triage are the next step, in their own section.
+
+| Brief item | Final status |
+| --- | --- |
+| 1 references | studied, no code reused, codicons credited |
+| 2 tokens | `tokens.ts` plus `:root`, test-enforced; strokes, colours, fills, corners, dots, type, hover, motion, high contrast as specified; static shadow A/B done, not adopted |
+| 3 polish | toolbar, badges, banner, hint, breadcrumb, states, Legend; export print palette with margin and fonts, theme as a setting |
+| 4 proof | `artifacts/v04-before/`, `artifacts/v04-after/` with 14 compare images; three review rounds recorded above |
+| 5 rules | L1, L2, L3 all passing in every view (accuracy baseline unchanged); render budget held and tested; behaviour tests first for hover and export; screenshots in light, dark and high contrast; 0.4.0 packaged, tested and installed |
+
+Next step: triage the mutation report when the run ends (`artifacts/mutation/mutation.json`; `node` the survivor summary by file), add tests for real gaps, record the score in NOTES.md.
