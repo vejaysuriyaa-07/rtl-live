@@ -17,10 +17,10 @@ export const WORKER_PATH = join(ROOT, "dist", "yosysWorker.mjs");
 
 let shared: SynthBackend | undefined;
 
-/** Native yosys if present, else wasm. Shared across a test file. */
+/** Native yosys if present, else wasm (RTL_LIVE_TEST_BACKEND=wasm forces wasm). Shared across a test file. */
 export function testBackend(): SynthBackend {
   if (shared) return shared;
-  const native = findYosys(undefined);
+  const native = process.env["RTL_LIVE_TEST_BACKEND"] === "wasm" ? undefined : findYosys(undefined);
   shared = native ? new NativeYosysBackend(native) : new WasmYosysBackend({ workerPath: WORKER_PATH });
   return shared;
 }

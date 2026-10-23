@@ -604,3 +604,49 @@ Result: L3 passes on every fixture in all three views, including the four new ch
 - Part C: search, trace drivers and loads, cones, path view, stats, simulation values.
 - Yosys front-end folding of `state == 1'b1` (fsm_moore keeps no comparator).
 - Source lines in tooltips come from the newest text, so line numbers can drift by a line or two while a stale diagram is shown.
+
+### Phase 5: package and report (done 2026-10-22)
+
+- Version 0.3.0 (`ffc06ab`), CHANGELOG entry, README (logical boxes, tooltips, legend, focus mode, layout rules, new screenshots under `media/screenshots/`: `7458.png`, `module_add.png`, `vectorgates-logical.png`, `legend-dark.png`, `focus-mode.png`, `contact-sheet.png`).
+- `npm run package`: `rtl-live-0.3.0.vsix`, 21 files, 17.44 MB. `npm run test:packaged`: 17 passing against the unzipped vsix.
+- Installed with `"$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" --install-extension rtl-live-0.3.0.vsix --force`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.3.0`. Running windows need "Developer: Reload Window".
+
+### v0.3 summary
+
+| Phase | What | Commits |
+| --- | --- | --- |
+| 0 triage | baseline, bugs 13 to 18 reproduced, fixtures `p9_two_missing_commas.v`, `vectorgates_slices.v` | `b839563` |
+| 1 correctness | bit-accurate drivers and a join for slice assigns (16); swallowed port names recovered (13) | `94665b2`, `77c2b82` |
+| 2 layout | four new L3 checks; spacing A/B (set D) and Brandes-Koepf; T-only junctions; labels on their own wires; before and after shots | `7af30e4`, `b677bba`, `4ff290a` |
+| 3 clarity | logical operators as any-1 boxes (17); tooltips on everything with the source line, legend, wording (18) | `53f576a`, `0a00f7e`, `ef11e57` |
+| 4 deferred | focus mode, designed states, contact sheet | `9e28cd3`, `a11c0ab` |
+| 5 release | 0.3.0, package, install | `ffc06ab` |
+
+Final status of every docs/BUGS.md item:
+
+| Bug | Final status |
+| --- | --- |
+| 1 to 12 | fixed in v0.2.0, regression tests confirmed in the Phase 0 triage table |
+| 13 port vanishes during recovery | fixed `77c2b82` (test: `portRecovery.test.ts`, including the typing fuzz) |
+| 14 crowded fan-out | fixed `b677bba` (test: accuracy L3 `wireSpacing` and `junctions` on every fixture; `postprocess.test.ts`) |
+| 15 join labels cramped | fixed `b677bba` (test: accuracy L3 `labelsClear` and `noOverlap`) |
+| 16 dashed yellow segment | fixed `94665b2` (test: `drivers.test.ts`; the dashed style is the multiple-driver warning and its tooltip names the bits) |
+| 17 logical OR glyph | fixed `53f576a` (test: `tooltips.test.ts` "logical operators drawn as reduce boxes", `m9.legend.spec.ts`) |
+| 18 explanations for every symbol | fixed `0a00f7e`, `ef11e57` (test: `tooltips.test.ts`, `legend.test.ts`, `m9.legend.spec.ts`) |
+| 5 to 8 known issues | fixed in v0.2.0; 8 re-checked by the v0.3 label placement (`b677bba`) |
+
+Layout A/B numbers: see Phase 2 above (set D plus Brandes-Koepf: 259 crossings over 132 layouts, no parallel wires of different nets under 8 px, min gap 11 px, area 14.8M px2 against 11.5M in v0.2).
+
+Test counts at the end: unit, golden and accuracy 604 passing (31 files); integration 17; webview 63; packaged 17. Accuracy report: structural L1 4/44 (clouds have no netlist), L2 44/44, L3 44/44; rtl L1 44/44, L2 44/44, L3 44/44; gate L1 44/44, L2 5/5 asserted, L3 44/44.
+
+Remaining known issues: tooltip source lines come from the newest text while a stale diagram is shown, so a line number can drift by a line or two; junction dots on buses are 12 px wide by the Part B rule, which reads heavy on dense fan-outs; Yosys folds `state == 1'b1` before any pass (fsm_moore keeps no comparator). The deferred list is under "Deferred to v0.4" above.
+
+### Final checklist (v0.3)
+
+1. Full suite green on the native Yosys backend: typecheck and lint clean; unit, golden and accuracy 604 passing (31 files); integration 17; webview 63; packaged 17. The unit, golden and accuracy suites also pass on the wasm backend (`RTL_LIVE_TEST_BACKEND=wasm npx vitest run`, 604 passing).
+2. `git status` clean. `git log --oneline` shows the phase commits from `b839563` (Phase 0) to `ffc06ab` (Phase 5). `git remote -v` lists `origin` as it was found; nothing was pushed.
+3. Hygiene check passed: the search of tracked files returns nothing.
+4. No existing file under `test/fixtures/` changed; three files were added (`hdlbits/vectorgates_slices.v`, `expected/vectorgates_slices.json`, `partial/p9_two_missing_commas.v`).
+5. docs/ACCURACY_REPORT.md: structural L1 4/44 (clouds have no netlist, deferred), L2 44/44, L3 44/44; rtl L1 44/44, L2 44/44, L3 44/44; gate L1 44/44, L2 5/5 asserted, L3 44/44, with the four new L3 checks.
+6. Every docs/BUGS.md item is fixed with a commit hash in the v0.3 summary table above.
+7. vsix 0.3.0 built, installed into `~/Applications/Visual Studio Code.app` with its bundled CLI, verified with `--list-extensions --show-versions`.
