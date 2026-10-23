@@ -1,14 +1,16 @@
 // Readability checks (accuracy level L3) on a laid-out, rendered module:
 // labels fit their symbols, labels do not overlap, every bus carries a width
-// label, Fit never zooms past 100 percent, and no wire crosses a symbol.
+// label, Fit never zooms past 100 percent, no wire crosses a symbol, parallel
+// wires of different nets keep 8 px apart, wire labels keep clear of other
+// nets' wires, and every junction dot marks a real T (never a crossing or a 4-way).
 // Runs in node: ELK via elkjs, then the pure SVG renderer, then a small walk
 // over the markup to recover text boxes in diagram coordinates.
 import ELK from "elkjs/lib/main.js";
 import type { ModuleView } from "../../src/ir/types";
 import { moduleToElk } from "../../webview/layout/toElk";
 import type { ElkGraphOut } from "../../webview/layout/types";
-import { FIT_MAX_SCALE, NOMINAL_VIEWPORT } from "../../webview/render/geometry";
-import { renderModule } from "../../webview/render/svg";
+import { FIT_MAX_SCALE, NOMINAL_VIEWPORT, WIRE_STROKE } from "../../webview/render/geometry";
+import { prepareLayout, renderModule } from "../../webview/render/svg";
 
 type Elk = { layout(g: unknown): Promise<unknown> };
 const elk = new (ELK as unknown as new () => Elk)();
@@ -25,7 +27,12 @@ export interface TextBox extends Box {
   text: string;
   /** data-id of the enclosing node or port group */
   owner: string | undefined;
+  /** data-net of the label's own net (bus width labels, ripper labels, warning badges) */
+  net: string | undefined;
 }
+
+/** Minimum distance between parallel wire segments of different nets. */
+export const MIN_WIRE_GAP = 8;
 
 export interface LayoutCheck {
   ok: boolean;
@@ -38,6 +45,9 @@ export interface LayoutReport {
   busLabels: LayoutCheck;
   fit: LayoutCheck;
   wiresClear: LayoutCheck;
+  wireSpacing: LayoutCheck;
+  labelsClear: LayoutCheck;
+  junctions: LayoutCheck;
   width: number;
   height: number;
   fitScale: number;
@@ -69,7 +79,7 @@ function attr(tag: string, name: string): string | undefined {
 /** Text boxes in absolute diagram coordinates. */
 export function textBoxes(inner: string): TextBox[] {
   const out: TextBox[] = [];
-  const stack: { dx: number; dy: number; owner: string | undefined }[] = [{ dx: 0, dy: 0, owner: undefined }];
+  const stack: { dx: number; dy: number; owner: string | undefined; net: string | undefined }[] = [{ dx: 0, dy: 0, owner: undefined, net: undefined }];
   const re = /<g\b[^>]*>|<\/g>|<text\b[^>]*>(?:<title>[^<]*<\/title>)?([^<]*)<\/text>/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(inner)) !== null) {
@@ -82,10 +92,11 @@ export function textBoxes(inner: string): TextBox[] {
     if (tag.startsWith("<g")) {
       const t = /translate\(([-\d.]+),([-\d.]+)\)/.exec(attr(tag, "transform") ?? "");
       const id = attr(tag, "data-id");
-      stack.push({ dx: top.dx + (t ? Number(t[1]) : 0), dy: top.dy + (t ? Number(t[2]) : 0), owner: id ?? top.owner });
+      stack.push({ dx: top.dx + (t ? Number(t[1]) : 0), dy: top.dy + (t ? Number(t[2]) : 0), owner: id ?? top.owner, net: attr(tag, "data-net") ?? top.net });
       continue;
     }
     const cls = attr(tag, "class") ?? "";
+    const net = attr(tag, "data-net") ?? top.net;
     const text = (m[1] ?? "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
     if (text.trim() === "") continue;
     const size = fontSize(cls);
@@ -97,7 +108,7 @@ export function textBoxes(inner: string): TextBox[] {
     const baseline = attr(tag, "dominant-baseline") ?? "alphabetic";
     const left = anchor === "middle" ? x - w / 2 : anchor === "end" ? x - w : x;
     const topY = baseline === "central" ? y - h / 2 : y - h * 0.8;
-    out.push({ x: left, y: topY, w, h, cls, text, owner: top.owner });
+    out.push({ x: left, y: topY, w, h, cls, text, owner: top.owner, net });
   }
   return out;
 }
@@ -136,11 +147,108 @@ function segmentHitsBox(p: { x: number; y: number }, q: { x: number; y: number }
   return clip(-dx, p.x - x0) && clip(dx, x1 - p.x) && clip(-dy, p.y - y0) && clip(dy, y1 - p.y) && t0 < t1;
 }
 
-export async function layoutView(view: ModuleView): Promise<ElkGraphOut> {
-  return (await elk.layout(moduleToElk(view))) as ElkGraphOut;
+export async function layoutView(view: ModuleView, options?: Record<string, string>): Promise<ElkGraphOut> {
+  return (await elk.layout(moduleToElk(view, options))) as ElkGraphOut;
 }
 
-export function checkLayout(view: ModuleView, layout: ElkGraphOut): LayoutReport {
+export interface Segment {
+  net: string;
+  edge: string;
+  a: { x: number; y: number };
+  b: { x: number; y: number };
+}
+
+/** Every straight wire segment of the layout, tagged with its net id. */
+export function wireSegments(layout: ElkGraphOut): Segment[] {
+  const out: Segment[] = [];
+  for (const e of layout.edges) {
+    const net = e.id.replace(/^edge:/, "").replace(/:\d+$/, "");
+    for (const s of e.sections ?? []) {
+      const pts = [s.startPoint, ...(s.bendPoints ?? []), s.endPoint];
+      for (let i = 0; i + 1 < pts.length; i++) {
+        const a = pts[i]!;
+        const b = pts[i + 1]!;
+        if (a.x === b.x && a.y === b.y) continue;
+        out.push({ net, edge: e.id, a, b });
+      }
+    }
+  }
+  return out;
+}
+
+const EPS = 0.01;
+
+function isH(s: Segment): boolean {
+  return Math.abs(s.a.y - s.b.y) < EPS;
+}
+function isV(s: Segment): boolean {
+  return Math.abs(s.a.x - s.b.x) < EPS;
+}
+
+/** Distance between two parallel segments whose extents overlap; undefined otherwise. */
+function parallelGap(p: Segment, q: Segment): number | undefined {
+  if (isH(p) && isH(q)) {
+    const over = Math.min(Math.max(p.a.x, p.b.x), Math.max(q.a.x, q.b.x)) - Math.max(Math.min(p.a.x, p.b.x), Math.min(q.a.x, q.b.x));
+    return over > EPS ? Math.abs(p.a.y - q.a.y) : undefined;
+  }
+  if (isV(p) && isV(q)) {
+    const over = Math.min(Math.max(p.a.y, p.b.y), Math.max(q.a.y, q.b.y)) - Math.max(Math.min(p.a.y, p.b.y), Math.min(q.a.y, q.b.y));
+    return over > EPS ? Math.abs(p.a.x - q.a.x) : undefined;
+  }
+  return undefined;
+}
+
+/** Point where a horizontal and a vertical segment cross in their interiors (not at an end). */
+function crossing(p: Segment, q: Segment): { x: number; y: number } | undefined {
+  const h = isH(p) ? p : isH(q) ? q : undefined;
+  const v = isV(p) ? p : isV(q) ? q : undefined;
+  if (!h || !v || h === v) return undefined;
+  const x = v.a.x;
+  const y = h.a.y;
+  const inH = x > Math.min(h.a.x, h.b.x) + EPS && x < Math.max(h.a.x, h.b.x) - EPS;
+  const inV = y > Math.min(v.a.y, v.b.y) + EPS && y < Math.max(v.a.y, v.b.y) - EPS;
+  return inH && inV ? { x, y } : undefined;
+}
+
+function segmentHitsLabel(s: Segment, box: Box, pad = 1): boolean {
+  const x0 = Math.min(s.a.x, s.b.x) - pad;
+  const x1 = Math.max(s.a.x, s.b.x) + pad;
+  const y0 = Math.min(s.a.y, s.b.y) - pad;
+  const y1 = Math.max(s.a.y, s.b.y) + pad;
+  return x1 > box.x && x0 < box.x + box.w && y1 > box.y && y0 < box.y + box.h;
+}
+
+/** Directions (unit axis vectors) in which wires of one net leave a point. */
+function directionsAt(segs: Segment[], pt: { x: number; y: number }): Set<string> {
+  const dirs = new Set<string>();
+  for (const s of segs) {
+    const onSeg = isH(s) ? Math.abs(s.a.y - pt.y) < EPS && pt.x >= Math.min(s.a.x, s.b.x) - EPS && pt.x <= Math.max(s.a.x, s.b.x) + EPS : isV(s) ? Math.abs(s.a.x - pt.x) < EPS && pt.y >= Math.min(s.a.y, s.b.y) - EPS && pt.y <= Math.max(s.a.y, s.b.y) + EPS : false;
+    if (!onSeg) continue;
+    for (const end of [s.a, s.b]) {
+      if (Math.abs(end.x - pt.x) < EPS && Math.abs(end.y - pt.y) < EPS) continue;
+      dirs.add(isH(s) ? (end.x > pt.x ? "E" : "W") : end.y > pt.y ? "S" : "N");
+    }
+  }
+  return dirs;
+}
+
+/** Junction dots drawn in the markup, with the net they belong to. */
+export function junctionDots(inner: string): { net: string; x: number; y: number; r: number }[] {
+  const out: { net: string; x: number; y: number; r: number }[] = [];
+  const re = /<g class="net[^"]*" data-net="([^"]*)"[^>]*>([\s\S]*?)<\/g>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(inner)) !== null) {
+    const net = m[1]!;
+    for (const c of (m[2] ?? "").matchAll(/<circle class="junction" cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)"/g)) {
+      out.push({ net, x: Number(c[1]), y: Number(c[2]), r: Number(c[3]) });
+    }
+  }
+  return out;
+}
+
+export function checkLayout(view: ModuleView, rawLayout: ElkGraphOut): LayoutReport {
+  // The renderer rounds every coordinate and separates 4-way junctions; measure what is drawn.
+  const layout = prepareLayout(rawLayout, view);
   const svg = renderModule(view, layout, { frame: true });
   const texts = textBoxes(svg.inner);
   const nodeBox = new Map<string, Box>(layout.children.map((c) => [c.id, { x: c.x, y: c.y, w: c.width, h: c.height }]));
@@ -241,5 +349,81 @@ export function checkLayout(view: ModuleView, layout: ElkGraphOut): LayoutReport
     }
   }
 
-  return { labelsInside, noOverlap, busLabels, fit, wiresClear, width: svg.width, height: svg.height, fitScale, svg: svg.inner };
+  // 6. Parallel wires of different nets keep MIN_WIRE_GAP apart (bug 14).
+  const segs = wireSegments(layout);
+  const wireSpacing: LayoutCheck = { ok: true, issues: [] };
+  for (let i = 0; i < segs.length; i++) {
+    for (let j = i + 1; j < segs.length; j++) {
+      const p = segs[i]!;
+      const q = segs[j]!;
+      if (p.net === q.net) continue;
+      const gap = parallelGap(p, q);
+      if (gap !== undefined && gap < MIN_WIRE_GAP - EPS) {
+        wireSpacing.ok = false;
+        wireSpacing.issues.push(`${p.net} and ${q.net} run ${Math.round(gap * 10) / 10} px apart near ${Math.round(p.a.x)},${Math.round(p.a.y)}`);
+      }
+    }
+  }
+
+  // 7. Wire labels keep clear of wires that are not their own net (bug 15).
+  const labelsClear: LayoutCheck = { ok: true, issues: [] };
+  for (const t of texts) {
+    if (t.cls !== "bus-width" && t.cls !== "ripper-label" && t.cls !== "warn-badge-text") continue;
+    for (const s of segs) {
+      if (t.net !== undefined && s.net === t.net) continue;
+      if (segmentHitsLabel(s, t)) {
+        labelsClear.ok = false;
+        labelsClear.issues.push(`"${t.text}" (${t.cls}) sits on a wire of ${s.net} near ${Math.round(t.x)},${Math.round(t.y)}`);
+        break;
+      }
+    }
+  }
+
+  // 8. Junction dots: on a real T of their own net, never on a crossing, never 4-way; big enough to see.
+  const junctions: LayoutCheck = { ok: true, issues: [] };
+  const dots = junctionDots(svg.inner);
+  const byNet = new Map<string, Segment[]>();
+  for (const s of segs) (byNet.get(s.net) ?? byNet.set(s.net, []).get(s.net)!).push(s);
+  for (const d of dots) {
+    const dirs = directionsAt(byNet.get(d.net) ?? [], d);
+    if (dirs.size < 3) {
+      junctions.ok = false;
+      junctions.issues.push(`junction dot of ${d.net} at ${d.x},${d.y} joins only ${dirs.size} wire(s)`);
+    } else if (dirs.size > 3) {
+      junctions.ok = false;
+      junctions.issues.push(`4-way junction of ${d.net} at ${d.x},${d.y}`);
+    }
+    const stroke = (view.nets.find((n) => n.id === d.net)?.width ?? 1) > 1 ? WIRE_STROKE.bus : WIRE_STROKE.single;
+    if (d.r < 2.5 * stroke - EPS) {
+      junctions.ok = false;
+      junctions.issues.push(`junction dot of ${d.net} at ${d.x},${d.y} has radius ${d.r} on a ${stroke} px wire`);
+    }
+  }
+  for (let i = 0; i < segs.length; i++) {
+    for (let j = i + 1; j < segs.length; j++) {
+      const p = segs[i]!;
+      const q = segs[j]!;
+      if (p.net === q.net) continue;
+      const x = crossing(p, q);
+      if (!x) continue;
+      const dot = dots.find((d) => Math.abs(d.x - x.x) < d.r && Math.abs(d.y - x.y) < d.r);
+      if (dot) {
+        junctions.ok = false;
+        junctions.issues.push(`dot of ${dot.net} at ${dot.x},${dot.y} sits on the crossing of ${p.net} and ${q.net}`);
+      }
+    }
+  }
+  // Two T junctions closer than a dot diameter read as one 4-way.
+  for (let i = 0; i < dots.length; i++) {
+    for (let j = i + 1; j < dots.length; j++) {
+      const a = dots[i]!;
+      const b = dots[j]!;
+      if (a.net === b.net && Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r - EPS && (a.x !== b.x || a.y !== b.y)) {
+        junctions.ok = false;
+        junctions.issues.push(`junction dots of ${a.net} at ${a.x},${a.y} and ${b.x},${b.y} touch`);
+      }
+    }
+  }
+
+  return { labelsInside, noOverlap, busLabels, fit, wiresClear, wireSpacing, labelsClear, junctions, width: svg.width, height: svg.height, fitScale, svg: svg.inner };
 }

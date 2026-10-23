@@ -3,8 +3,17 @@ import type { Node, Port } from "../../src/ir/types";
 
 export const CHAR_W = 6.6; // approx width of one character at 11px UI font
 export const PIN_PITCH = 16;
+/** Pitch of slice pins on split and join bars. */
+export const RIPPER_PITCH = 16;
+/** Ripper label font is 8.5 px (webview/styles.css .ripper-label). */
+export const RIPPER_LABEL_CHAR = 8.5 * 0.6;
 export const PORT_NODE_HEIGHT = 20;
 export const GATE_W = 48;
+/** Wire stroke widths (webview/styles.css .net-path); junction dots are 2.5 times the stroke. */
+export const WIRE_STROKE = { single: 1.2, bus: 2.4 } as const;
+export function junctionRadius(width: number): number {
+  return 2.5 * (width > 1 ? WIRE_STROKE.bus : WIRE_STROKE.single);
+}
 export const GATE_H = 30;
 /** Fit never zooms past this factor (text keeps its designed size; 1 means at most 100%). */
 export const FIT_MAX_SCALE = 1;
@@ -61,7 +70,9 @@ export function nodeSize(node: Node): Size {
       return { width: textWidth(node.label) + 14, height: 18 };
     case "split":
     case "join":
-      return { width: 8, height: Math.max(24, rows * 14 + 6) };
+      // ELK spreads the pins evenly over the height: (rows + 1) gaps of RIPPER_PITCH keep
+      // the slice wires and their labels apart (bugs 14 and 15).
+      return { width: 8, height: Math.max(24, (rows + 1) * RIPPER_PITCH) };
     case "cloud": {
       const w = Math.max(70, textWidth(node.label) + 20, south * PIN_PITCH + 10);
       return { width: w, height: Math.max(34, rows * PIN_PITCH + 14) };

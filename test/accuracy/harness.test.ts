@@ -4,11 +4,13 @@ import { describe, expect, it } from "vitest";
 import type { ModuleView, SchematicDoc } from "../../src/ir/types";
 import { docToVerilog, ExportError } from "../../src/ir/toVerilog";
 import type { ElkGraphOut } from "../../webview/layout/types";
-import { FIT_MAX_SCALE } from "../../webview/render/geometry";
-import { HDLBITS, makeTreeSitterParser, readFixture } from "../unit/helpers";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { FIT_MAX_SCALE, junctionRadius, WIRE_STROKE } from "../../webview/render/geometry";
+import { HDLBITS, ROOT, makeTreeSitterParser, readFixture } from "../unit/helpers";
 import { disposeTestBackend, synthFixture } from "../unit/synthHelpers";
 import { buildTestbench, checkEquivalence, clockInputs, compareOutputs, icarusAvailable } from "./equivalence";
-import { checkLayout, layoutView, textBoxes } from "./layout";
+import { checkLayout, junctionDots, layoutView, textBoxes } from "./layout";
 
 async function synthDoc(name: string): Promise<{ doc: SchematicDoc; text: string; file: ReturnType<Awaited<ReturnType<typeof makeTreeSitterParser>>["parse"]> }> {
   const parser = await makeTreeSitterParser();
@@ -153,6 +155,105 @@ describe("L3 harness", () => {
     expect(rep2.busLabels.ok).toBe(true);
     expect(rep2.wiresClear.ok).toBe(false);
     expect(rep2.wiresClear.issues[0]).toMatch(/crosses k/);
+  });
+
+  it("flags parallel wires of different nets closer than 8 px", () => {
+    const view: ModuleView = {
+      name: "m",
+      ports: [
+        { name: "a", direction: "input", width: 1, src: [] },
+        { name: "b", direction: "input", width: 1, src: [] },
+        { name: "y", direction: "output", width: 1, src: [] },
+        { name: "z", direction: "output", width: 1, src: [] },
+      ],
+      nodes: [],
+      nets: [
+        { id: "net:a", name: "a", width: 1, driver: { node: "port:a", pin: "a" }, sinks: [{ node: "port:y", pin: "y" }], src: [] },
+        { id: "net:b", name: "b", width: 1, driver: { node: "port:b", pin: "b" }, sinks: [{ node: "port:z", pin: "z" }], src: [] },
+      ],
+    };
+    const wires = (dy: number): ElkGraphOut => ({
+      id: "root",
+      width: 300,
+      height: 120,
+      children: [box("port:a", 0, 20, 30, 20), box("port:b", 0, 60, 30, 20), box("port:y", 250, 20, 30, 20), box("port:z", 250, 60, 30, 20)],
+      edges: [
+        { id: "edge:net:a:0", sources: ["port:a.a"], targets: ["port:y.y"], sections: [{ id: "s1", startPoint: { x: 30, y: 30 }, endPoint: { x: 250, y: 30 } }] },
+        { id: "edge:net:b:0", sources: ["port:b.b"], targets: ["port:z.z"], sections: [{ id: "s2", startPoint: { x: 30, y: 70 }, bendPoints: [{ x: 100, y: 70 }, { x: 100, y: 30 + dy }, { x: 200, y: 30 + dy }, { x: 200, y: 70 }], endPoint: { x: 250, y: 70 } }] },
+      ],
+    });
+    expect(checkLayout(view, wires(4)).wireSpacing.ok).toBe(false);
+    expect(checkLayout(view, wires(4)).wireSpacing.issues[0]).toMatch(/net:a and net:b run 4 px apart/);
+    expect(checkLayout(view, wires(8)).wireSpacing.ok).toBe(true);
+  });
+
+  it("flags a width label that cannot get clear of another net's wire", () => {
+    const view: ModuleView = {
+      name: "m",
+      ports: [
+        { name: "a", direction: "input", width: 4, src: [] },
+        { name: "y", direction: "output", width: 4, src: [] },
+        { name: "c", direction: "input", width: 1, src: [] },
+        { name: "z", direction: "output", width: 1, src: [] },
+      ],
+      nodes: [],
+      nets: [
+        { id: "net:a", name: "a", width: 4, driver: { node: "port:a", pin: "a" }, sinks: [{ node: "port:y", pin: "y" }], src: [] },
+        { id: "net:c", name: "c", width: 1, driver: { node: "port:c", pin: "c" }, sinks: [{ node: "port:z", pin: "z" }], src: [] },
+      ],
+    };
+    // The bus is 20 px long, so the only label spot is its middle, where c's vertical wire passes.
+    const layout: ElkGraphOut = {
+      id: "root",
+      width: 200,
+      height: 200,
+      children: [box("port:a", 0, 90, 30, 20), box("port:y", 50, 90, 30, 20), box("port:c", 0, 0, 30, 20), box("port:z", 150, 160, 30, 20)],
+      edges: [
+        { id: "edge:net:a:0", sources: ["port:a.a"], targets: ["port:y.y"], sections: [{ id: "s1", startPoint: { x: 30, y: 100 }, endPoint: { x: 50, y: 100 } }] },
+        { id: "edge:net:c:0", sources: ["port:c.c"], targets: ["port:z.z"], sections: [{ id: "s2", startPoint: { x: 30, y: 10 }, bendPoints: [{ x: 45, y: 10 }, { x: 45, y: 170 }], endPoint: { x: 150, y: 170 } }] },
+      ],
+    };
+    const rep = checkLayout(view, layout);
+    expect(rep.labelsClear.ok).toBe(false);
+    expect(rep.labelsClear.issues[0]).toMatch(/"4" \(bus-width\) sits on a wire of net:c/);
+  });
+
+  it("flags a 4-way junction that cannot be separated and accepts a T", () => {
+    const ports = ["a", "y", "n", "s"].map((name, i) => ({ name, direction: i === 0 ? ("input" as const) : ("output" as const), width: 1, src: [] }));
+    const view: ModuleView = {
+      name: "m",
+      ports,
+      nodes: [],
+      nets: [{ id: "net:a", name: "a", width: 1, driver: { node: "port:a", pin: "a" }, sinks: [{ node: "port:y", pin: "y" }, { node: "port:n", pin: "n" }, { node: "port:s", pin: "s" }], src: [] }],
+    };
+    // Both branch legs end directly on a pin, so neither can slide: the cross stays and is reported.
+    const cross: ElkGraphOut = {
+      id: "root",
+      width: 300,
+      height: 300,
+      children: [box("port:a", 0, 140, 30, 20), box("port:y", 250, 140, 30, 20), box("port:n", 135, 0, 30, 20), box("port:s", 135, 280, 30, 20)],
+      edges: [
+        { id: "edge:net:a:0", sources: ["port:a.a"], targets: ["port:y.y"], sections: [{ id: "s1", startPoint: { x: 30, y: 150 }, endPoint: { x: 250, y: 150 } }], junctionPoints: [{ x: 150, y: 150 }] },
+        { id: "edge:net:a:1", sources: ["port:a.a"], targets: ["port:n.n"], sections: [{ id: "s2", startPoint: { x: 30, y: 150 }, bendPoints: [{ x: 150, y: 150 }], endPoint: { x: 150, y: 20 } }] },
+        { id: "edge:net:a:2", sources: ["port:a.a"], targets: ["port:s.s"], sections: [{ id: "s3", startPoint: { x: 30, y: 150 }, bendPoints: [{ x: 150, y: 150 }], endPoint: { x: 150, y: 280 } }] },
+      ],
+    };
+    const rep = checkLayout(view, cross);
+    expect(rep.junctions.ok).toBe(false);
+    expect(rep.junctions.issues[0]).toMatch(/4-way junction of net:a at 150,150/);
+    const tee: ElkGraphOut = { ...cross, edges: cross.edges.slice(0, 2) };
+    expect(checkLayout(view, tee).junctions.ok).toBe(true);
+    expect(junctionDots(checkLayout(view, tee).svg)).toEqual([{ net: "net:a", x: 150, y: 150, r: 3 }]);
+  });
+
+  it("junction dots are 2.5 times the stroke width the stylesheet draws", () => {
+    const css = readFileSync(join(ROOT, "webview", "styles.css"), "utf8");
+    const single = /\.schematic \.net-path \{[^}]*stroke-width: ([\d.]+)/.exec(css)?.[1];
+    const bus = /\.schematic \.net\.bus \.net-path \{[^}]*stroke-width: ([\d.]+)/.exec(css)?.[1];
+    expect(Number(single)).toBe(WIRE_STROKE.single);
+    expect(Number(bus)).toBe(WIRE_STROKE.bus);
+    expect(junctionRadius(1)).toBe(2.5 * WIRE_STROKE.single);
+    expect(junctionRadius(8)).toBe(2.5 * WIRE_STROKE.bus);
   });
 
   it("fit check follows the cap constant", async () => {
