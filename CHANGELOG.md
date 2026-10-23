@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+Two layout fixes from docs/BUGS.md (items 19 and 20).
+
+- Fan-out hubs (bug 19): junction dots are at least 20 px apart and a plain crossing is at least 16 px from any junction dot. Node pins now sit at fixed positions one 16 px pitch apart (gate inputs included), the post-pass that splits 4-way junctions keeps its two dots 20 px apart, and a dot that crowds another dot or a crossing is slid along its trunk until it is clear. Both rules are L3 checks on every fixture in every view; the checker also now finds junction dots on bus wires, which it had missed before.
+- Legend (bug 20): samples draw at the diagram's own scale (one SVG unit per pixel), each sample box includes the ripper range labels that hang beside the bar, and the picture column is wide enough for every sample, so `[5:3]` and `[2:0]` are the diagram's size, nothing is clipped, and nothing overlaps the text column. A unit test measures every sample and a Playwright test measures the rendered panel in light and dark.
+
 ## 0.3.0
 
 Readability and clarity release for first-week Verilog learners. Every fixture passes the readability checks in all three views, including four new ones (wire spacing, label clearance, junction correctness, no 4-way junctions); see docs/ACCURACY_REPORT.md.

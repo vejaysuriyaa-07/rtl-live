@@ -6,7 +6,7 @@ Screenshots are in `media/screenshots/` (vsce cannot embed images without a publ
 
 ## First run
 
-1. Run `code --install-extension rtl-live-0.3.0.vsix --force`, then Cmd+Shift+P, "Developer: Reload Window".
+1. Run `code --install-extension rtl-live-0.3.1.vsix --force`, then Cmd+Shift+P, "Developer: Reload Window".
 2. Optional, faster synthesis: `brew install yosys`. Without it the bundled wasm engine is used, and its first run takes a few seconds.
 3. Click the RTL Live icon in the Activity Bar to open the "Schematic" view. You can drag it to the secondary side bar.
 4. 10-minute manual check using `test/fixtures/hdlbits/`:
@@ -33,7 +33,7 @@ If `code` is not on your PATH, run "Shell Command: Install 'code' command in PAT
 - Every element explains itself on hover in one plain sentence and quotes the source line it came from: wires ("3 separate wires drawn as one line (a bus)"), junction dots ("Wires connect here"), plain crossings ("These wires cross but do not connect"), bubbles, pins, slashes, ripper labels, gates, muxes, flip-flops, latches, constants, instances and black boxes.
 - Legend button (key `l`): every symbol with its meaning, drawn with the diagram's own symbols.
 - Focus mode: hover a wire or a symbol to light its whole net and dim everything else; Escape clears.
-- Readable layout: wires of different nets stay at least 8 px apart, fan-out trunks get their own channels, junction dots are 2.5 times the wire width and only ever mark a T (never a crossing, never a 4-way), join and split labels sit above their own slice wires. The accuracy suite checks all of this on every fixture in all three views.
+- Readable layout: wires of different nets stay at least 8 px apart, fan-out trunks get their own channels, pins sit 16 px apart, junction dots are 2.5 times the wire width, at least 20 px from each other and 16 px from any plain crossing, and only ever mark a T (never a crossing, never a 4-way), join and split labels sit above their own slice wires. The accuracy suite checks all of this on every fixture in all three views.
 - Warnings on the wire: multiply driven bits (`y[3:2] has multiple drivers`; disjoint slice assigns are legal and draw as a join) and combinational loops carry a badge; the banner names the offending signal and bits.
 - Every fixture is checked for functional equivalence against its source with Icarus Verilog in both views (`docs/ACCURACY_REPORT.md`).
 - Hierarchy: instances of modules in the same file are boxes you can double-click to drill into, with a breadcrumb to go back. Modules that are not in the file (HDLBits' `mod_a`, `my_dff`, `add16`) are drawn as dashed black boxes with pin directions inferred from how they are connected.
