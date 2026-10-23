@@ -21,7 +21,35 @@ describe("width helpers", () => {
   it("select widths", () => {
     expect(selectWidth("[15:8]")).toBe(8);
     expect(selectWidth("[3]")).toBe(1);
+    expect(selectWidth("[12]")).toBe(1);
     expect(selectWidth("[i]")).toBeUndefined();
+  });
+  it("indexed part selects take their width from the literal after the colon", () => {
+    expect(selectWidth("[base +: 4]")).toBe(4);
+    expect(selectWidth("[i*8 -: 8]")).toBe(8);
+    expect(selectWidth("[base +: W]")).toBeUndefined();
+    expect(selectWidth("[7:0")).toBeUndefined();
+  });
+  it("empty or missing range text has no width", () => {
+    expect(parseRange(undefined)).toBeUndefined();
+    expect(parseRange("")).toBeUndefined();
+    expect(parseRange("[ 15 : 0 ]")).toEqual({ width: 16, range: "[15:0]" });
+  });
+  it("recognises every constant literal form and nothing else", () => {
+    expect(isConstLiteral("5")).toBe(true);
+    expect(isConstLiteral(" 8'hFF ")).toBe(true);
+    expect(isConstLiteral("12'sd5")).toBe(true);
+    expect(isConstLiteral("4'b10_1x")).toBe(true);
+    expect(isConstLiteral("'0")).toBe(true);
+    expect(isConstLiteral("'z")).toBe(true);
+    expect(isConstLiteral("4'd")).toBe(false);
+    expect(isConstLiteral("a'b0")).toBe(false);
+    expect(isConstLiteral("5a")).toBe(false);
+    expect(isConstLiteral("'ab")).toBe(false);
+    expect(literalWidth(" 8 'h FF")).toBe(8);
+    expect(literalWidth("12'sd5")).toBe(12);
+    expect(literalWidth("'0")).toBeUndefined();
+    expect(literalWidth("4 d5")).toBeUndefined();
   });
 });
 

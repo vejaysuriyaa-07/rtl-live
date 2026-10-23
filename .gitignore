@@ -4,3 +4,5 @@ dist/
 artifacts/
 *.vsix
 .DS_Store
+.stryker-tmp/
+reports/
