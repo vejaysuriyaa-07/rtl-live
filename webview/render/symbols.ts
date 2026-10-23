@@ -41,14 +41,14 @@ function bitLabels(pins: PinPos): string {
   const out: string[] = [];
   for (const [, p] of pins) {
     if (!p.pin.bits) continue;
-    // Both sides hang their label to the right of the bar, over the outgoing wire, so a split
-    // next to a join never crosses labels.
-    const x = p.pin.side === "west" ? p.x + 10 : p.x + 3;
-    const anchor = "start";
+    // Each label sits above its own wire: a join input to the left of the bar over the
+    // incoming slice, a split output to the right over the outgoing slice (bug 15).
+    const x = p.pin.side === "west" ? p.x - 3 : p.x + 3;
+    const anchor = p.pin.side === "west" ? "end" : "start";
     // A repeated input shows its count; the range it fills is in the tooltip.
     const text = p.pin.label ? p.pin.label : p.pin.bits;
     const tip = p.pin.label ? `${p.pin.bits} = ${p.pin.width} bit${p.pin.width === 1 ? "" : "s"} ${p.pin.label}` : `${p.pin.bits} (${p.pin.width} bit${p.pin.width === 1 ? "" : "s"})`;
-    out.push(`<text class="ripper-label" x="${fmt(x)}" y="${fmt(p.y - 3)}" text-anchor="${anchor}"><title>${esc(tip)}</title>${esc(text)}</text>`);
+    out.push(`<text class="ripper-label" x="${fmt(x)}" y="${fmt(p.y - 3)}" text-anchor="${anchor}"${p.pin.net ? ` data-net="${esc(p.pin.net)}"` : ""}><title>${esc(tip)}</title>${esc(text)}</text>`);
   }
   return out.join("");
 }

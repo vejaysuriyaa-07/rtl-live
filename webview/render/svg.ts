@@ -3,8 +3,9 @@
 import type { ModuleView, Net, Node, Pin, Port } from "../../src/ir/types";
 import type { ElkEdgeOut, ElkGraphOut, ElkNodeOut, ElkPoint, ElkPortOut } from "../layout/types";
 import { elkPortId, portNodeId } from "../layout/toElk";
+import { junctionOffset, netOfEdge, separateJunctions } from "../layout/postprocess";
 import { symbolMarkup } from "./symbols";
-import { frameMinWidth } from "./geometry";
+import { frameMinWidth, junctionRadius } from "./geometry";
 
 export interface RenderOptions {
   /** Show the module frame and title */
@@ -125,12 +126,49 @@ interface BusLabel {
   anchor: "start" | "end";
 }
 
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** What a wire label must keep clear of: other nets' wires, every symbol, and its own net's dots. */
+export interface Avoid {
+  segs: { net: string; a: ElkPoint; b: ElkPoint }[];
+  boxes: Box[];
+  dots: { net: string; x: number; y: number; r: number }[];
+}
+
+const BUS_WIDTH_CHAR = 9 * 0.6;
+
+function boxesTouch(a: Box, b: Box): boolean {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+
+/** Box a width label (slash plus number) or a warning badge occupies around its anchor point. */
+function labelBox(p: BusLabel, textW: number): Box {
+  return p.anchor === "start" ? { x: p.x - 4, y: p.y - 11, w: 8 + textW, h: 15 } : { x: p.x - 4 - textW, y: p.y - 11, w: 8 + textW, h: 15 };
+}
+
+function isClear(box: Box, net: string, avoid: Avoid): boolean {
+  for (const s of avoid.segs) {
+    if (s.net === net) continue;
+    const r: Box = { x: Math.min(s.a.x, s.b.x) - 1, y: Math.min(s.a.y, s.b.y) - 1, w: Math.abs(s.a.x - s.b.x) + 2, h: Math.abs(s.a.y - s.b.y) + 2 };
+    if (boxesTouch(box, r)) return false;
+  }
+  for (const b of avoid.boxes) if (boxesTouch(box, b)) return false;
+  for (const d of avoid.dots) if (d.net === net && boxesTouch(box, { x: d.x - d.r, y: d.y - d.r, w: 2 * d.r, h: 2 * d.r })) return false;
+  return true;
+}
+
 /**
- * Where the width label goes. Normally a little along the longest segment. A wire that
- * leaves a ripper carries the range label at that end, so the width goes near the other
- * end instead (12 px before a pin, 20 px before a port chevron), anchored away from it.
+ * Where the width label goes: the first candidate along the wire that keeps clear of other
+ * nets, symbols and junction dots. Candidates run along the longest segment first. A wire
+ * that leaves a ripper carries the range label at that end, so the width goes near the
+ * other end instead (12 px before a pin, 20 px before a port chevron), anchored away from it.
  */
-function busLabelPos(e: ElkEdgeOut, nearEnd: "start" | "end" | "middle", endIsPort: boolean): BusLabel | undefined {
+function busLabelPos(e: ElkEdgeOut, nearEnd: "start" | "end" | "middle", endIsPort: boolean, net: string, textW: number, avoid: Avoid): BusLabel | undefined {
   const s = e.sections?.[0];
   if (!s) return undefined;
   const pts = [s.startPoint, ...(s.bendPoints ?? []), s.endPoint];
@@ -154,15 +192,26 @@ function busLabelPos(e: ElkEdgeOut, nearEnd: "start" | "end" | "middle", endIsPo
     }
     return segs[segs.length - 1]!.b;
   };
-  if (nearEnd === "end") return { ...fromStart(Math.max(total - gap, total / 2)), anchor: "end" };
-  if (nearEnd === "start") return { ...fromStart(Math.min(gap, total / 2)), anchor: "start" };
-  const best = segs.reduce((m, x) => (x.len > m.len ? x : m), segs[0]!);
-  const t = Math.min(Math.max(10, best.len * 0.3), Math.max(best.len - 10, best.len / 2));
-  return { ...along(best, t), anchor: "start" };
+  const candidates: BusLabel[] = [];
+  if (nearEnd === "end") {
+    for (const d of [gap, gap + 14, gap + 28, total / 2]) candidates.push({ ...fromStart(Math.max(total - d, total / 2)), anchor: "end" });
+  } else if (nearEnd === "start") {
+    for (const d of [gap, gap + 14, gap + 28, total / 2]) candidates.push({ ...fromStart(Math.min(d, total / 2)), anchor: "start" });
+  } else {
+    const byLength = [...segs].sort((a, b) => b.len - a.len);
+    for (const seg of byLength) {
+      for (const f of [0.3, 0.5, 0.7, 0.15, 0.85]) {
+        const t = Math.min(Math.max(10, seg.len * f), Math.max(seg.len - 10, seg.len / 2));
+        candidates.push({ ...along(seg, t), anchor: "start" });
+      }
+    }
+  }
+  const rounded = candidates.map((c) => ({ x: Math.round(c.x), y: Math.round(c.y), anchor: c.anchor }));
+  return rounded.find((c) => isClear(labelBox(c, textW), net, avoid)) ?? rounded[0];
 }
 
 /** Round every coordinate so wires land on whole pixels and corners stay sharp. */
-function roundLayout(layout: ElkGraphOut): ElkGraphOut {
+export function roundLayout(layout: ElkGraphOut): ElkGraphOut {
   const r = (v: number): number => Math.round(v);
   return {
     ...layout,
@@ -186,11 +235,12 @@ function roundLayout(layout: ElkGraphOut): ElkGraphOut {
   };
 }
 
-function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rippers: ReadonlySet<string>): { markup: string; labelled: boolean } {
+function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rippers: ReadonlySet<string>, avoid: Avoid): { markup: string; labelled: boolean } {
   const d = edgePath(e);
   const width = net?.width ?? 1;
   const cls = `net${width > 1 ? " bus" : ""}${net?.role ? ` ${net.role}` : ""}${net?.warnings && net.warnings.length > 0 ? " warn" : ""}`;
   const netId = net?.id ?? e.id;
+  const ownNet = netOfEdge(e.id);
   let label = "";
   if (width > 1 && showWidth) {
     const srcNode = e.sources[0]?.split(".")[0] ?? "";
@@ -201,7 +251,7 @@ function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rip
     const mode = fromRipper && !toRipper ? "end" : toRipper && !fromRipper ? "start" : "middle";
     const endIsPort = mode === "end" ? dstNode.startsWith("port:") : mode === "start" ? srcNode.startsWith("port:") : false;
     // A slice leaving a split or a part entering a join is labelled with its range on the ripper itself.
-    const p = fromRipper || toRipper ? undefined : busLabelPos(e, mode, endIsPort);
+    const p = fromRipper || toRipper ? undefined : busLabelPos(e, mode, endIsPort, ownNet, String(width).length * BUS_WIDTH_CHAR, avoid);
     if (p) {
       label =
         `<path class="bus-slash" d="M${fmt(p.x - 3)},${fmt(p.y + 4)} L${fmt(p.x + 3)},${fmt(p.y - 4)}"/>` +
@@ -209,11 +259,11 @@ function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rip
     }
   }
   const title = net ? `${net.name ?? net.id}${net.aliases && net.aliases.length > 0 ? ` (also ${net.aliases.join(", ")})` : ""} (${width} bit${width === 1 ? "" : "s"})` : netId;
-  const junctions = (e.junctionPoints ?? []).map((j) => `<circle class="junction" cx="${fmt(j.x)}" cy="${fmt(j.y)}" r="2.5"/>`).join("");
+  const junctions = (e.junctionPoints ?? []).map((j) => `<circle class="junction" cx="${fmt(j.x)}" cy="${fmt(j.y)}" r="${fmt(junctionRadius(width))}"/>`).join("");
   // Semantic warning badge on the first wire of the net (multiple drivers, combinational loop).
   let warn = "";
   if (showWidth && net?.warnings && net.warnings.length > 0) {
-    const p = busLabelPos(e, "middle", false);
+    const p = busLabelPos(e, "middle", false, ownNet, 12, avoid);
     if (p) {
       warn = `<g class="warn" data-warning="${esc(net.warnings.join(","))}"><path class="warn-badge" d="M${fmt(p.x)},${fmt(p.y - 13)} L${fmt(p.x + 6)},${fmt(p.y - 3)} L${fmt(p.x - 6)},${fmt(p.y - 3)} Z"/><text class="warn-badge-text" x="${fmt(p.x)}" y="${fmt(p.y - 4)}" text-anchor="middle">!</text><title>${esc(`warning: ${net.warnings.join(", ")}`)}</title></g>`;
     }
@@ -221,12 +271,34 @@ function renderEdge(e: ElkEdgeOut, net: Net | undefined, showWidth: boolean, rip
   return { markup: `<g class="${cls}" data-net="${esc(netId)}"${net ? srcAttr(net.src) : ""}><path class="net-path" d="${d}"/>${label}${junctions}${warn}<title>${esc(title)}${net?.warnings && net.warnings.length > 0 ? `\nwarning: ${net.warnings.join(", ")}` : ""}</title></g>`, labelled: label !== "" || warn !== "" };
 }
 
+/** Rounds the layout to whole pixels and splits 4-way junctions; the checks measure the same result. */
+export function prepareLayout(rawLayout: ElkGraphOut, view: ModuleView): ElkGraphOut {
+  const widthOf = new Map(view.nets.map((n) => [n.id, n.width] as const));
+  return separateJunctions(roundLayout(rawLayout), (net) => junctionOffset(junctionRadius(widthOf.get(net) ?? 1)));
+}
+
+/** Everything a wire label must stay clear of, collected once per render. */
+function avoidance(layout: ElkGraphOut, widthOf: (net: string) => number): Avoid {
+  const avoid: Avoid = { segs: [], boxes: [], dots: [] };
+  for (const e of layout.edges) {
+    const net = netOfEdge(e.id);
+    for (const s of e.sections ?? []) {
+      const pts = [s.startPoint, ...(s.bendPoints ?? []), s.endPoint];
+      for (let i = 0; i + 1 < pts.length; i++) avoid.segs.push({ net, a: pts[i]!, b: pts[i + 1]! });
+    }
+    for (const j of e.junctionPoints ?? []) avoid.dots.push({ net, x: j.x, y: j.y, r: junctionRadius(widthOf(net)) });
+  }
+  for (const c of layout.children) avoid.boxes.push({ x: c.x, y: c.y, w: c.width, h: c.height });
+  return avoid;
+}
+
 export function renderModule(view: ModuleView, rawLayout: ElkGraphOut, opts: RenderOptions = {}): RenderedSvg {
-  const layout = roundLayout(rawLayout);
+  const layout = prepareLayout(rawLayout, view);
   const idx = index(layout);
   const rippers = new Set(view.nodes.filter((n) => n.kind === "split" || n.kind === "join").map((n) => n.id));
   const nodeById = new Map(view.nodes.map((n) => [n.id, n] as const));
   const netById = new Map(view.nets.map((n) => [n.id, n] as const));
+  const avoid = avoidance(layout, (net) => netById.get(net)?.width ?? 1);
   const parts: string[] = [];
   // The frame holds its title even when the layout is tiny (bug 1).
   const width = Math.max(layout.width, 60, opts.frame !== false ? frameMinWidth(view.name) : 0);
@@ -243,7 +315,7 @@ export function renderModule(view: ModuleView, rawLayout: ElkGraphOut, opts: Ren
   for (const e of layout.edges) {
     const netId = e.id.replace(/^edge:/, "").replace(/:\d+$/, "");
     // One width label per net, on the first wire that can carry it.
-    const r = renderEdge(e, netById.get(netId), !labelled.has(netId), rippers);
+    const r = renderEdge(e, netById.get(netId), !labelled.has(netId), rippers, avoid);
     if (r.labelled) labelled.add(netId);
     edges.push(r.markup);
   }

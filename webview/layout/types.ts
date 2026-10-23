@@ -5,11 +5,19 @@ export interface ElkLayoutOptions {
   [key: string]: string;
 }
 
+export interface ElkLabelIn {
+  text: string;
+  width: number;
+  height: number;
+}
+
 export interface ElkPortIn {
   id: string;
   width: number;
   height: number;
   layoutOptions: ElkLayoutOptions;
+  /** Reserves room next to the port (ripper range labels); the renderer draws its own text. */
+  labels?: ElkLabelIn[];
 }
 
 export interface ElkNodeIn {

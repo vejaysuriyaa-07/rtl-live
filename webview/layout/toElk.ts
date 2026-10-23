@@ -3,7 +3,7 @@
 // Node pins become ELK ports with fixed sides (inputs WEST, outputs EAST,
 // clock/select SOUTH) and explicit indices so the drawing order is stable.
 import type { ModuleView, Node, Pin, Port } from "../../src/ir/types";
-import { nodeSize, PORT_NODE_HEIGHT, portNodeWidth, textWidth } from "../render/geometry";
+import { nodeSize, PORT_NODE_HEIGHT, portNodeWidth, RIPPER_LABEL_CHAR, textWidth } from "../render/geometry";
 import type { ElkEdgeIn, ElkGraphIn, ElkNodeIn, ElkPortIn } from "./types";
 
 export const ROOT_LAYOUT_OPTIONS: Readonly<Record<string, string>> = {
@@ -12,13 +12,17 @@ export const ROOT_LAYOUT_OPTIONS: Readonly<Record<string, string>> = {
   "elk.edgeRouting": "ORTHOGONAL",
   "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
   "elk.layered.crossingMinimization.forceNodeModelOrder": "false",
-  "elk.spacing.nodeNode": "24",
-  "elk.layered.spacing.nodeNodeBetweenLayers": "44",
-  "elk.layered.spacing.edgeNodeBetweenLayers": "20",
-  "elk.spacing.edgeNode": "14",
-  "elk.spacing.edgeEdge": "10",
-  "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
-  "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+  // Spacing chosen by A/B over every fixture (NOTES.md, v0.3 Phase 2): parallel wires of
+  // different nets stay at least 8 px apart and fan-out trunks get their own channels.
+  "elk.spacing.nodeNode": "28",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "64",
+  "elk.layered.spacing.edgeNodeBetweenLayers": "28",
+  "elk.spacing.edgeNode": "16",
+  "elk.spacing.edgeEdge": "16",
+  "elk.layered.spacing.edgeEdgeBetweenLayers": "16",
+  // Brandes-Koepf placed every fixture with fewer crossings than network simplex (259 versus
+  // 307 over all views) and no parallel wires of different nets closer than 11 px.
+  "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
   // Ports with nothing attached (a half-typed header) must still line the left and right
   // edges; packing disconnected nodes into components would lay them out as a grid (bug 10).
   "elk.separateConnectedComponents": "false",
@@ -62,11 +66,13 @@ function elkPorts(node: Node): ElkPortIn[] {
   const emit = (pins: Pin[], side: string, reverse: boolean): void => {
     const ordered = reverse ? [...pins].reverse() : pins;
     for (const p of ordered) {
+      const label = ripperLabelSize(node, p);
       out.push({
         id: elkPortId(node.id, p.id),
         width: 1,
         height: 1,
         layoutOptions: { "elk.port.side": side, "elk.port.index": String(index++) },
+        ...(label ? { labels: [label] } : {}),
       });
     }
   };
@@ -91,19 +97,21 @@ function portSurrounding(node: Node): string | undefined {
   }
 }
 
-/** Ripper range labels hang off the bar along the wires; reserve that room so neighbours keep clear. */
-function ripperMargins(node: Node): string | undefined {
-  if (node.kind !== "split" && node.kind !== "join") return undefined;
-  const labelW = (p: Pin): number => textWidth(p.label ? `${p.bits ?? ""} ${p.label}` : (p.bits ?? ""), 8.5 * 0.6) + 6;
-  const left = Math.max(0, ...node.pins.filter((p) => p.side === "west").map(labelW));
-  const right = Math.max(0, ...node.pins.filter((p) => p.side === "east").map(labelW));
-  return `[top=0,left=${left},bottom=0,right=${right}]`;
+/**
+ * Ripper range labels hang off the bar above their own wire. Declaring them as ELK port
+ * labels makes the layered algorithm reserve that room in the node margin, which the edge
+ * router keeps clear of (bug 15); plain elk.margins are ignored by the router.
+ */
+function ripperLabelSize(node: Node, pin: Pin): { text: string; width: number; height: number } | undefined {
+  if ((node.kind !== "split" && node.kind !== "join") || !pin.bits) return undefined;
+  const text = pin.label ? pin.label : pin.bits;
+  return { text, width: textWidth(text, RIPPER_LABEL_CHAR) + 8, height: 10 };
 }
 
 function logicNode(node: Node): ElkNodeIn {
   const size = nodeSize(node);
   const surrounding = portSurrounding(node);
-  const margins = ripperMargins(node);
+  const ripper = node.kind === "split" || node.kind === "join";
   return {
     id: node.id,
     width: size.width,
@@ -111,7 +119,7 @@ function logicNode(node: Node): ElkNodeIn {
     layoutOptions: {
       "elk.portConstraints": "FIXED_ORDER",
       ...(surrounding ? { "elk.spacing.portSurrounding": surrounding } : {}),
-      ...(margins ? { "elk.margins": margins } : {}),
+      ...(ripper ? { "elk.portLabels.placement": "OUTSIDE" } : {}),
     },
     ports: elkPorts(node),
   };
@@ -139,7 +147,7 @@ function portNode(port: Port): ElkNodeIn {
   };
 }
 
-export function moduleToElk(view: ModuleView): ElkGraphIn {
+export function moduleToElk(view: ModuleView, options?: Record<string, string>): ElkGraphIn {
   const children: ElkNodeIn[] = [];
   for (const p of view.ports) children.push(portNode(p));
   const sorted = [...view.nodes].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
@@ -155,5 +163,5 @@ export function moduleToElk(view: ModuleView): ElkGraphIn {
       edges.push({ id: `edge:${net.id}:${k}`, sources: [src], targets: [elkPortId(s.node, s.pin)] });
     });
   }
-  return { id: "root", layoutOptions: { ...ROOT_LAYOUT_OPTIONS }, children, edges };
+  return { id: "root", layoutOptions: { ...ROOT_LAYOUT_OPTIONS, ...(options ?? {}) }, children, edges };
 }
