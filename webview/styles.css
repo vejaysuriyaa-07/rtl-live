@@ -152,7 +152,7 @@ body {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 300px;
+  width: 320px;
   max-width: calc(100% - 16px);
   max-height: calc(100% - 16px);
   overflow: auto;
@@ -178,12 +178,16 @@ body {
 }
 .legend-pic {
   flex: none;
-  width: 96px;
+  width: 120px;
   display: flex;
   justify-content: center;
 }
-.legend-svg {
+/* Samples draw at the diagram's scale: the svg is exactly as wide as its viewBox (bug 20). */
+.legend-pic svg.schematic.legend-svg {
+  width: 120px;
+  height: auto;
   overflow: visible;
+  cursor: default;
 }
 .legend-title {
   font-weight: 600;

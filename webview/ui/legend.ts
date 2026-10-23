@@ -1,7 +1,7 @@
 // Legend panel (bug 18): every symbol the renderer draws, drawn with the same symbol
 // code, each with its one-sentence meaning.
 import type { Node, NodeKind, Pin } from "../../src/ir/types";
-import { junctionRadius, nodeSize } from "../render/geometry";
+import { junctionRadius, nodeSize, RIPPER_LABEL_CHAR, textWidth } from "../render/geometry";
 import { ALL_ZERO, ANY_ONE } from "../render/logical";
 import { fmt, portShapePath } from "../render/svg";
 import { symbolMarkup, type PinPos } from "../render/symbols";
@@ -20,14 +20,34 @@ export interface LegendItem {
 }
 
 const PAD = 12;
+/** Width of the picture column in the panel (webview/styles.css .legend-pic); samples never exceed it. */
+export const LEGEND_PIC_W = 120;
 
 function pin(id: string, direction: "in" | "out", side: Pin["side"], width = 1, extra: Partial<Pin> = {}): Pin {
   return { id, label: "", direction, side, width, net: null, ...extra };
 }
 
-/** Lays a node out on its own: west pins down the left edge, east pins down the right, south pins along the bottom. */
-function sample(node: Node): { svg: string; width: number; height: number } {
+/** Room a ripper's range labels take beside the bar: they hang 3 px outside the bar over their own wire. */
+function ripperLabelRoom(node: Node): { left: number; right: number } {
+  const room = { left: 0, right: 0 };
+  if (node.kind !== "split" && node.kind !== "join") return room;
+  for (const p of node.pins) {
+    if (!p.bits) continue;
+    const w = textWidth(p.label ? p.label : p.bits, RIPPER_LABEL_CHAR) + 3;
+    if (p.side === "west") room.left = Math.max(room.left, w);
+    else if (p.side === "east") room.right = Math.max(room.right, w);
+  }
+  return room;
+}
+
+/**
+ * Lays a node out on its own: west pins down the left edge, east pins down the right, south pins
+ * along the bottom. The sample box includes the pin stubs and any labels hanging outside the
+ * symbol, so nothing is clipped or spills into the text column (bug 20).
+ */
+function sample(node: Node): { svg: string; width: number; height: number; left: number } {
   const size = nodeSize(node);
+  const room = ripperLabelRoom(node);
   const pins: PinPos = new Map();
   const bySide = (side: Pin["side"]): Pin[] => node.pins.filter((p) => p.side === side);
   const top = node.kind === "instance" || node.kind === "blackbox" || node.kind === "unknown" || node.kind === "dff" ? 18 : 0;
@@ -43,14 +63,15 @@ function sample(node: Node): { svg: string; width: number; height: number } {
   const cls = `node node-${node.kind}${node.op ? ` op-${node.op}` : ""}`;
   return {
     svg: `<g class="nets">${stubs}</g><g class="nodes"><g class="${cls}" data-kind="${node.kind}">${symbolMarkup(node, size.width, size.height, pins)}</g></g>`,
-    width: size.width + 2 * PAD,
+    width: size.width + 2 * PAD + Math.max(0, room.left - PAD) + Math.max(0, room.right - PAD),
     height: size.height + PAD,
+    left: Math.max(PAD, room.left),
   };
 }
 
 function nodeItem(key: string, title: string, text: string, node: Node, kinds: NodeKind[]): LegendItem {
   const s = sample(node);
-  return { key, title, text, svg: `<g transform="translate(${PAD},2)">${s.svg}</g>`, width: s.width, height: s.height, kinds };
+  return { key, title, text, svg: `<g transform="translate(${fmt(s.left)},2)">${s.svg}</g>`, width: s.width, height: s.height, kinds };
 }
 
 function gate(op: string, inputs = 2, width = 1, info?: Record<string, string>): Node {

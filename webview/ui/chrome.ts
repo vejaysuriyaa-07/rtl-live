@@ -1,6 +1,6 @@
 // Toolbar, status badge, banner and breadcrumb. Plain DOM, no framework.
 import type { StatusInfo, BannerError, HintInfo } from "../../src/shared/protocol";
-import { legendItems } from "./legend";
+import { LEGEND_PIC_W, legendItems } from "./legend";
 import { fmt } from "../render/svg";
 
 export interface ChromeHandlers {
@@ -263,7 +263,9 @@ export function buildLegend(): HTMLElement {
     row.dataset["key"] = item.key;
     const pic = document.createElement("div");
     pic.className = "legend-pic";
-    pic.innerHTML = `<svg class="schematic legend-svg" viewBox="0 0 ${fmt(item.width)} ${fmt(item.height)}" width="${fmt(Math.min(item.width, 96))}" height="${fmt(item.height * Math.min(1, 96 / item.width))}">${item.svg}</svg>`;
+    // The viewBox is as wide as the picture column, so the sample draws at the diagram's own
+    // scale (one SVG unit per CSS pixel) and sits centred; the stylesheet gives the svg that width.
+    pic.innerHTML = `<svg class="schematic legend-svg" viewBox="0 0 ${LEGEND_PIC_W} ${fmt(item.height)}" width="${LEGEND_PIC_W}" height="${fmt(item.height)}"><g transform="translate(${fmt((LEGEND_PIC_W - item.width) / 2)},0)">${item.svg}</g></svg>`;
     const text = document.createElement("div");
     text.className = "legend-text";
     const title = document.createElement("div");
