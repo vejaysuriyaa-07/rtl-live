@@ -104,6 +104,9 @@ body {
 }
 
 #banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex: none;
   padding: 3px 8px;
   font-size: 11px;
@@ -452,4 +455,34 @@ body[data-theme="highContrastLight"] .schematic .gate-body {
 }
 .schematic .node-unknown .body {
   stroke: var(--rl-warn);
+}
+
+/* ---- focus mode: the hovered net and what it touches stay, the rest dims ---- */
+.schematic.focus .net:not(.focused) {
+  opacity: 0.18;
+}
+.schematic.focus .node:not(.focused),
+.schematic.focus .port:not(.focused) {
+  opacity: 0.3;
+}
+.schematic.focus .net.focused .net-path {
+  stroke: var(--rl-focus);
+}
+.schematic.focus .net.focused .junction {
+  fill: var(--rl-focus);
+}
+.schematic.focus .crossings {
+  opacity: 0;
+}
+.schematic .net,
+.schematic .node,
+.schematic .port {
+  transition: opacity 120ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .schematic .net,
+  .schematic .node,
+  .schematic .port {
+    transition: none;
+  }
 }

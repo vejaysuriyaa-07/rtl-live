@@ -587,3 +587,20 @@ Result: L3 passes on every fixture in all three views, including the four new ch
 - Legend: a "Legend" toolbar button (key `l`, Escape closes) opens a panel listing every symbol, drawn with the same symbol code (`webview/ui/legend.ts`, DOM in `chrome.ts`), theme aware. A unit test checks that the items cover every `NodeKind` plus ports, wires, buses, junctions, crossings and warnings.
 - Wording pass: status line reads "ready, from cache", "synthesizing (turning the code into gates)", "synthesized in N ms", "showing the last good diagram; fix the error to update it", "too big to draw as gates (over 2,000 cells); showing the code outline"; badges carry a tooltip that says what the state means; toolbar buttons say what they do in plain words. The `.tb-btn` stylesheet rule lost in v0.2 is restored and the node hover rule is no longer tied to the ghost rule.
 - Tests: `test/unit/tooltips.test.ts` (every node, port, net, junction, crossing, bubble, slash and clock triangle in every golden has a sentence; source line quoting; the symbol table; the logical expansion on vectorgates, logic_ops and bitwise_vs_logical), `test/unit/legend.test.ts`, Playwright `m9.legend.spec.ts` (legend panel in light and dark with screenshots `artifacts/m9-legend-<theme>.png`, boxes, tag and tooltips in the real bundle).
+
+### Phase 4: selected deferred items
+
+- Focus mode (`webview/interaction/focus.ts`): hovering a wire lights its whole net (every segment and dot) and the symbols at its ends; hovering a symbol or port lights every net on its pins; everything else dims (opacity 0.18 for wires, 0.3 for symbols, a 120 ms transition that reduced-motion turns off); Escape or leaving the diagram clears it. Pure helpers `focusNets` and `focusSymbols` are unit tested on the 7458 golden; Playwright `m10.states.spec.ts` checks the classes and the computed opacity.
+- Designed states, each one sentence and at most one button: empty ("Open a Verilog file (.v or .sv) to see its schematic."), no module ("No module found yet. Start with: ..."), loading ("Starting Yosys, the synthesizer. The first diagram takes a moment." while warming up, "Synthesizing: turning the code into gates." while the first synthesis runs), error (the banner sentence plus one "Go to line N" button that reveals the line), stale ("Showing the last good diagram." in front of the error, badge "Stale" with its tooltip). A global `[hidden] { display: none !important }` rule keeps flex containers hidden.
+- Contact sheet: `npm run test:webview` writes `artifacts/contact-sheet.html` and `artifacts/contact-sheet.png`, every golden fixture drawn small in a grid (light theme), for a quick visual review after any renderer change.
+
+### Deferred to v0.4
+
+- Minimap, print-ready export (white background option), grid-snapped routing, monospace signal names and the full line-weight pass, selection accent on connected nets beyond focus mode, a bubble on negative-latch clock pins.
+- Golden screenshot comparison on every change (the contact sheet is reviewed by eye).
+- A2 badges for undriven outputs, unused inputs and inferred latches from incomplete `case`.
+- A1 and A3 to A6 automation listed under "Manual checks" in the v0.2 log.
+- Structural view L1: logic clouds have no netlist.
+- Part C: search, trace drivers and loads, cones, path view, stats, simulation values.
+- Yosys front-end folding of `state == 1'b1` (fsm_moore keeps no comparator).
+- Source lines in tooltips come from the newest text, so line numbers can drift by a line or two while a stale diagram is shown.

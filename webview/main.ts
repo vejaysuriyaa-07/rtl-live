@@ -9,6 +9,7 @@ import { ZoomController } from "./interaction/zoom";
 import { applyCursorHighlight, type Cursor } from "./interaction/highlight";
 import { capturePositions, tweenFrom } from "./interaction/animate";
 import { Chrome } from "./ui/chrome";
+import { FocusController } from "./interaction/focus";
 import "./styles.css";
 
 const state: ViewState = initialState();
@@ -28,6 +29,7 @@ canvas.append(svg);
 const elkWorkerUri = document.body.dataset["elkWorkerUri"];
 const elk = new ElkRunner({ workerScriptUri: elkWorkerUri, log: (l, t) => log(l, t) });
 const zoomer = new ZoomController(svg, viewport);
+const focus = new FocusController(svg, viewport);
 
 let renderSeq = 0;
 let sourceLines: string[] | undefined;
@@ -72,7 +74,8 @@ async function render(fitNow: boolean): Promise<void> {
   const name = currentModuleName(state);
   if (!doc || !name || !doc.modules[name]) {
     viewport.innerHTML = "";
-    chrome.setEmpty(doc && doc.moduleNames.length === 0 ? "No module found yet. Start with: module top_module(input a, output b);" : "Open a Verilog file (.v or .sv) to see its schematic.");
+    focus.setView(undefined);
+    chrome.setEmpty(emptyMessage(doc));
     chrome.setBreadcrumb([]);
     return;
   }
@@ -99,10 +102,19 @@ async function render(fitNow: boolean): Promise<void> {
   viewport.innerHTML = rendered.inner;
   tweened = tweenFrom(viewport, previous);
   lastRendered = { width: rendered.width, height: rendered.height, module: name };
+  focus.setView(view);
   if (fitNow || moduleChanged || !state.fitted) fit(false);
   wireInteractions();
   highlightCursor();
   persist();
+}
+
+/** Designed empty and loading states: one sentence each. */
+function emptyMessage(doc: SchematicDoc | undefined): string {
+  if (doc && doc.moduleNames.length === 0) return "No module found yet. Start with: module top_module(input a, output b);";
+  if (state.status.warmingUp) return "Starting Yosys, the synthesizer. The first diagram takes a moment.";
+  if (state.status.message?.startsWith("synthesizing")) return "Synthesizing: turning the code into gates.";
+  return "Open a Verilog file (.v or .sv) to see its schematic.";
 }
 
 function highlightCursor(): void {
@@ -173,6 +185,7 @@ function handle(msg: HostToWebview): void {
     case "status":
       state.status = msg.status;
       chrome.setStatus(msg.status);
+      if (!lastRendered || !state.doc?.modules[currentModuleName(state) ?? ""]) chrome.setEmpty(emptyMessage(state.doc));
       break;
     case "error":
       state.error = msg.error;
@@ -225,6 +238,7 @@ window.addEventListener("unhandledrejection", (ev: PromiseRejectionEvent) => log
 window.addEventListener("keydown", (ev) => {
   if (ev.target instanceof HTMLSelectElement || ev.target instanceof HTMLInputElement) return;
   if (ev.key === "Escape" && chrome.legendOpen) chrome.toggleLegend(false);
+  else if (ev.key === "Escape") focus.clear();
   else if (ev.key === "l") chrome.toggleLegend();
   else if (ev.key === "f") fit(true);
   else if (ev.key === "+" || ev.key === "=") zoomer.zoomBy(1.25);
@@ -242,5 +256,5 @@ try {
 } catch {
   // ignore
 }
-window.__rtlLiveTestHooks = { ...(window.__rtlLiveTestHooks ?? {}), state, elk, tweenCount: () => tweened };
+window.__rtlLiveTestHooks = { ...(window.__rtlLiveTestHooks ?? {}), state, elk, tweenCount: () => tweened, focusActive: () => focus.isActive };
 postToHost({ type: "ready", generation: 0 });

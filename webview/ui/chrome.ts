@@ -131,6 +131,10 @@ export class Chrome {
 
   setStatus(s: StatusInfo): void {
     if (s.view) this.setView(s.view);
+    if (this.lastFidelity !== s.fidelity) {
+      this.lastFidelity = s.fidelity;
+      if (this.currentError) this.setError(this.currentError);
+    }
     const viewName = s.view === "gate" ? "Gate" : "RTL";
     const badge = s.warmingUp ? "Warming up" : s.fidelity === "synthesized" ? `${viewName} view` : s.fidelity === "stale" ? "Stale" : s.editing ? "Editing" : "Structural";
     const cls = s.warmingUp ? "warming" : s.editing && s.fidelity === "structural" ? "editing" : s.fidelity;
@@ -158,15 +162,33 @@ export class Chrome {
     this.statusEl.append(t);
   }
 
+  private lastFidelity: StatusInfo["fidelity"] | undefined;
+
+  /** Designed error and stale states: one sentence and one "Go to line" button. */
   setError(err: BannerError | null): void {
     this.currentError = err;
+    this.bannerEl.replaceChildren();
     if (!err) {
       this.bannerEl.hidden = true;
-      this.bannerEl.textContent = "";
       return;
     }
     const where = err.line !== undefined ? `${err.file ? `${err.file}:` : "line "}${err.line}${err.column !== undefined ? `:${err.column}` : ""}` : "";
-    this.bannerEl.textContent = `${where ? `${where}  ` : ""}${err.message}`;
+    const text = document.createElement("span");
+    text.className = "banner-text";
+    const lead = this.lastFidelity === "stale" ? "Showing the last good diagram. " : "";
+    text.textContent = `${lead}${where ? `${where}  ` : ""}${err.message}`;
+    this.bannerEl.append(text);
+    if (err.line !== undefined) {
+      const line = err.line;
+      const b = document.createElement("button");
+      b.className = "tb-btn banner-action";
+      b.textContent = `Go to line ${line}`;
+      b.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        this.handlers.onErrorClick(err);
+      });
+      this.bannerEl.append(b);
+    }
     this.bannerEl.title = "Click to jump to this line in the editor";
     this.bannerEl.hidden = false;
   }
