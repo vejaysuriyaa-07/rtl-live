@@ -926,4 +926,6 @@ Scope: the v0.5.0 brief (cross-platform tool lookup, CI, Marketplace readiness; 
 - Installed with the bundled CLI of `~/Applications/Visual Studio Code.app`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.5.1`. Running windows need "Developer: Reload Window".
 - Not pushed, not tagged, not published: those are VJ's steps ("How to publish", v0.5 work log).
 
-Next step: push, then publish 0.5.1 (publisher `vejaysuriyaa`, upload the vsix or `npx vsce publish`), tag `v0.5.1`, replace the README install line with the Marketplace link.
+- Published by VJ on 2026-10-24 as `vejaysuriyaa.rtl-live` 0.5.1 (Preview tag on). CI run seven on `42900d8`: Ubuntu 4m22s, macOS 4m33s, Windows 7m49s, all green. README install line now links the listing and names `code --install-extension vejaysuriyaa.rtl-live`.
+
+Next step: tag `v0.5.1` (VJ), then the v0.6 candidates in NOTES.md.

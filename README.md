@@ -14,7 +14,7 @@ Built for learning Verilog on exercise sets like HDLBits: type a module header a
 
 ## Install
 
-From the Marketplace: search for "RTL Live" in the Extensions view. From a file: `code --install-extension rtl-live-0.5.1.vsix`, then "Developer: Reload Window".
+From the [Marketplace](https://marketplace.visualstudio.com/items?itemName=vejaysuriyaa.rtl-live): search for "RTL Live" in the Extensions view, or run `code --install-extension vejaysuriyaa.rtl-live`. From a file: `code --install-extension rtl-live-0.5.1.vsix`, then "Developer: Reload Window".
 
 It works out of the box with the built-in synthesis engine (Yosys compiled to WebAssembly, about 80 MB, loaded on first use). Installing a native Yosys makes synthesis several times faster:
 

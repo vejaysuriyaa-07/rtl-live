@@ -26,13 +26,12 @@ in place so it stays under about 2,000 words.
   that the IR order followed Yosys's cell names (changed in 0.70+219); fixed in `fromYosys.ts` (see archive,
   "Fifth CI run"). Run six (40088822763, commit `14d5fb1`): green on all three OSes; Ubuntu 3m55s with the
   native step at 694 passing on Yosys 0.70+219, macOS 3m31s, Windows 7m37s.
-- Not yet published. Marketplace steps are in the archive under "How to publish" (v0.5 work log).
+- Published 2026-10-24: https://marketplace.visualstudio.com/items?itemName=vejaysuriyaa.rtl-live shows 0.5.1 with the
+  Preview tag. CI run seven (`42900d8`) green on all three OSes.
 
 ## Next step
 
-1. VJ pushes `main` (release commit included) and publishes 0.5.1: "How to publish" (archive, v0.5 work log):
-   publisher id `vejaysuriyaa`, upload `rtl-live-0.5.1.vsix` or `npx vsce publish`, tag `v0.5.1`. Then the
-   README install line becomes the Marketplace link (a docs commit).
+1. VJ tags the release (`git tag v0.5.1`, push the tag) and pushes the README commit with the Marketplace link.
 3. Candidate v0.6 work, in this order: a `case` fixture with duplicate arms (rtlView pmux merging), a replication
    fixture pass over `fromYosys.ts`, then the open issues below.
 
