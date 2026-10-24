@@ -742,3 +742,39 @@ Studied for look only, no code copied (THIRD_PARTY_NOTICES.md records this): net
 | 5 rules | L1, L2, L3 all passing in every view (accuracy baseline unchanged); render budget held and tested; behaviour tests first for hover and export; screenshots in light, dark and high contrast; 0.4.0 packaged, tested and installed |
 
 Next step: triage the mutation report when the run ends (`artifacts/mutation/mutation.json`; `node` the survivor summary by file), add tests for real gaps, record the score in NOTES.md.
+
+## v0.4.1 work log (2026-10-23)
+
+Scope: docs/BUGS.md items 21 to 23, recorded in `a6835a3` together with the learning mode idea for v0.5. Baseline at `41dee58`: unit, golden and accuracy 630 passing (35 files); integration 18; webview 92; packaged 18.
+
+### Bug 21: ports-only module shows the no-file state (fixed `edfc823`)
+
+- Reproduced with `test/fixtures/partial/p10_ports_only.v` (the vectorgates header and nothing else): the parse was clean, synthesis returned ok, and `doc.modules` was empty. Yosys writes `"blackbox": 1` on a module whose body is empty, and `fromYosys` skipped every module with that attribute, so the top never reached the webview; `emptyMessage` then fell through to "Open a Verilog file".
+- Fix: the reader keeps every module named in the user's file whatever Yosys tags it (stubs from `blackboxStubs` are still skipped). Output and inout ports whose bits have no driver get `Port.undriven`; the structural pass sets the same flag from assigns, always blocks and instance connection identifiers, only on a module that parsed cleanly. `portNodeWidth` reserves `PORT_HINT_W` to the left of an undriven output, the chevron stays at the frame edge, and "not driven yet" is drawn there in the small muted italic type with a tooltip sentence that says what to add. The webview's empty state says "No diagram for <name> yet." whenever a doc is loaded; the no-file sentence is only for no doc.
+- Tests first: `test/unit/portsOnly.test.ts` (synthesized rtl and gate docs keep the module with five ports and no nodes, outputs undriven, inputs not; structural view flags the same outputs and leaves a driven output plain; rendered markup puts inputs left of outputs with the hint and class on every undriven output and not on inputs; tooltip text), `m10.states.spec.ts` (a render whose module is missing shows "No diagram for top_module yet.", never the no-file sentence; a ports-only doc draws three hinted ports in light and dark, `artifacts/v041-ports-only-{light,dark}.png`). Golden files unchanged: no fixture has an undriven output.
+
+### Bug 22: the less helpful error wins (fixed `249f830`)
+
+- Cause: the statement pass in `describeSyntaxErrors` deliberately skipped a bare `assign` (`last === t && startsAssign`), so the only issue at that spot was "missing endmodule" (rank 3) at the end of the file.
+- Fix: an assign that ends (end of file, next keyword) before its `=` reports "assign is incomplete: write assign name = expression;" at the end of its last token, rank 0, so it sorts before the endmodule message at the same position; the sort is stable, so `refineErrors` keeps that order. `BannerError.more` carries the errors after the first (up to three, source order); the controller fills it from `file.errors` and the banner shows "also: 9:7 missing endmodule" as a muted second line.
+- Tests first: `errorMessages.test.ts` (lone assign first with endmodule second at the same spot; `assign b` without `=`; a complete assign without `;` still says missing `;`), `m10.states.spec.ts` (banner text and the `.banner-more` line, one button), `m8.editing.test.ts` (opening `p11_assign_keyword_only.v` in VS Code gives the incomplete-assign banner at 9:7 with `more` = missing endmodule).
+
+### Bug 23: valid ports ghosted (fixed `249f830`)
+
+- Cause: `inErrorContext(a)` climbed to the root, and tree-sitter wraps a module with a broken body (lone `assign`, or just a missing `endmodule` as in `p4_missing_endmodule.v`) in one ERROR node that starts at `module`, so every clean port declaration had an ERROR ancestor.
+- Fix: the header end is the end of `module_ansi_header` (or the port list or the header node, whichever reaches furthest); the header is broken only when an ERROR or MISSING node ends inside it. A port is tentative when its own declaration has an error, or when the header is broken and the port sits under the ERROR. `p9_two_missing_commas.v` (p1c, p1d, p1e tentative via the swallowed-name and recovery paths) and the unclosed-list case (`b` tentative, its declaration holds the ERROR) behave as before.
+- Tests first: `portRecovery.test.ts` (p11 keeps all twelve ports solid with the two errors in order; p4 ghosts nothing; the unclosed list and p9 still ghost what they did). `structural.test.ts` matched partial fixtures by prefix (`"p1"` also matched `p10`); it now matches `"p1_"`, which is why its expectations list changed.
+
+### Release
+
+- Commits: `a6835a3` docs (bugs recorded); `249f830` fix(errors) bugs 22 and 23; `edfc823` fix(ir) bug 21; version bump, CHANGELOG, README and this log in the release commit.
+- Gates on the final tree: unit, golden and accuracy 643 passing (35 files); integration 19; webview 94; typecheck and lint clean; hygiene check passed; no existing file under `test/fixtures/` changed (two new partial fixtures); nothing pushed. `npm run test:perf` was not run: the Stryker workers were still using every core (load average above 25) and the 16 ms budget is only meaningful on a quiet CPU; the render path did not change in this release.
+- `npm run package`: `rtl-live-0.4.1.vsix`, 22 files, 17.52 MB. `npm run test:packaged`: 19 passing against the unzipped vsix. Installed with the bundled CLI of `~/Applications/Visual Studio Code.app`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.4.1`. Running windows need "Developer: Reload Window".
+
+| Bug | Final status |
+| --- | --- |
+| 21 ports-only module | fixed `edfc823` (test: `portsOnly.test.ts`; `m10.states.spec.ts` empty state and hinted ports) |
+| 22 error order | fixed `249f830` (test: `errorMessages.test.ts`; `m10.states.spec.ts` banner list; `m8.editing.test.ts`) |
+| 23 ghosted valid ports | fixed `249f830` (test: `portRecovery.test.ts`; `m8.editing.test.ts`) |
+
+Next step: triage the mutation report when the run ends (`artifacts/mutation/mutation.json`; `node` the survivor summary by file), add tests for real gaps, record the score in a new NOTES.md section.

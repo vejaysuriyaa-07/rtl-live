@@ -6,7 +6,7 @@ Screenshots are in `media/screenshots/` (vsce cannot embed images without a publ
 
 ## First run
 
-1. Run `code --install-extension rtl-live-0.4.0.vsix --force`, then Cmd+Shift+P, "Developer: Reload Window".
+1. Run `code --install-extension rtl-live-0.4.1.vsix --force`, then Cmd+Shift+P, "Developer: Reload Window".
 2. Optional, faster synthesis: `brew install yosys`. Without it the bundled wasm engine is used, and its first run takes a few seconds.
 3. Click the RTL Live icon in the Activity Bar to open the "Schematic" view. You can drag it to the secondary side bar.
 4. 10-minute manual check using `test/fixtures/hdlbits/`:

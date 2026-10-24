@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1
+
+Three small fixes from docs/BUGS.md (items 21 to 23).
+
+- A module with ports but no logic is drawn as a box again. Yosys tags an empty body as a blackbox and the netlist reader skipped it, so the panel showed "Open a Verilog file" under a "synthesized" badge. Every output nothing drives now carries a small "not driven yet" hint beside its chevron (synthesized and structural views), and the empty state only claims no file is open when none is.
+- A lone `assign` (or `assign y` with no `=`) is reported first, in beginner terms: "assign is incomplete: write assign name = expression;". The banner lists the errors after the first one on a second line, so "missing endmodule" still shows.
+- Ports from a cleanly parsed header stay solid when the error is later in the file; only ports recovered from a broken header are ghosted.
+
 ## 0.4.0
 
 Visual design release: calm, precise and readable, like a polished EDA tool or a textbook figure. Every value is a design token in `webview/render/tokens.ts`; the stylesheet repeats them on `:root` and a unit test keeps the two in step.
