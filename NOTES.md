@@ -777,4 +777,49 @@ Scope: docs/BUGS.md items 21 to 23, recorded in `a6835a3` together with the lear
 | 22 error order | fixed `249f830` (test: `errorMessages.test.ts`; `m10.states.spec.ts` banner list; `m8.editing.test.ts`) |
 | 23 ghosted valid ports | fixed `249f830` (test: `portRecovery.test.ts`; `m8.editing.test.ts`) |
 
-Next step: triage the mutation report when the run ends (`artifacts/mutation/mutation.json`; `node` the survivor summary by file), add tests for real gaps, record the score in a new NOTES.md section.
+Next step: none for v0.4.1; the mutation triage follows in its own section.
+
+## Mutation testing (2026-10-23)
+
+### Setup (`a5bb707`)
+
+- StrykerJS 10.0.0 with the vitest runner, `stryker.config.mjs`, `npm run test:mutation`. Mutated: `src/ir`, `src/structural`, the synthesis script helpers (`script.ts`, `blackboxStubs.ts`, `yosysJson.ts`), the schedulers (`scheduler.ts`, `lifecycle.ts`, `cache.ts`, `webviewHtml.ts`), `src/shared/protocol.ts`, and the webview layout and render modules. Test suites driven: unit, golden and accuracy (`vitest.config.mts`), per-test coverage. Regex mutants are excluded (three in four of all mutants, nearly all whitespace variants of the tokenizer patterns). Reports in `artifacts/mutation/` (ignored by git); the full report is kept as `artifacts/mutation/full-mutation.json`.
+- Smoke run on `width.ts` first: 131 mutants, 53 survived, all test gaps (indexed part-selects, two-digit bit selects, most constant literal forms), closed in `width.test.ts` before the full run.
+
+### Full run
+
+- Tree: `a5bb707` (0.3.1 plus the setup), 11350 mutants, 10 workers, 10:16 to 17:54 wall clock while the v0.4 and v0.4.1 work ran on the same machine (load average 25 to 43; the workers were paused with SIGSTOP for a few minutes of timing measurements, so a handful of in-flight mutants may be recorded as timeouts).
+- Score: 61.61 percent of all mutants, 67.17 percent of covered ones. 5084 killed, 1907 timed out, 3417 survived, 940 without coverage, 2 errors. 16.5 tests per mutant on average.
+- Where the survivors are (file, survived of total): `legend.ts` 344/509, `toIr.ts` 406/637, `fallbackScanner.ts` 362/989, `toVerilog.ts` 335/588, `svg.ts` 243/592, `treeSitterParser.ts` 209/1026, `tooltips.ts` 205/459, `symbols.ts` 178/429, `fromYosys.ts` 175/1037, `rtlView.ts` 172/494, `errorMessages.ts` 111/1019, `postprocess.ts` 93/536, `semantics.ts` 89/417, `cellMap.ts` 79/422, `geometry.ts` 63/133, `simplify.ts` 62/348, `blackboxStubs.ts` 58/275, `protocol.ts` 55/183. At 100 percent: `srcRange.ts`, `stableIds.ts`, `grammar.ts`; `script.ts` 98.
+
+### Triage
+
+Read with the survivor summary grouped by source line (string and object literal mutants set aside first; they are most of `legend.ts`, `tooltips.ts`, `symbols.ts` and `svg.ts`, where the text itself is the point and a screenshot, not a unit test, is the right check).
+
+Real gaps, closed in `16e1e8f` (unit, golden and accuracy 673 passing, 37 files):
+
+- `protocol.ts`: every field check in `isWebviewToHost` survived a flip to `true`, so a malformed `log`, `revealSource`, `export`, `highlighted` or `setView` message from the webview would have been accepted. One rejecting case per branch, plus the finite-generation rule on both directions.
+- `semantics.ts`: the bit-range arithmetic of the multiple-driver report (`declaredRange`, `overlap`, `coversAll`) was only reached by `multi_driver.v`, a whole-signal clash. New cases: disjoint and overlapping slices, whole against slice, a reversed `[0:7]` declaration, a bit outside the declaration (no clash), two slices covering every bit (no bit list).
+- `cellMap.ts`: no fixture has an inverted clock, an inverted enable or reset, `$aldff`, `$dffsr`, `$sr`, `$bmux` or `$neg`, so the pins those produce were never asserted. `cellMap.test.ts` builds the cells by hand.
+- `toIr.ts`: the black-box pin direction inference (`inferPinDirection`, eleven rules) and the formal-port path for a defined module had no direct assertions. `blackboxPins.test.ts` pins every rule.
+- `simplify.ts`: `dropBuffers` naming rules (keep a rename between two named nets, hand the output name to an unnamed input net, leave a buffer with a missing net alone).
+- `errorMessages.ts`: comment and string masking edge cases (block comment over lines, unterminated, escaped quote), `case`/`endcase` and `begin`/`end` pairing, and the rule that an opening paren inside a port list is not an instance.
+
+Regression found by the new tests: the 0.4.1 change for bug 21 had added instance connection identifiers to the set `inferPinDirection` reads, which turned every output wired to an instance into an input pin of that instance. The identifiers now feed only the "not driven yet" decision (`onInstance` in `toIr.ts`). Fixed in the same commit.
+
+Survivors left as they are, with the reason:
+
+- `fallbackScanner.ts` (362): the scanner only runs when the tree-sitter grammar fails to load; the packaged-grammar guard from 0.1.0 covers that path end to end, and the structural tests run both parsers over every fixture. Line-level assertions would duplicate the tree-sitter ones.
+- `toVerilog.ts` (335): used only by the equivalence harness; its output is checked by Yosys `equiv`, so a surviving mutant there means the harness still proved equivalence.
+- `postprocess.ts` (93): rewritten in `970c11a` after the run started; the report describes the old code. `test:perf` and the accuracy L3 checks cover the new one.
+- `rtlView.ts` (172, lines 74 to 131): the pmux case merging has branches no fixture reaches (duplicate case inputs, a selector wider than 16 bits, all-x defaults). Candidate fixture for v0.5: a `case` with two arms selecting the same signal.
+- `treeSitterParser.ts` (209): mostly the header recovery tokenizer and the error dedupe; partially covered by `partialHeader.test.ts` and `portRecovery.test.ts`, the rest needs broken inputs that are hard to write without also changing what tree-sitter yields.
+- `geometry.ts`, `toElk.ts`, `logical.ts`: node size constants and layout options, checked by the accuracy layout rules, not by unit assertions on the numbers.
+- `scheduler.ts`, `lifecycle.ts`, `cache.ts`: stats counters and timer bookkeeping.
+- `fromYosys.ts` (175): spread over the netlist reader (bit naming preference for ports, replication detection, join ordinals); the goldens pin the output for every fixture, so these flips produce the same drawing for all of them. Worth a second pass with the replication fixtures of known issue 7.
+
+Proof, scoped rerun on the four files with hand-built tests (`artifacts/mutation-scoped/mutation.json`, 1371 mutants, 18:01 to 18:27): `cellMap.ts` 61.6 to 87.9 percent, `protocol.ts` 41.0 to 72.8, `semantics.ts` 73.6 to 79.6, `simplify.ts` 77.6 to 81.6 (all mutants, including the string literals). What is left in `protocol.ts` is the message type name strings (30 of 50) and switch-case flips that fall through to an equivalent branch; in `semantics.ts`, `declaredRange` on a non-literal range (`[N-1:0]`, width 0) and the loop reporter, both reachable only through fixtures that do not exist yet. `toIr.ts` and `errorMessages.ts` were not rerun (1000 mutants each, most of the run time is their timeouts); their new tests fail on the unmutated rules they describe when those rules are removed by hand.
+
+How to rerun: `npm run test:mutation` (full, several hours), or scoped with `npx stryker run --mutate src/ir/cellMap.ts --incremental false` (the CLI has no flag for the report file name; to keep the full report, point a small config that spreads `stryker.config.mjs` and sets `jsonReporter.fileName` at `--configFile`). Survivor summaries: group the json by file and line, non-string mutators first.
+
+Next step: a `case` fixture with duplicate arms for `rtlView.ts`, and a replication fixture pass over `fromYosys.ts`; both are v0.5 candidates, not blockers.
