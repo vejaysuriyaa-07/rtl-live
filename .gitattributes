@@ -1,0 +1,9 @@
+# Source, tests and fixtures stay LF on every OS: fixture line and column positions depend on it.
+* text=auto eol=lf
+*.wasm binary
+*.png binary
+*.ttf binary
+*.tar binary
+*.vsix binary
+*.gif binary
+*.ico binary

@@ -7,15 +7,18 @@
 //
 //   npm run test:packaged                      # VS Code stable (downloaded once into .vscode-test/)
 //   RTL_LIVE_VSCODE_VERSION=1.106.3 npm run test:packaged
+import { fileURLToPath } from "node:url";
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-const root = resolve(new URL(".", import.meta.url).pathname, "..");
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+// npm and npx are .cmd shims on Windows and need the shell to start; the arguments are fixed strings.
+const shell = process.platform === "win32";
 const run = (cmd, args, opts = {}) => {
   console.log(`[test-packaged] ${cmd} ${args.join(" ")}`);
-  const r = spawnSync(cmd, args, { cwd: root, stdio: "inherit", ...opts });
+  const r = spawnSync(cmd, args, { cwd: root, stdio: "inherit", shell, ...opts });
   if (r.status !== 0) {
     console.error(`[test-packaged] ${cmd} exited with ${r.status}`);
     process.exit(r.status ?? 1);
@@ -27,7 +30,9 @@ try {
   run("npm", ["run", "build:prod"]);
   const vsix = join(work, "rtl-live.vsix");
   run("npx", ["vsce", "package", "--no-dependencies", "--out", vsix]);
-  execFileSync("unzip", ["-q", vsix, "-d", join(work, "unpacked")]);
+  const unpacked = join(work, "unpacked");
+  if (process.platform === "win32") execFileSync("powershell", ["-NoProfile", "-Command", "Expand-Archive", "-LiteralPath", vsix, "-DestinationPath", unpacked]);
+  else execFileSync("unzip", ["-q", vsix, "-d", unpacked]);
   const extensionDir = join(work, "unpacked", "extension");
   for (const f of ["package.json", "dist/extension.js", "dist/webview.js", "dist/webview.css", "dist/elkWorker.js", "dist/web-tree-sitter.wasm", "dist/tree-sitter-verilog.wasm"]) {
     if (!existsSync(join(extensionDir, f))) {

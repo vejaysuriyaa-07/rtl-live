@@ -1,12 +1,13 @@
 // Benchmarks per fixture: structural parse+IR (both parsers), warm synthesis per
 // available backend, ELK layout (elkjs in node) and the wasm cold start.
 // Writes artifacts/bench.json and prints a markdown table.
+import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 
-const root = resolve(new URL(".", import.meta.url).pathname, "..");
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 mkdirSync(join(root, "artifacts"), { recursive: true });
 
 await build({

@@ -2,12 +2,13 @@
 // package using the pinned tree-sitter-cli. tree-sitter-cli 0.27 downloads a
 // wasi-sdk clang and binaryen into ~/.cache/tree-sitter on first use, so no
 // emscripten or docker is needed. Records provenance in assets/wasm/provenance.json.
+import { fileURLToPath } from "node:url";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { resolve, join } from "node:path";
 
-const root = resolve(new URL(".", import.meta.url).pathname, "..");
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const src = join(root, "node_modules", "tree-sitter-verilog");
 const work = join(root, "artifacts", "grammar-src");
 const outDir = join(root, "assets", "wasm");

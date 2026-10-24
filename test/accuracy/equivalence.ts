@@ -10,6 +10,7 @@ import type { ModuleView, SchematicDoc } from "../../src/ir/types";
 import { docToVerilog, ExportError, verilogId } from "../../src/ir/toVerilog";
 import { collectStubs, type Stub } from "../../src/synth/blackboxStubs";
 import type { StructuralFile } from "../../src/structural/types";
+import { findToolSync } from "../../src/synth/toolLookup";
 
 export interface EquivalenceResult {
   ok: boolean;
@@ -24,8 +25,10 @@ export interface EquivalenceResult {
   netlist?: string;
 }
 
-export const IVERILOG = "/opt/homebrew/bin/iverilog";
-export const VVP = "/opt/homebrew/bin/vvp";
+// Icarus Verilog is found like every other tool: PATH first, then the common folders
+// (test/unit/toolLookup.test.ts); the suite skips L1 when it is not installed.
+export const IVERILOG = findToolSync("iverilog", process.env["RTL_LIVE_IVERILOG"]) ?? "iverilog";
+export const VVP = findToolSync("vvp", process.env["RTL_LIVE_VVP"]) ?? "vvp";
 
 export function icarusAvailable(): boolean {
   return existsSync(IVERILOG) && existsSync(VVP);

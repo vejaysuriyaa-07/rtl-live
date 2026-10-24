@@ -1,10 +1,11 @@
 // Renders artifacts/accuracy.json (written by test/accuracy/accuracy.test.ts)
 // as docs/ACCURACY_REPORT.md: one row per fixture and view with the L1, L2
 // and L3 status and the reason for every failure.
+import { fileURLToPath } from "node:url";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const root = resolve(new URL(".", import.meta.url).pathname, "..");
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const results = JSON.parse(readFileSync(join(root, "artifacts", "accuracy.json"), "utf8"));
 const views = ["structural", "rtl", "gate"];
 const levels = ["L1", "L2", "L3"];

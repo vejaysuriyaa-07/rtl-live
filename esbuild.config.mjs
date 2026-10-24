@@ -5,10 +5,11 @@
 //   dist/yosysWorker.mjs  esm, node   (worker_threads worker for @yowasp/yosys)
 //   dist/webview.js       iife, browser
 //   dist/elkWorker.js     iife, browser (ELK layout in a Web Worker)
+import { fileURLToPath } from "node:url";
 import { cpSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-export const ROOT = resolve(new URL(".", import.meta.url).pathname);
+export const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)));
 
 /**
  * web-tree-sitter 0.27 ships an ESM build (web-tree-sitter.js) that locates

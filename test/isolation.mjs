@@ -4,11 +4,12 @@
 // the workspace, so tests never touch the real profile, the real extensions
 // folder or the fixtures in the repository. The folder is removed when the
 // test CLI process exits.
+import { fileURLToPath } from "node:url";
 import { cpSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-export const REPO_ROOT = resolve(new URL("..", import.meta.url).pathname);
+export const REPO_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 export const REPO_FIXTURES = join(REPO_ROOT, "test", "fixtures");
 
 /**

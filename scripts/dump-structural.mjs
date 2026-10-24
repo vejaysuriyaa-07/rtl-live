@@ -1,12 +1,13 @@
 // Dev helper: print the structural model of a file with both parsers.
 // usage: node scripts/dump-structural.mjs path/to/file.v [ports|full]
+import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { build } from "esbuild";
 
 const file = process.argv[2];
 const mode = process.argv[3] ?? "full";
-const root = resolve(new URL(".", import.meta.url).pathname, "..");
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 
 const result = await build({
   stdin: {

@@ -14,7 +14,7 @@ import { selectTop } from "../../src/structural/topSelect";
 import type { StructuralFile, StructuralParser } from "../../src/structural/types";
 import { HDLBITS, ROOT, listFixtures, makeTreeSitterParser, readExpected, readFixture } from "../unit/helpers";
 import { disposeTestBackend, runChecks, synthFixture, testBackend, type SynthExpectations } from "../unit/synthHelpers";
-import { checkEquivalence } from "./equivalence";
+import { checkEquivalence, icarusAvailable } from "./equivalence";
 import { checkLayout, layoutView, type LayoutReport } from "./layout";
 
 export type ViewName = "structural" | "rtl" | "gate";
@@ -42,6 +42,10 @@ export interface FixtureResult {
 const KNOWN_FILE = join(__dirname, "known-failures.json");
 const ARTIFACT = join(ROOT, "artifacts", "accuracy.json");
 const UPDATE = process.env["UPDATE_ACCURACY_BASELINE"] === "1";
+// Without Icarus Verilog (CI runners other than Ubuntu) L1 is recorded as skipped, and the
+// baseline comparison leaves the L1 entries out, so the other levels are still held to it.
+const ICARUS = icarusAvailable();
+const SKIPPED_L1: CheckResult = { ok: true, detail: { skipped: "iverilog not installed" } };
 
 function tryChecks(fn: () => void): CheckResult {
   try {
@@ -130,7 +134,7 @@ describe("accuracy", () => {
       const sl = await layoutChecks(sdoc);
       const sEq = checkEquivalence({ name, source: text, file, doc: sdoc });
       r.views.structural = {
-        L1: sEq.ok ? { ok: true } : { ok: false, reason: sEq.reason ?? "mismatch" },
+        L1: !ICARUS ? SKIPPED_L1 : sEq.ok ? { ok: true } : { ok: false, reason: sEq.reason ?? "mismatch" },
         L2: structuralChecks(file, top, expected),
         L3: sl.result,
         layout: sl.layout,
@@ -147,7 +151,7 @@ describe("accuracy", () => {
         const rawEq = checkEquivalence({ name, source: text, file, doc: res.rawDoc });
         const l3 = await layoutChecks(res.doc);
         r.views[view] = {
-          L1: eq.ok && rawEq.ok ? { ok: true, detail: { vectors: eq.vectors, maskedBits: eq.maskedBits, clocks: eq.clocks } } : { ok: false, reason: eq.ok ? `raw netlist: ${rawEq.reason}` : (eq.reason ?? "mismatch") },
+          L1: !ICARUS ? SKIPPED_L1 : eq.ok && rawEq.ok ? { ok: true, detail: { vectors: eq.vectors, maskedBits: eq.maskedBits, clocks: eq.clocks } } : { ok: false, reason: eq.ok ? `raw netlist: ${rawEq.reason}` : (eq.reason ?? "mismatch") },
           L2: synthChecks(view, res.rawDoc, res.doc, name, expected),
           L3: l3.result,
           layout: l3.layout,
@@ -174,8 +178,9 @@ describe("accuracy", () => {
       return;
     }
     const known = JSON.parse(readFileSync(KNOWN_FILE, "utf8")) as Record<string, string>;
-    const unexpected = Object.keys(failing).filter((k) => !(k in known));
-    const stale = Object.keys(known).filter((k) => !(k in failing));
+    const compared = (k: string): boolean => ICARUS || !k.endsWith("|L1");
+    const unexpected = Object.keys(failing).filter((k) => compared(k) && !(k in known));
+    const stale = Object.keys(known).filter((k) => compared(k) && !(k in failing));
     expect(unexpected.map((k) => `${k}: ${failing[k]}`), "new accuracy failures (fix them or add to known-failures.json with a reason)").toEqual([]);
     expect(stale, "known failures that now pass; remove them from known-failures.json").toEqual([]);
   });

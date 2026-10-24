@@ -1,11 +1,12 @@
 // Side-by-side before/after images for the v0.4 design pass.
 // Reads artifacts/v04-before and artifacts/v04-after (written by test/webview/v04.visual.spec.ts
 // with RTL_LIVE_V04_DIR) and writes artifacts/v04-after/compare-<name>-<theme>.png.
+import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const root = resolve(new URL(".", import.meta.url).pathname, "..");
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const before = join(root, "artifacts", "v04-before");
 const after = join(root, "artifacts", "v04-after");
 const names = ["vectorgates", "7458", "module_add", "module_shift8", "counter4", "fsm_moore", "legend"];
