@@ -7,16 +7,15 @@ in place so it stays under about 2,000 words.
 
 ## Current version and status (2026-10-24)
 
-- Version 0.5.0, release commit `e30d65e`, then `eb1c022` (M11 fixed for runners without Yosys), `d13b3e8`
-  (CI: OSS CAD Suite Yosys on Ubuntu, integration tests restore text through the API) and the IR ordering fix
-  (diagram independent of the Yosys build, junction clearance axes). CHANGELOG "Unreleased" lists the
-  user-facing changes since 0.5.0; ship them as 0.5.1 (`/ship 0.5.1`).
+- Version 0.5.1 (release commit on top of `6084a1c`): the IR order no longer follows the Yosys build, the
+  junction clearance axis fix, Show Tool Paths always names the engine, CI green on all three OSes (run six).
+  `rtl-live-0.5.1.vsix` (20 files, 17.5 MB) built, packaged suite 20 passing, installed as
+  `vejaysuriyaa.rtl-live@0.5.1`.
 - Gates on the current tree: vitest unit, golden and accuracy 694 passing (40 files) with brew Yosys 0.70+post,
   with the OSS CAD Suite 0.70+219 and with `RTL_LIVE_TEST_BACKEND=wasm`; also green with Icarus hidden
   (`RTL_LIVE_IVERILOG=off`); integration 20 (also 20 with `RTL_LIVE_YOSYS=off`); webview 96; packaged 20
   against the vsix; typecheck and lint clean; hygiene check passed.
-- `rtl-live-0.5.0.vsix` (22 files, 17.5 MB) built and installed in `~/Applications/Visual Studio Code.app`
-  (`vejaysuriyaa.rtl-live@0.5.0`). Running windows need "Developer: Reload Window".
+- Running VS Code windows need "Developer: Reload Window" after an install.
 - CI (`.github/workflows/ci.yml`, Ubuntu 24.04, macOS, Windows): run one failed in the accuracy harness without
   Icarus (fixed), run two in M11 (fixed), runs three and four in the Ubuntu native-Yosys step (apt Yosys 0.33
   rejects `write_json -noscopeinfo`; fixed by installing the OSS CAD Suite release, pinned by the `OSS_CAD_SUITE`
@@ -27,13 +26,13 @@ in place so it stays under about 2,000 words.
   that the IR order followed Yosys's cell names (changed in 0.70+219); fixed in `fromYosys.ts` (see archive,
   "Fifth CI run"). Run six (40088822763, commit `14d5fb1`): green on all three OSes; Ubuntu 3m55s with the
   native step at 694 passing on Yosys 0.70+219, macOS 3m31s, Windows 7m37s.
-- Not published. Marketplace steps are in the archive under "How to publish" (v0.5 work log).
+- Not yet published. Marketplace steps are in the archive under "How to publish" (v0.5 work log).
 
 ## Next step
 
-1. Ship 0.5.1 (`/ship 0.5.1`: the CHANGELOG "Unreleased" entries become the 0.5.1 section), then publish.
-2. Then follow "How to publish" (archive, v0.5 work log): publisher id `vejaysuriyaa`, upload the vsix or
-   `npx vsce publish`, tag `v0.5.0`, replace the README install line with the Marketplace link.
+1. VJ pushes `main` (release commit included) and publishes 0.5.1: "How to publish" (archive, v0.5 work log):
+   publisher id `vejaysuriyaa`, upload `rtl-live-0.5.1.vsix` or `npx vsce publish`, tag `v0.5.1`. Then the
+   README install line becomes the Marketplace link (a docs commit).
 3. Candidate v0.6 work, in this order: a `case` fixture with duplicate arms (rtlView pmux merging), a replication
    fixture pass over `fromYosys.ts`, then the open issues below.
 

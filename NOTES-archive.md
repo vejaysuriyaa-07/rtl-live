@@ -918,4 +918,12 @@ Scope: the v0.5.0 brief (cross-platform tool lookup, CI, Marketplace readiness; 
 
 - Commit `14d5fb1`. Ubuntu 3m55s ("Check the Yosys version" printed `yosys 0.70+219 found on PATH`, native step 694 passing), macOS 3m31s, Windows 7m37s. First fully green run of the workflow.
 
-Next step: `/ship 0.5.1`, then publish (see "How to publish" above).
+
+## v0.5.1 release (2026-10-24)
+
+- Commits since 0.5.0: `eb1c022` fix(tools) Show Tool Paths always names the engine; `0d32343` docs; `d13b3e8` ci (OSS CAD Suite Yosys on Ubuntu, integration tests restore text through the API, profile logs upload); `61c5bc4` fix(ir) IR order independent of the Yosys build; `14d5fb1` fix(layout) perpendicular clearance axis; `6084a1c` docs; the release commit (version 0.5.1, CHANGELOG 0.5.1 section from the Unreleased entries, README install line, this log, the accuracy report's date line).
+- Gates on the release tree: `npm test` 694 passing (40 files, brew Yosys 0.70+post; accuracy report 132 rows, 40 known failures, unchanged); webview 96; integration 20; packaged 20 against `rtl-live-0.5.1.vsix` (20 files, 17.5 MB); typecheck and lint clean; hygiene check passed; CI run six green on Ubuntu, macOS and Windows for `14d5fb1`.
+- Installed with the bundled CLI of `~/Applications/Visual Studio Code.app`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.5.1`. Running windows need "Developer: Reload Window".
+- Not pushed, not tagged, not published: those are VJ's steps ("How to publish", v0.5 work log).
+
+Next step: push, then publish 0.5.1 (publisher `vejaysuriyaa`, upload the vsix or `npx vsce publish`), tag `v0.5.1`, replace the README install line with the Marketplace link.

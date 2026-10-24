@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.5.1
+
+The same diagram from any Yosys build, a junction fix, a clearer tool report, and a green CI on Ubuntu, macOS and Windows.
 
 - The diagram no longer depends on which Yosys build produced the netlist. Yosys 0.70+219 (OSS CAD Suite) renamed its auto-generated cells, which reordered its JSON output and with it the nodes, nets and wire order of the drawing; the netlist reader now orders everything itself (net names alphabetically, cells by source position, nets by port then source position), so the built-in engine and any native Yosys draw the same picture. The golden IR files were regenerated once; their content is unchanged.
 - Fixed a 4-way junction that could survive the junction pass: the clearance test for a slid branch looked up perpendicular wires on the wrong axis and refused a valid slide (seen on arith_compare with the new wire order).

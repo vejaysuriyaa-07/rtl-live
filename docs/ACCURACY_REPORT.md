@@ -1,6 +1,6 @@
 # Accuracy report
 
-Generated 2026-10-23 by `npm test` (test/accuracy) from 44 fixtures in test/fixtures/hdlbits.
+Generated 2026-10-24 by `npm test` (test/accuracy) from 44 fixtures in test/fixtures/hdlbits.
 
 Levels:
 
