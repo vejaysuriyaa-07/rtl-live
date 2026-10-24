@@ -18,11 +18,11 @@
           "name": "a",
           "sinks": [
             {
-              "node": "gate:xnor:dd3bc21552",
+              "node": "gate:xor:d05cdfac44",
               "pin": "A"
             },
             {
-              "node": "gate:xor:d05cdfac44",
+              "node": "gate:xnor:dd3bc21552",
               "pin": "A"
             }
           ],
@@ -45,11 +45,11 @@
           "name": "b",
           "sinks": [
             {
-              "node": "gate:xnor:dd3bc21552",
+              "node": "gate:xor:d05cdfac44",
               "pin": "B"
             },
             {
-              "node": "gate:xor:d05cdfac44",
+              "node": "gate:xnor:dd3bc21552",
               "pin": "B"
             }
           ],
@@ -111,29 +111,6 @@
         },
         {
           "driver": {
-            "node": "reduce:xnor:bbd2f227f6",
-            "pin": "Y"
-          },
-          "id": "net:y3",
-          "name": "y3",
-          "sinks": [
-            {
-              "node": "port:y3",
-              "pin": "y3"
-            }
-          ],
-          "src": [
-            {
-              "column": 81,
-              "endColumn": 83,
-              "endLine": 1,
-              "line": 1
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
             "node": "gate:xnor:dd3bc21552",
             "pin": "Y"
           },
@@ -154,12 +131,35 @@
             }
           ],
           "width": 1
+        },
+        {
+          "driver": {
+            "node": "reduce:xnor:bbd2f227f6",
+            "pin": "Y"
+          },
+          "id": "net:y3",
+          "name": "y3",
+          "sinks": [
+            {
+              "node": "port:y3",
+              "pin": "y3"
+            }
+          ],
+          "src": [
+            {
+              "column": 81,
+              "endColumn": 83,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
         }
       ],
       "nodes": [
         {
-          "id": "reduce:xnor:bbd2f227f6",
-          "kind": "reduce",
+          "id": "gate:xor:d05cdfac44",
+          "kind": "gate",
           "label": "XNOR",
           "op": "xnor",
           "pins": [
@@ -167,25 +167,39 @@
               "direction": "in",
               "id": "A",
               "label": "",
-              "net": "net:v",
+              "net": "net:a",
               "side": "west",
-              "width": 4
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
             },
             {
               "direction": "out",
               "id": "Y",
               "label": "",
-              "net": "net:y3",
+              "net": "net:y1",
               "side": "east",
               "width": 1
             }
           ],
           "src": [
             {
+              "column": 17,
+              "endColumn": 22,
+              "endLine": 2,
+              "line": 2
+            },
+            {
               "column": 15,
-              "endColumn": 18,
-              "endLine": 4,
-              "line": 4
+              "endColumn": 23,
+              "endLine": 2,
+              "line": 2
             }
           ],
           "width": 1
@@ -232,8 +246,8 @@
           "width": 1
         },
         {
-          "id": "gate:xor:d05cdfac44",
-          "kind": "gate",
+          "id": "reduce:xnor:bbd2f227f6",
+          "kind": "reduce",
           "label": "XNOR",
           "op": "xnor",
           "pins": [
@@ -241,39 +255,25 @@
               "direction": "in",
               "id": "A",
               "label": "",
-              "net": "net:a",
+              "net": "net:v",
               "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:b",
-              "side": "west",
-              "width": 1
+              "width": 4
             },
             {
               "direction": "out",
               "id": "Y",
               "label": "",
-              "net": "net:y1",
+              "net": "net:y3",
               "side": "east",
               "width": 1
             }
           ],
           "src": [
             {
-              "column": 17,
-              "endColumn": 22,
-              "endLine": 2,
-              "line": 2
-            },
-            {
               "column": 15,
-              "endColumn": 23,
-              "endLine": 2,
-              "line": 2
+              "endColumn": 18,
+              "endLine": 4,
+              "line": 4
             }
           ],
           "width": 1

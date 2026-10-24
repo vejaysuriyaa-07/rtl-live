@@ -65,12 +65,12 @@
           "name": "in",
           "sinks": [
             {
-              "node": "mux:7eb9a7e3a9",
-              "pin": "B"
-            },
-            {
               "node": "mux:43f601fb5e",
               "pin": "S"
+            },
+            {
+              "node": "mux:7eb9a7e3a9",
+              "pin": "B"
             }
           ],
           "src": [
@@ -79,6 +79,51 @@
               "endColumn": 51,
               "endLine": 1,
               "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "mux:43f601fb5e",
+            "pin": "Y"
+          },
+          "id": "net:mux:43f601fb5e.Y",
+          "sinks": [
+            {
+              "node": "mux:7eb9a7e3a9",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "mux:7eb9a7e3a9",
+            "pin": "Y"
+          },
+          "id": "net:next_state",
+          "name": "next_state",
+          "sinks": [
+            {
+              "node": "mux:04c1adf072",
+              "pin": "A"
+            }
+          ],
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 24,
+              "endLine": 3,
+              "line": 3
             }
           ],
           "width": 1
@@ -137,79 +182,6 @@
         },
         {
           "driver": {
-            "node": "mux:7eb9a7e3a9",
-            "pin": "Y"
-          },
-          "id": "net:next_state",
-          "name": "next_state",
-          "sinks": [
-            {
-              "node": "mux:04c1adf072",
-              "pin": "A"
-            }
-          ],
-          "src": [
-            {
-              "column": 14,
-              "endColumn": 24,
-              "endLine": 3,
-              "line": 3
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
-            "node": "mux:43f601fb5e",
-            "pin": "Y"
-          },
-          "id": "net:mux:43f601fb5e.Y",
-          "sinks": [
-            {
-              "node": "mux:7eb9a7e3a9",
-              "pin": "A"
-            }
-          ],
-          "src": [
-            {
-              "column": 23,
-              "endColumn": 33,
-              "endLine": 6,
-              "line": 6
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
-            "node": "const:1'b1:147d5852d9",
-            "pin": "Y"
-          },
-          "id": "net:const:1'b1:147d5852d9.Y",
-          "sinks": [
-            {
-              "node": "mux:04c1adf072",
-              "pin": "B"
-            }
-          ],
-          "src": [
-            {
-              "column": 9,
-              "endColumn": 14,
-              "endLine": 11,
-              "line": 11
-            },
-            {
-              "column": 5,
-              "endColumn": 36,
-              "endLine": 12,
-              "line": 11
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
             "node": "const:1'b1:fa5ba4dab5",
             "pin": "Y"
           },
@@ -251,9 +223,193 @@
             }
           ],
           "width": 1
+        },
+        {
+          "driver": {
+            "node": "const:1'b1:147d5852d9",
+            "pin": "Y"
+          },
+          "id": "net:const:1'b1:147d5852d9.Y",
+          "sinks": [
+            {
+              "node": "mux:04c1adf072",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 14,
+              "endLine": 11,
+              "line": 11
+            },
+            {
+              "column": 5,
+              "endColumn": 36,
+              "endLine": 12,
+              "line": 11
+            }
+          ],
+          "width": 1
         }
       ],
       "nodes": [
+        {
+          "id": "const:1'b1:fa5ba4dab5",
+          "info": {
+            "value": "1'b1"
+          },
+          "kind": "const",
+          "label": "1'b1",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:1'b1:fa5ba4dab5.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "const:1'b0:6dad68fd34",
+          "info": {
+            "value": "1'b0"
+          },
+          "kind": "const",
+          "label": "1'b0",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:1'b0:6dad68fd34.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "mux:43f601fb5e",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:const:1'b1:fa5ba4dab5.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:const:1'b0:6dad68fd34.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:in",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:mux:43f601fb5e.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 6,
+              "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "mux:7eb9a7e3a9",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:mux:43f601fb5e.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:in",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:out",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:next_state",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 34,
+              "endLine": 6,
+              "line": 6
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 8,
+              "line": 5
+            }
+          ],
+          "width": 1
+        },
         {
           "id": "dff:dff:afc34668a3",
           "info": {
@@ -382,162 +538,6 @@
               "endColumn": 36,
               "endLine": 12,
               "line": 11
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "mux:7eb9a7e3a9",
-          "kind": "mux",
-          "label": "MUX",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "0",
-              "net": "net:mux:43f601fb5e.Y",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "1",
-              "net": "net:in",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "S",
-              "label": "",
-              "net": "net:out",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:next_state",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 34,
-              "endColumn": 34,
-              "endLine": 6,
-              "line": 6
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 8,
-              "line": 5
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "const:1'b1:fa5ba4dab5",
-          "info": {
-            "value": "1'b1"
-          },
-          "kind": "const",
-          "label": "1'b1",
-          "pins": [
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:const:1'b1:fa5ba4dab5.Y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 23,
-              "endColumn": 33,
-              "endLine": 6,
-              "line": 6
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "const:1'b0:6dad68fd34",
-          "info": {
-            "value": "1'b0"
-          },
-          "kind": "const",
-          "label": "1'b0",
-          "pins": [
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:const:1'b0:6dad68fd34.Y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 23,
-              "endColumn": 33,
-              "endLine": 6,
-              "line": 6
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "mux:43f601fb5e",
-          "kind": "mux",
-          "label": "MUX",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "0",
-              "net": "net:const:1'b1:fa5ba4dab5.Y",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "1",
-              "net": "net:const:1'b0:6dad68fd34.Y",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "S",
-              "label": "",
-              "net": "net:in",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:mux:43f601fb5e.Y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 23,
-              "endColumn": 33,
-              "endLine": 6,
-              "line": 6
             }
           ],
           "width": 1

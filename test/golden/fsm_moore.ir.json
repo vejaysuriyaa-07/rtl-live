@@ -85,31 +85,23 @@
           "width": 1
         },
         {
-          "aliases": [
-            "state"
-          ],
           "driver": {
-            "node": "dff:sdff:5be333204f",
-            "pin": "Q"
+            "node": "mux:43f601fb5e",
+            "pin": "Y"
           },
-          "id": "net:out",
-          "name": "out",
+          "id": "net:mux:43f601fb5e.Y",
           "sinks": [
             {
-              "node": "port:out",
-              "pin": "out"
-            },
-            {
               "node": "pmux:9406705d2d",
-              "pin": "S"
+              "pin": "B0"
             }
           ],
           "src": [
             {
-              "column": 60,
-              "endColumn": 63,
-              "endLine": 1,
-              "line": 1
+              "column": 23,
+              "endColumn": 33,
+              "endLine": 6,
+              "line": 6
             }
           ],
           "width": 1
@@ -139,28 +131,6 @@
         },
         {
           "driver": {
-            "node": "mux:43f601fb5e",
-            "pin": "Y"
-          },
-          "id": "net:mux:43f601fb5e.Y",
-          "sinks": [
-            {
-              "node": "pmux:9406705d2d",
-              "pin": "B0"
-            }
-          ],
-          "src": [
-            {
-              "column": 23,
-              "endColumn": 33,
-              "endLine": 6,
-              "line": 6
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
             "node": "mux:8e150ffc25",
             "pin": "Y"
           },
@@ -177,6 +147,36 @@
               "endColumn": 33,
               "endLine": 7,
               "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "aliases": [
+            "state"
+          ],
+          "driver": {
+            "node": "dff:sdff:5be333204f",
+            "pin": "Q"
+          },
+          "id": "net:out",
+          "name": "out",
+          "sinks": [
+            {
+              "node": "port:out",
+              "pin": "out"
+            },
+            {
+              "node": "pmux:9406705d2d",
+              "pin": "S"
+            }
+          ],
+          "src": [
+            {
+              "column": 60,
+              "endColumn": 63,
+              "endLine": 1,
+              "line": 1
             }
           ],
           "width": 1
@@ -271,118 +271,6 @@
         }
       ],
       "nodes": [
-        {
-          "id": "dff:sdff:5be333204f",
-          "info": {
-            "clock": "posedge",
-            "reset": "sync, value 1",
-            "states": "A = 1'b0, B = 1'b1"
-          },
-          "kind": "dff",
-          "label": "DFF",
-          "op": "sdff",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "D",
-              "label": "D",
-              "net": "net:next_state",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "CLK",
-              "label": "",
-              "net": "net:clk",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "R",
-              "label": "R",
-              "net": "net:reset",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Q",
-              "label": "Q",
-              "net": "net:out",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 3,
-              "endColumn": 6,
-              "endLine": 13,
-              "line": 10
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "pmux:9406705d2d",
-          "info": {
-            "select": "value",
-            "selector": "out"
-          },
-          "kind": "pmux",
-          "label": "PMUX",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "B0",
-              "label": "0",
-              "net": "net:mux:43f601fb5e.Y",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "B1",
-              "label": "1",
-              "net": "net:mux:8e150ffc25.Y",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "S",
-              "label": "",
-              "net": "net:out",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:next_state",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 34,
-              "endColumn": 34,
-              "endLine": 6,
-              "line": 6
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 8,
-              "line": 5
-            }
-          ],
-          "width": 1
-        },
         {
           "id": "const:1'b1:fa5ba4dab5",
           "info": {
@@ -486,6 +374,64 @@
           "width": 1
         },
         {
+          "id": "pmux:9406705d2d",
+          "info": {
+            "select": "value",
+            "selector": "out"
+          },
+          "kind": "pmux",
+          "label": "PMUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "B0",
+              "label": "0",
+              "net": "net:mux:43f601fb5e.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B1",
+              "label": "1",
+              "net": "net:mux:8e150ffc25.Y",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:out",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:next_state",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 34,
+              "endColumn": 34,
+              "endLine": 6,
+              "line": 6
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 8,
+              "line": 5
+            }
+          ],
+          "width": 1
+        },
+        {
           "id": "const:1'b0:6e49a1e8bb",
           "info": {
             "value": "1'b0"
@@ -583,6 +529,60 @@
               "endColumn": 33,
               "endLine": 7,
               "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "dff:sdff:5be333204f",
+          "info": {
+            "clock": "posedge",
+            "reset": "sync, value 1",
+            "states": "A = 1'b0, B = 1'b1"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "sdff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:next_state",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "R",
+              "label": "R",
+              "net": "net:reset",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:out",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 6,
+              "endLine": 13,
+              "line": 10
             }
           ],
           "width": 1

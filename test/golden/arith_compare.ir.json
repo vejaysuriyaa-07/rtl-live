@@ -22,7 +22,7 @@
               "pin": "A"
             },
             {
-              "node": "compare:eq:ff240b921d",
+              "node": "arith:sub:38744683af",
               "pin": "A"
             },
             {
@@ -30,7 +30,7 @@
               "pin": "A"
             },
             {
-              "node": "arith:sub:38744683af",
+              "node": "compare:eq:ff240b921d",
               "pin": "A"
             }
           ],
@@ -57,7 +57,7 @@
               "pin": "B"
             },
             {
-              "node": "compare:eq:ff240b921d",
+              "node": "arith:sub:38744683af",
               "pin": "B"
             },
             {
@@ -65,7 +65,7 @@
               "pin": "B"
             },
             {
-              "node": "arith:sub:38744683af",
+              "node": "compare:eq:ff240b921d",
               "pin": "B"
             }
           ],
@@ -104,26 +104,26 @@
         },
         {
           "driver": {
-            "node": "compare:eq:ff240b921d",
+            "node": "arith:sub:38744683af",
             "pin": "Y"
           },
-          "id": "net:eq",
-          "name": "eq",
+          "id": "net:diff",
+          "name": "diff",
           "sinks": [
             {
-              "node": "port:eq",
-              "pin": "eq"
+              "node": "port:diff",
+              "pin": "diff"
             }
           ],
           "src": [
             {
-              "column": 74,
-              "endColumn": 76,
+              "column": 50,
+              "endColumn": 54,
               "endLine": 2,
               "line": 2
             }
           ],
-          "width": 1
+          "width": 8
         },
         {
           "driver": {
@@ -150,26 +150,26 @@
         },
         {
           "driver": {
-            "node": "arith:sub:38744683af",
+            "node": "compare:eq:ff240b921d",
             "pin": "Y"
           },
-          "id": "net:diff",
-          "name": "diff",
+          "id": "net:eq",
+          "name": "eq",
           "sinks": [
             {
-              "node": "port:diff",
-              "pin": "diff"
+              "node": "port:eq",
+              "pin": "eq"
             }
           ],
           "src": [
             {
-              "column": 50,
-              "endColumn": 54,
+              "column": 74,
+              "endColumn": 76,
               "endLine": 2,
               "line": 2
             }
           ],
-          "width": 8
+          "width": 1
         }
       ],
       "nodes": [
@@ -215,10 +215,10 @@
           "width": 9
         },
         {
-          "id": "compare:eq:ff240b921d",
-          "kind": "compare",
-          "label": "=",
-          "op": "eq",
+          "id": "arith:sub:38744683af",
+          "kind": "arith",
+          "label": "−",
+          "op": "sub",
           "pins": [
             {
               "direction": "in",
@@ -240,20 +240,20 @@
               "direction": "out",
               "id": "Y",
               "label": "",
-              "net": "net:eq",
+              "net": "net:diff",
               "side": "east",
-              "width": 1
+              "width": 8
             }
           ],
           "src": [
             {
               "column": 17,
-              "endColumn": 23,
-              "endLine": 6,
-              "line": 6
+              "endColumn": 22,
+              "endLine": 4,
+              "line": 4
             }
           ],
-          "width": 1
+          "width": 8
         },
         {
           "id": "compare:lt:83b0768dff",
@@ -297,10 +297,10 @@
           "width": 1
         },
         {
-          "id": "arith:sub:38744683af",
-          "kind": "arith",
-          "label": "−",
-          "op": "sub",
+          "id": "compare:eq:ff240b921d",
+          "kind": "compare",
+          "label": "=",
+          "op": "eq",
           "pins": [
             {
               "direction": "in",
@@ -322,20 +322,20 @@
               "direction": "out",
               "id": "Y",
               "label": "",
-              "net": "net:diff",
+              "net": "net:eq",
               "side": "east",
-              "width": 8
+              "width": 1
             }
           ],
           "src": [
             {
               "column": 17,
-              "endColumn": 22,
-              "endLine": 4,
-              "line": 4
+              "endColumn": 23,
+              "endLine": 6,
+              "line": 6
             }
           ],
-          "width": 8
+          "width": 1
         }
       ],
       "ports": [

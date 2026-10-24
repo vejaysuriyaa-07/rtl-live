@@ -59,28 +59,6 @@
         },
         {
           "driver": {
-            "node": "arith:add:dc806dc0d6",
-            "pin": "Y"
-          },
-          "id": "net:arith:add:dc806dc0d6.Y",
-          "sinks": [
-            {
-              "node": "dff:sdff:f5710d95bf",
-              "pin": "D"
-            }
-          ],
-          "src": [
-            {
-              "column": 21,
-              "endColumn": 29,
-              "endLine": 4,
-              "line": 4
-            }
-          ],
-          "width": 4
-        },
-        {
-          "driver": {
             "node": "dff:sdff:f5710d95bf",
             "pin": "Q"
           },
@@ -102,6 +80,28 @@
               "endColumn": 61,
               "endLine": 1,
               "line": 1
+            }
+          ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "arith:add:dc806dc0d6",
+            "pin": "Y"
+          },
+          "id": "net:arith:add:dc806dc0d6.Y",
+          "sinks": [
+            {
+              "node": "dff:sdff:f5710d95bf",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 29,
+              "endLine": 4,
+              "line": 4
             }
           ],
           "width": 4
@@ -130,6 +130,59 @@
         }
       ],
       "nodes": [
+        {
+          "id": "dff:sdff:f5710d95bf",
+          "info": {
+            "clock": "posedge",
+            "reset": "sync, value 0000"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "sdff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:arith:add:dc806dc0d6.Y",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "R",
+              "label": "R",
+              "net": "net:reset",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 30,
+              "endLine": 4,
+              "line": 2
+            }
+          ],
+          "width": 4
+        },
         {
           "id": "const:4'b0001:694afbebd8",
           "info": {
@@ -194,59 +247,6 @@
               "endColumn": 29,
               "endLine": 4,
               "line": 4
-            }
-          ],
-          "width": 4
-        },
-        {
-          "id": "dff:sdff:f5710d95bf",
-          "info": {
-            "clock": "posedge",
-            "reset": "sync, value 0000"
-          },
-          "kind": "dff",
-          "label": "DFF",
-          "op": "sdff",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "D",
-              "label": "D",
-              "net": "net:arith:add:dc806dc0d6.Y",
-              "side": "west",
-              "width": 4
-            },
-            {
-              "direction": "in",
-              "id": "CLK",
-              "label": "",
-              "net": "net:clk",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "R",
-              "label": "R",
-              "net": "net:reset",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Q",
-              "label": "Q",
-              "net": "net:q",
-              "side": "east",
-              "width": 4
-            }
-          ],
-          "src": [
-            {
-              "column": 3,
-              "endColumn": 30,
-              "endLine": 4,
-              "line": 2
             }
           ],
           "width": 4

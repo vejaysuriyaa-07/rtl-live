@@ -424,28 +424,6 @@
         },
         {
           "driver": {
-            "node": "inst:hi",
-            "pin": "sum"
-          },
-          "id": "net:inst:hi.sum",
-          "sinks": [
-            {
-              "node": "join:de6387f16a",
-              "pin": "in1"
-            }
-          ],
-          "src": [
-            {
-              "column": 9,
-              "endColumn": 78,
-              "endLine": 7,
-              "line": 7
-            }
-          ],
-          "width": 16
-        },
-        {
-          "driver": {
             "node": "inst:lo",
             "pin": "cout"
           },
@@ -491,46 +469,22 @@
         },
         {
           "driver": {
-            "node": "split:net:a",
-            "pin": "out[31:16]"
+            "node": "inst:hi",
+            "pin": "sum"
           },
-          "id": "net:a[31:16]",
-          "name": "a[31:16]",
+          "id": "net:inst:hi.sum",
           "sinks": [
             {
-              "node": "inst:hi",
-              "pin": "a"
+              "node": "join:de6387f16a",
+              "pin": "in1"
             }
           ],
           "src": [
             {
-              "column": 32,
-              "endColumn": 33,
-              "endLine": 4,
-              "line": 4
-            }
-          ],
-          "width": 16
-        },
-        {
-          "driver": {
-            "node": "split:net:b",
-            "pin": "out[31:16]"
-          },
-          "id": "net:b[31:16]",
-          "name": "b[31:16]",
-          "sinks": [
-            {
-              "node": "inst:hi",
-              "pin": "b"
-            }
-          ],
-          "src": [
-            {
-              "column": 48,
-              "endColumn": 49,
-              "endLine": 4,
-              "line": 4
+              "column": 9,
+              "endColumn": 78,
+              "endLine": 7,
+              "line": 7
             }
           ],
           "width": 16
@@ -605,6 +559,52 @@
         },
         {
           "driver": {
+            "node": "split:net:a",
+            "pin": "out[31:16]"
+          },
+          "id": "net:a[31:16]",
+          "name": "a[31:16]",
+          "sinks": [
+            {
+              "node": "inst:hi",
+              "pin": "a"
+            }
+          ],
+          "src": [
+            {
+              "column": 32,
+              "endColumn": 33,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
+            "node": "split:net:b",
+            "pin": "out[31:16]"
+          },
+          "id": "net:b[31:16]",
+          "name": "b[31:16]",
+          "sinks": [
+            {
+              "node": "inst:hi",
+              "pin": "b"
+            }
+          ],
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 49,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 16
+        },
+        {
+          "driver": {
             "node": "join:de6387f16a",
             "pin": "out"
           },
@@ -642,20 +642,20 @@
               "width": 32
             },
             {
-              "bits": "[31:16]",
-              "direction": "out",
-              "id": "out[31:16]",
-              "label": "",
-              "net": "net:a[31:16]",
-              "side": "east",
-              "width": 16
-            },
-            {
               "bits": "[15:0]",
               "direction": "out",
               "id": "out[15:0]",
               "label": "",
               "net": "net:a[15:0]",
+              "side": "east",
+              "width": 16
+            },
+            {
+              "bits": "[31:16]",
+              "direction": "out",
+              "id": "out[31:16]",
+              "label": "",
+              "net": "net:a[31:16]",
               "side": "east",
               "width": 16
             }
@@ -684,20 +684,20 @@
               "width": 32
             },
             {
-              "bits": "[31:16]",
-              "direction": "out",
-              "id": "out[31:16]",
-              "label": "",
-              "net": "net:b[31:16]",
-              "side": "east",
-              "width": 16
-            },
-            {
               "bits": "[15:0]",
               "direction": "out",
               "id": "out[15:0]",
               "label": "",
               "net": "net:b[15:0]",
+              "side": "east",
+              "width": 16
+            },
+            {
+              "bits": "[31:16]",
+              "direction": "out",
+              "id": "out[31:16]",
+              "label": "",
+              "net": "net:b[31:16]",
               "side": "east",
               "width": 16
             }
@@ -711,64 +711,6 @@
             }
           ],
           "width": 32
-        },
-        {
-          "drillTarget": "add16",
-          "id": "inst:hi",
-          "kind": "instance",
-          "label": "hi : add16",
-          "moduleType": "add16",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "a",
-              "label": "a",
-              "net": "net:a[31:16]",
-              "side": "west",
-              "width": 16
-            },
-            {
-              "direction": "in",
-              "id": "b",
-              "label": "b",
-              "net": "net:b[31:16]",
-              "side": "west",
-              "width": 16
-            },
-            {
-              "direction": "in",
-              "id": "cin",
-              "label": "cin",
-              "net": "net:c",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "cout",
-              "label": "cout",
-              "net": null,
-              "side": "east",
-              "width": 0
-            },
-            {
-              "direction": "out",
-              "id": "sum",
-              "label": "sum",
-              "net": "net:inst:hi.sum",
-              "side": "east",
-              "width": 16
-            }
-          ],
-          "src": [
-            {
-              "column": 9,
-              "endColumn": 78,
-              "endLine": 7,
-              "line": 7
-            }
-          ],
-          "width": 1
         },
         {
           "id": "const:1'b0:694c7136e7",
@@ -851,6 +793,64 @@
               "endColumn": 79,
               "endLine": 6,
               "line": 6
+            }
+          ],
+          "width": 1
+        },
+        {
+          "drillTarget": "add16",
+          "id": "inst:hi",
+          "kind": "instance",
+          "label": "hi : add16",
+          "moduleType": "add16",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "a",
+              "label": "a",
+              "net": "net:a[31:16]",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "in",
+              "id": "b",
+              "label": "b",
+              "net": "net:b[31:16]",
+              "side": "west",
+              "width": 16
+            },
+            {
+              "direction": "in",
+              "id": "cin",
+              "label": "cin",
+              "net": "net:c",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "cout",
+              "label": "cout",
+              "net": null,
+              "side": "east",
+              "width": 0
+            },
+            {
+              "direction": "out",
+              "id": "sum",
+              "label": "sum",
+              "net": "net:inst:hi.sum",
+              "side": "east",
+              "width": 16
+            }
+          ],
+          "src": [
+            {
+              "column": 9,
+              "endColumn": 78,
+              "endLine": 7,
+              "line": 7
             }
           ],
           "width": 1

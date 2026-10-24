@@ -333,29 +333,6 @@
         },
         {
           "driver": {
-            "node": "gate:or:47e9cfb809",
-            "pin": "Y"
-          },
-          "id": "net:p1y",
-          "name": "p1y",
-          "sinks": [
-            {
-              "node": "port:p1y",
-              "pin": "p1y"
-            }
-          ],
-          "src": [
-            {
-              "column": 46,
-              "endColumn": 49,
-              "endLine": 2,
-              "line": 2
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
             "node": "gate:or:774f1d8d73",
             "pin": "Y"
           },
@@ -373,6 +350,29 @@
               "endColumn": 39,
               "endLine": 3,
               "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:or:47e9cfb809",
+            "pin": "Y"
+          },
+          "id": "net:p1y",
+          "name": "p1y",
+          "sinks": [
+            {
+              "node": "port:p1y",
+              "pin": "p1y"
+            }
+          ],
+          "src": [
+            {
+              "column": 46,
+              "endColumn": 49,
+              "endLine": 2,
+              "line": 2
             }
           ],
           "width": 1
@@ -560,47 +560,6 @@
           "width": 1
         },
         {
-          "id": "gate:or:47e9cfb809",
-          "kind": "gate",
-          "label": "OR",
-          "op": "or",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "",
-              "net": "net:w2",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:w4",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:p1y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 16,
-              "endColumn": 23,
-              "endLine": 10,
-              "line": 10
-            }
-          ],
-          "width": 1
-        },
-        {
           "id": "gate:or:774f1d8d73",
           "kind": "gate",
           "label": "OR",
@@ -637,6 +596,47 @@
               "endColumn": 23,
               "endLine": 9,
               "line": 9
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:or:47e9cfb809",
+          "kind": "gate",
+          "label": "OR",
+          "op": "or",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:w2",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:w4",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:p1y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 16,
+              "endColumn": 23,
+              "endLine": 10,
+              "line": 10
             }
           ],
           "width": 1

@@ -131,21 +131,6 @@
         },
         {
           "driver": {
-            "node": "mux:4172595832",
-            "pin": "Y"
-          },
-          "id": "net:mux:4172595832.Y",
-          "sinks": [
-            {
-              "node": "mux:95aa6d6b7c",
-              "pin": "A"
-            }
-          ],
-          "src": [],
-          "width": 4
-        },
-        {
-          "driver": {
             "node": "mux:95aa6d6b7c",
             "pin": "Y"
           },
@@ -164,6 +149,21 @@
               "line": 2
             }
           ],
+          "width": 4
+        },
+        {
+          "driver": {
+            "node": "mux:4172595832",
+            "pin": "Y"
+          },
+          "id": "net:mux:4172595832.Y",
+          "sinks": [
+            {
+              "node": "mux:95aa6d6b7c",
+              "pin": "A"
+            }
+          ],
+          "src": [],
           "width": 4
         },
         {
@@ -236,60 +236,6 @@
               "endColumn": 25,
               "endLine": 4,
               "line": 2
-            }
-          ],
-          "width": 4
-        },
-        {
-          "id": "mux:4172595832",
-          "kind": "mux",
-          "label": "MUX",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "0",
-              "net": "net:q",
-              "side": "west",
-              "width": 4
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "1",
-              "net": "net:d",
-              "side": "west",
-              "width": 4
-            },
-            {
-              "direction": "in",
-              "id": "S",
-              "label": "",
-              "net": "net:en",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:mux:4172595832.Y",
-              "side": "east",
-              "width": 4
-            }
-          ],
-          "src": [
-            {
-              "column": 14,
-              "endColumn": 16,
-              "endLine": 4,
-              "line": 4
-            },
-            {
-              "column": 10,
-              "endColumn": 25,
-              "endLine": 4,
-              "line": 4
             }
           ],
           "width": 4
@@ -377,6 +323,60 @@
               "endColumn": 25,
               "endLine": 4,
               "line": 3
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "mux:4172595832",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:q",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:d",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:en",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:mux:4172595832.Y",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 14,
+              "endColumn": 16,
+              "endLine": 4,
+              "line": 4
+            },
+            {
+              "column": 10,
+              "endColumn": 25,
+              "endLine": 4,
+              "line": 4
             }
           ],
           "width": 4

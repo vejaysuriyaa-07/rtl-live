@@ -18,11 +18,11 @@
           "name": "a",
           "sinks": [
             {
-              "node": "mux:ec8bbae8a9",
+              "node": "mux:5c671cc3ea",
               "pin": "A"
             },
             {
-              "node": "mux:5c671cc3ea",
+              "node": "mux:ec8bbae8a9",
               "pin": "A"
             }
           ],
@@ -45,11 +45,11 @@
           "name": "b",
           "sinks": [
             {
-              "node": "mux:ec8bbae8a9",
+              "node": "mux:5c671cc3ea",
               "pin": "B"
             },
             {
-              "node": "mux:5c671cc3ea",
+              "node": "mux:ec8bbae8a9",
               "pin": "B"
             }
           ],
@@ -113,6 +113,29 @@
               "endColumn": 63,
               "endLine": 1,
               "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "mux:5c671cc3ea",
+            "pin": "Y"
+          },
+          "id": "net:out_assign",
+          "name": "out_assign",
+          "sinks": [
+            {
+              "node": "port:out_assign",
+              "pin": "out_assign"
+            }
+          ],
+          "src": [
+            {
+              "column": 31,
+              "endColumn": 41,
+              "endLine": 2,
+              "line": 2
             }
           ],
           "width": 1
@@ -183,32 +206,57 @@
             }
           ],
           "width": 1
-        },
+        }
+      ],
+      "nodes": [
         {
-          "driver": {
-            "node": "mux:5c671cc3ea",
-            "pin": "Y"
-          },
-          "id": "net:out_assign",
-          "name": "out_assign",
-          "sinks": [
+          "id": "mux:5c671cc3ea",
+          "kind": "mux",
+          "label": "MUX",
+          "pins": [
             {
-              "node": "port:out_assign",
-              "pin": "out_assign"
+              "direction": "in",
+              "id": "A",
+              "label": "0",
+              "net": "net:a",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "1",
+              "net": "net:b",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:gate:and:586fa95cfb.Y",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:out_assign",
+              "side": "east",
+              "width": 1
             }
           ],
           "src": [
             {
-              "column": 31,
-              "endColumn": 41,
-              "endLine": 2,
-              "line": 2
+              "column": 23,
+              "endColumn": 48,
+              "endLine": 3,
+              "line": 3
             }
           ],
           "width": 1
-        }
-      ],
-      "nodes": [
+        },
         {
           "id": "gate:and:586fa95cfb",
           "kind": "gate",
@@ -341,54 +389,6 @@
               "endColumn": 41,
               "endLine": 6,
               "line": 5
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "mux:5c671cc3ea",
-          "kind": "mux",
-          "label": "MUX",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "0",
-              "net": "net:a",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "1",
-              "net": "net:b",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "S",
-              "label": "",
-              "net": "net:gate:and:586fa95cfb.Y",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:out_assign",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 23,
-              "endColumn": 48,
-              "endLine": 3,
-              "line": 3
             }
           ],
           "width": 1

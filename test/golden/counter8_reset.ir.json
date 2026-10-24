@@ -59,28 +59,6 @@
         },
         {
           "driver": {
-            "node": "arith:add:8585a55616",
-            "pin": "Y"
-          },
-          "id": "net:arith:add:8585a55616.Y",
-          "sinks": [
-            {
-              "node": "dff:sdff:f5710d95bf",
-              "pin": "D"
-            }
-          ],
-          "src": [
-            {
-              "column": 21,
-              "endColumn": 29,
-              "endLine": 5,
-              "line": 5
-            }
-          ],
-          "width": 8
-        },
-        {
-          "driver": {
             "node": "dff:sdff:f5710d95bf",
             "pin": "Q"
           },
@@ -102,6 +80,28 @@
               "endColumn": 55,
               "endLine": 2,
               "line": 2
+            }
+          ],
+          "width": 8
+        },
+        {
+          "driver": {
+            "node": "arith:add:8585a55616",
+            "pin": "Y"
+          },
+          "id": "net:arith:add:8585a55616.Y",
+          "sinks": [
+            {
+              "node": "dff:sdff:f5710d95bf",
+              "pin": "D"
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 29,
+              "endLine": 5,
+              "line": 5
             }
           ],
           "width": 8
@@ -130,6 +130,59 @@
         }
       ],
       "nodes": [
+        {
+          "id": "dff:sdff:f5710d95bf",
+          "info": {
+            "clock": "posedge",
+            "reset": "sync, value 00000000"
+          },
+          "kind": "dff",
+          "label": "DFF",
+          "op": "sdff",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "D",
+              "label": "D",
+              "net": "net:arith:add:8585a55616.Y",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "CLK",
+              "label": "",
+              "net": "net:clk",
+              "side": "south",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "R",
+              "label": "R",
+              "net": "net:reset",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "out",
+              "id": "Q",
+              "label": "Q",
+              "net": "net:q",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 3,
+              "endColumn": 30,
+              "endLine": 5,
+              "line": 3
+            }
+          ],
+          "width": 8
+        },
         {
           "id": "const:8'b00000001:7b8a904032",
           "info": {
@@ -194,59 +247,6 @@
               "endColumn": 29,
               "endLine": 5,
               "line": 5
-            }
-          ],
-          "width": 8
-        },
-        {
-          "id": "dff:sdff:f5710d95bf",
-          "info": {
-            "clock": "posedge",
-            "reset": "sync, value 00000000"
-          },
-          "kind": "dff",
-          "label": "DFF",
-          "op": "sdff",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "D",
-              "label": "D",
-              "net": "net:arith:add:8585a55616.Y",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "in",
-              "id": "CLK",
-              "label": "",
-              "net": "net:clk",
-              "side": "south",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "R",
-              "label": "R",
-              "net": "net:reset",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "out",
-              "id": "Q",
-              "label": "Q",
-              "net": "net:q",
-              "side": "east",
-              "width": 8
-            }
-          ],
-          "src": [
-            {
-              "column": 3,
-              "endColumn": 30,
-              "endLine": 5,
-              "line": 3
             }
           ],
           "width": 8

@@ -58,28 +58,6 @@
         },
         {
           "driver": {
-            "node": "arith:add:8585a55616",
-            "pin": "Y"
-          },
-          "id": "net:arith:add:8585a55616.Y",
-          "sinks": [
-            {
-              "node": "mux:84f9bdbfeb",
-              "pin": "A"
-            }
-          ],
-          "src": [
-            {
-              "column": 21,
-              "endColumn": 29,
-              "endLine": 5,
-              "line": 5
-            }
-          ],
-          "width": 8
-        },
-        {
-          "driver": {
             "node": "dff:dff:5d546605c6",
             "pin": "Q"
           },
@@ -129,14 +107,14 @@
         },
         {
           "driver": {
-            "node": "const:8'b00000001:7b8a904032",
+            "node": "arith:add:8585a55616",
             "pin": "Y"
           },
-          "id": "net:const:8'b00000001:7b8a904032.Y",
+          "id": "net:arith:add:8585a55616.Y",
           "sinks": [
             {
-              "node": "arith:add:8585a55616",
-              "pin": "B"
+              "node": "mux:84f9bdbfeb",
+              "pin": "A"
             }
           ],
           "src": [
@@ -176,77 +154,31 @@
             }
           ],
           "width": 8
+        },
+        {
+          "driver": {
+            "node": "const:8'b00000001:7b8a904032",
+            "pin": "Y"
+          },
+          "id": "net:const:8'b00000001:7b8a904032.Y",
+          "sinks": [
+            {
+              "node": "arith:add:8585a55616",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 29,
+              "endLine": 5,
+              "line": 5
+            }
+          ],
+          "width": 8
         }
       ],
       "nodes": [
-        {
-          "id": "const:8'b00000001:7b8a904032",
-          "info": {
-            "value": "8'b00000001"
-          },
-          "kind": "const",
-          "label": "8'b00000001",
-          "pins": [
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:const:8'b00000001:7b8a904032.Y",
-              "side": "east",
-              "width": 8
-            }
-          ],
-          "src": [
-            {
-              "column": 21,
-              "endColumn": 29,
-              "endLine": 5,
-              "line": 5
-            }
-          ],
-          "width": 8
-        },
-        {
-          "id": "arith:add:8585a55616",
-          "kind": "arith",
-          "label": "+",
-          "op": "add",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "",
-              "net": "net:q",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:const:8'b00000001:7b8a904032.Y",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:arith:add:8585a55616.Y",
-              "side": "east",
-              "width": 8
-            }
-          ],
-          "src": [
-            {
-              "column": 21,
-              "endColumn": 29,
-              "endLine": 5,
-              "line": 5
-            }
-          ],
-          "width": 8
-        },
         {
           "id": "dff:dff:5d546605c6",
           "info": {
@@ -374,6 +306,74 @@
               "endColumn": 30,
               "endLine": 5,
               "line": 4
+            }
+          ],
+          "width": 8
+        },
+        {
+          "id": "const:8'b00000001:7b8a904032",
+          "info": {
+            "value": "8'b00000001"
+          },
+          "kind": "const",
+          "label": "8'b00000001",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:8'b00000001:7b8a904032.Y",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 29,
+              "endLine": 5,
+              "line": 5
+            }
+          ],
+          "width": 8
+        },
+        {
+          "id": "arith:add:8585a55616",
+          "kind": "arith",
+          "label": "+",
+          "op": "add",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:q",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:const:8'b00000001:7b8a904032.Y",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:arith:add:8585a55616.Y",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 29,
+              "endLine": 5,
+              "line": 5
             }
           ],
           "width": 8

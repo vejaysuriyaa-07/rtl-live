@@ -49,12 +49,12 @@
           "name": "d",
           "sinks": [
             {
-              "node": "pmux:f89b8b7d78",
-              "pin": "A"
-            },
-            {
               "node": "inst:u1",
               "pin": "d"
+            },
+            {
+              "node": "pmux:f89b8b7d78",
+              "pin": "A"
             }
           ],
           "src": [
@@ -76,7 +76,7 @@
           "name": "sel",
           "sinks": [
             {
-              "node": "compare:eq:276ee70e37",
+              "node": "compare:eq:f335117187",
               "pin": "A"
             },
             {
@@ -84,7 +84,7 @@
               "pin": "A"
             },
             {
-              "node": "compare:eq:f335117187",
+              "node": "compare:eq:276ee70e37",
               "pin": "A"
             }
           ],
@@ -100,74 +100,6 @@
         },
         {
           "driver": {
-            "node": "pmux:f89b8b7d78",
-            "pin": "Y"
-          },
-          "id": "net:q",
-          "name": "q",
-          "sinks": [
-            {
-              "node": "port:q",
-              "pin": "q"
-            }
-          ],
-          "src": [
-            {
-              "column": 79,
-              "endColumn": 80,
-              "endLine": 1,
-              "line": 1
-            }
-          ],
-          "width": 8
-        },
-        {
-          "driver": {
-            "node": "compare:eq:276ee70e37",
-            "pin": "Y"
-          },
-          "id": "net:compare:eq:276ee70e37.Y",
-          "sinks": [
-            {
-              "node": "join:921882cb6c",
-              "pin": "in0"
-            }
-          ],
-          "src": [],
-          "width": 1
-        },
-        {
-          "driver": {
-            "node": "compare:eq:0c289f672a",
-            "pin": "Y"
-          },
-          "id": "net:compare:eq:0c289f672a.Y",
-          "sinks": [
-            {
-              "node": "join:921882cb6c",
-              "pin": "in1"
-            }
-          ],
-          "src": [],
-          "width": 1
-        },
-        {
-          "driver": {
-            "node": "compare:eq:f335117187",
-            "pin": "Y"
-          },
-          "id": "net:compare:eq:f335117187.Y",
-          "sinks": [
-            {
-              "node": "join:921882cb6c",
-              "pin": "in2"
-            }
-          ],
-          "src": [],
-          "width": 1
-        },
-        {
-          "driver": {
             "node": "inst:u1",
             "pin": "q"
           },
@@ -175,12 +107,12 @@
           "name": "q1",
           "sinks": [
             {
-              "node": "pmux:f89b8b7d78",
-              "pin": "B2"
-            },
-            {
               "node": "inst:u2",
               "pin": "d"
+            },
+            {
+              "node": "pmux:f89b8b7d78",
+              "pin": "B2"
             }
           ],
           "src": [
@@ -202,12 +134,12 @@
           "name": "q2",
           "sinks": [
             {
-              "node": "pmux:f89b8b7d78",
-              "pin": "B1"
-            },
-            {
               "node": "inst:u3",
               "pin": "d"
+            },
+            {
+              "node": "pmux:f89b8b7d78",
+              "pin": "B1"
             }
           ],
           "src": [
@@ -245,50 +177,90 @@
         },
         {
           "driver": {
-            "node": "join:921882cb6c",
-            "pin": "out"
+            "node": "compare:eq:f335117187",
+            "pin": "Y"
           },
-          "id": "net:join:921882cb6c.out",
+          "id": "net:compare:eq:f335117187.Y",
           "sinks": [
             {
-              "node": "pmux:f89b8b7d78",
-              "pin": "S"
+              "node": "join:921882cb6c",
+              "pin": "in2"
+            }
+          ],
+          "src": [],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "compare:eq:0c289f672a",
+            "pin": "Y"
+          },
+          "id": "net:compare:eq:0c289f672a.Y",
+          "sinks": [
+            {
+              "node": "join:921882cb6c",
+              "pin": "in1"
+            }
+          ],
+          "src": [],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "compare:eq:276ee70e37",
+            "pin": "Y"
+          },
+          "id": "net:compare:eq:276ee70e37.Y",
+          "sinks": [
+            {
+              "node": "join:921882cb6c",
+              "pin": "in0"
+            }
+          ],
+          "src": [],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "pmux:f89b8b7d78",
+            "pin": "Y"
+          },
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
+            {
+              "node": "port:q",
+              "pin": "q"
             }
           ],
           "src": [
             {
-              "column": 20,
-              "endColumn": 20,
-              "endLine": 10,
-              "line": 10
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 12,
-              "line": 7
+              "column": 79,
+              "endColumn": 80,
+              "endLine": 1,
+              "line": 1
             }
           ],
-          "width": 3
+          "width": 8
         },
         {
           "driver": {
-            "node": "const:2'b11:125c8a83aa",
+            "node": "const:2'b01:38e737268d",
             "pin": "Y"
           },
-          "id": "net:const:2'b11:125c8a83aa.Y",
+          "id": "net:const:2'b01:38e737268d.Y",
           "sinks": [
             {
-              "node": "compare:eq:276ee70e37",
+              "node": "compare:eq:f335117187",
               "pin": "B"
             }
           ],
           "src": [
             {
-              "column": 20,
-              "endColumn": 20,
-              "endLine": 10,
-              "line": 10
+              "column": 19,
+              "endColumn": 19,
+              "endLine": 8,
+              "line": 8
             },
             {
               "column": 5,
@@ -329,14 +301,200 @@
         },
         {
           "driver": {
-            "node": "const:2'b01:38e737268d",
+            "node": "const:2'b11:125c8a83aa",
             "pin": "Y"
           },
-          "id": "net:const:2'b01:38e737268d.Y",
+          "id": "net:const:2'b11:125c8a83aa.Y",
           "sinks": [
             {
-              "node": "compare:eq:f335117187",
+              "node": "compare:eq:276ee70e37",
               "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 20,
+              "endLine": 10,
+              "line": 10
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 12,
+              "line": 7
+            }
+          ],
+          "width": 2
+        },
+        {
+          "driver": {
+            "node": "join:921882cb6c",
+            "pin": "out"
+          },
+          "id": "net:join:921882cb6c.out",
+          "sinks": [
+            {
+              "node": "pmux:f89b8b7d78",
+              "pin": "S"
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 20,
+              "endLine": 10,
+              "line": 10
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 12,
+              "line": 7
+            }
+          ],
+          "width": 3
+        }
+      ],
+      "nodes": [
+        {
+          "id": "inst:u1",
+          "kind": "blackbox",
+          "label": "u1 : my_dff8",
+          "moduleType": "my_dff8",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "clk",
+              "label": "clk",
+              "net": "net:clk",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "d",
+              "label": "d",
+              "net": "net:d",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "out",
+              "id": "q",
+              "label": "q",
+              "net": "net:q1",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 11,
+              "endColumn": 40,
+              "endLine": 3,
+              "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "inst:u2",
+          "kind": "blackbox",
+          "label": "u2 : my_dff8",
+          "moduleType": "my_dff8",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "clk",
+              "label": "clk",
+              "net": "net:clk",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "d",
+              "label": "d",
+              "net": "net:q1",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "out",
+              "id": "q",
+              "label": "q",
+              "net": "net:q2",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 11,
+              "endColumn": 40,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "inst:u3",
+          "kind": "blackbox",
+          "label": "u3 : my_dff8",
+          "moduleType": "my_dff8",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "clk",
+              "label": "clk",
+              "net": "net:clk",
+              "side": "west",
+              "width": 1
+            },
+            {
+              "direction": "in",
+              "id": "d",
+              "label": "d",
+              "net": "net:q2",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "out",
+              "id": "q",
+              "label": "q",
+              "net": "net:q3",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 11,
+              "endColumn": 40,
+              "endLine": 5,
+              "line": 5
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "const:2'b01:38e737268d",
+          "info": {
+            "value": "2'b01"
+          },
+          "kind": "const",
+          "label": "2'b01",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:2'b01:38e737268d.Y",
+              "side": "east",
+              "width": 2
             }
           ],
           "src": [
@@ -354,9 +512,214 @@
             }
           ],
           "width": 2
-        }
-      ],
-      "nodes": [
+        },
+        {
+          "id": "compare:eq:f335117187",
+          "kind": "compare",
+          "label": "=",
+          "op": "eq",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:sel",
+              "side": "west",
+              "width": 2
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:const:2'b01:38e737268d.Y",
+              "side": "west",
+              "width": 2
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:compare:eq:f335117187.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 19,
+              "endColumn": 19,
+              "endLine": 8,
+              "line": 8
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 12,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "const:2'b10:b01b6a0873",
+          "info": {
+            "value": "2'b10"
+          },
+          "kind": "const",
+          "label": "2'b10",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:2'b10:b01b6a0873.Y",
+              "side": "east",
+              "width": 2
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 20,
+              "endLine": 9,
+              "line": 9
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 12,
+              "line": 7
+            }
+          ],
+          "width": 2
+        },
+        {
+          "id": "compare:eq:0c289f672a",
+          "kind": "compare",
+          "label": "=",
+          "op": "eq",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:sel",
+              "side": "west",
+              "width": 2
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:const:2'b10:b01b6a0873.Y",
+              "side": "west",
+              "width": 2
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:compare:eq:0c289f672a.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 20,
+              "endLine": 9,
+              "line": 9
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 12,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "const:2'b11:125c8a83aa",
+          "info": {
+            "value": "2'b11"
+          },
+          "kind": "const",
+          "label": "2'b11",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:2'b11:125c8a83aa.Y",
+              "side": "east",
+              "width": 2
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 20,
+              "endLine": 10,
+              "line": 10
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 12,
+              "line": 7
+            }
+          ],
+          "width": 2
+        },
+        {
+          "id": "compare:eq:276ee70e37",
+          "kind": "compare",
+          "label": "=",
+          "op": "eq",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:sel",
+              "side": "west",
+              "width": 2
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:const:2'b11:125c8a83aa.Y",
+              "side": "west",
+              "width": 2
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:compare:eq:276ee70e37.Y",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 20,
+              "endLine": 10,
+              "line": 10
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 12,
+              "line": 7
+            }
+          ],
+          "width": 1
+        },
         {
           "id": "join:921882cb6c",
           "kind": "join",
@@ -483,369 +846,6 @@
             }
           ],
           "width": 8
-        },
-        {
-          "id": "const:2'b11:125c8a83aa",
-          "info": {
-            "value": "2'b11"
-          },
-          "kind": "const",
-          "label": "2'b11",
-          "pins": [
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:const:2'b11:125c8a83aa.Y",
-              "side": "east",
-              "width": 2
-            }
-          ],
-          "src": [
-            {
-              "column": 20,
-              "endColumn": 20,
-              "endLine": 10,
-              "line": 10
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 12,
-              "line": 7
-            }
-          ],
-          "width": 2
-        },
-        {
-          "id": "compare:eq:276ee70e37",
-          "kind": "compare",
-          "label": "=",
-          "op": "eq",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "",
-              "net": "net:sel",
-              "side": "west",
-              "width": 2
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:const:2'b11:125c8a83aa.Y",
-              "side": "west",
-              "width": 2
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:compare:eq:276ee70e37.Y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 20,
-              "endColumn": 20,
-              "endLine": 10,
-              "line": 10
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 12,
-              "line": 7
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "const:2'b10:b01b6a0873",
-          "info": {
-            "value": "2'b10"
-          },
-          "kind": "const",
-          "label": "2'b10",
-          "pins": [
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:const:2'b10:b01b6a0873.Y",
-              "side": "east",
-              "width": 2
-            }
-          ],
-          "src": [
-            {
-              "column": 20,
-              "endColumn": 20,
-              "endLine": 9,
-              "line": 9
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 12,
-              "line": 7
-            }
-          ],
-          "width": 2
-        },
-        {
-          "id": "compare:eq:0c289f672a",
-          "kind": "compare",
-          "label": "=",
-          "op": "eq",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "",
-              "net": "net:sel",
-              "side": "west",
-              "width": 2
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:const:2'b10:b01b6a0873.Y",
-              "side": "west",
-              "width": 2
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:compare:eq:0c289f672a.Y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 20,
-              "endColumn": 20,
-              "endLine": 9,
-              "line": 9
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 12,
-              "line": 7
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "const:2'b01:38e737268d",
-          "info": {
-            "value": "2'b01"
-          },
-          "kind": "const",
-          "label": "2'b01",
-          "pins": [
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:const:2'b01:38e737268d.Y",
-              "side": "east",
-              "width": 2
-            }
-          ],
-          "src": [
-            {
-              "column": 19,
-              "endColumn": 19,
-              "endLine": 8,
-              "line": 8
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 12,
-              "line": 7
-            }
-          ],
-          "width": 2
-        },
-        {
-          "id": "compare:eq:f335117187",
-          "kind": "compare",
-          "label": "=",
-          "op": "eq",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "",
-              "net": "net:sel",
-              "side": "west",
-              "width": 2
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:const:2'b01:38e737268d.Y",
-              "side": "west",
-              "width": 2
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:compare:eq:f335117187.Y",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 19,
-              "endColumn": 19,
-              "endLine": 8,
-              "line": 8
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 12,
-              "line": 7
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "inst:u1",
-          "kind": "blackbox",
-          "label": "u1 : my_dff8",
-          "moduleType": "my_dff8",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "clk",
-              "label": "clk",
-              "net": "net:clk",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "d",
-              "label": "d",
-              "net": "net:d",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "out",
-              "id": "q",
-              "label": "q",
-              "net": "net:q1",
-              "side": "east",
-              "width": 8
-            }
-          ],
-          "src": [
-            {
-              "column": 11,
-              "endColumn": 40,
-              "endLine": 3,
-              "line": 3
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "inst:u2",
-          "kind": "blackbox",
-          "label": "u2 : my_dff8",
-          "moduleType": "my_dff8",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "clk",
-              "label": "clk",
-              "net": "net:clk",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "d",
-              "label": "d",
-              "net": "net:q1",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "out",
-              "id": "q",
-              "label": "q",
-              "net": "net:q2",
-              "side": "east",
-              "width": 8
-            }
-          ],
-          "src": [
-            {
-              "column": 11,
-              "endColumn": 40,
-              "endLine": 4,
-              "line": 4
-            }
-          ],
-          "width": 1
-        },
-        {
-          "id": "inst:u3",
-          "kind": "blackbox",
-          "label": "u3 : my_dff8",
-          "moduleType": "my_dff8",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "clk",
-              "label": "clk",
-              "net": "net:clk",
-              "side": "west",
-              "width": 1
-            },
-            {
-              "direction": "in",
-              "id": "d",
-              "label": "d",
-              "net": "net:q2",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "out",
-              "id": "q",
-              "label": "q",
-              "net": "net:q3",
-              "side": "east",
-              "width": 8
-            }
-          ],
-          "src": [
-            {
-              "column": 11,
-              "endColumn": 40,
-              "endLine": 5,
-              "line": 5
-            }
-          ],
-          "width": 1
         }
       ],
       "ports": [

@@ -58,28 +58,6 @@
         },
         {
           "driver": {
-            "node": "arith:add:dc806dc0d6",
-            "pin": "Y"
-          },
-          "id": "net:arith:add:dc806dc0d6.Y",
-          "sinks": [
-            {
-              "node": "mux:e7c052502f",
-              "pin": "A"
-            }
-          ],
-          "src": [
-            {
-              "column": 21,
-              "endColumn": 29,
-              "endLine": 4,
-              "line": 4
-            }
-          ],
-          "width": 4
-        },
-        {
-          "driver": {
             "node": "dff:dff:5d546605c6",
             "pin": "Q"
           },
@@ -129,14 +107,14 @@
         },
         {
           "driver": {
-            "node": "const:4'b0001:694afbebd8",
+            "node": "arith:add:dc806dc0d6",
             "pin": "Y"
           },
-          "id": "net:const:4'b0001:694afbebd8.Y",
+          "id": "net:arith:add:dc806dc0d6.Y",
           "sinks": [
             {
-              "node": "arith:add:dc806dc0d6",
-              "pin": "B"
+              "node": "mux:e7c052502f",
+              "pin": "A"
             }
           ],
           "src": [
@@ -176,77 +154,31 @@
             }
           ],
           "width": 4
+        },
+        {
+          "driver": {
+            "node": "const:4'b0001:694afbebd8",
+            "pin": "Y"
+          },
+          "id": "net:const:4'b0001:694afbebd8.Y",
+          "sinks": [
+            {
+              "node": "arith:add:dc806dc0d6",
+              "pin": "B"
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 29,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 4
         }
       ],
       "nodes": [
-        {
-          "id": "const:4'b0001:694afbebd8",
-          "info": {
-            "value": "4'b0001"
-          },
-          "kind": "const",
-          "label": "4'b0001",
-          "pins": [
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:const:4'b0001:694afbebd8.Y",
-              "side": "east",
-              "width": 4
-            }
-          ],
-          "src": [
-            {
-              "column": 21,
-              "endColumn": 29,
-              "endLine": 4,
-              "line": 4
-            }
-          ],
-          "width": 4
-        },
-        {
-          "id": "arith:add:dc806dc0d6",
-          "kind": "arith",
-          "label": "+",
-          "op": "add",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "",
-              "net": "net:q",
-              "side": "west",
-              "width": 4
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:const:4'b0001:694afbebd8.Y",
-              "side": "west",
-              "width": 4
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:arith:add:dc806dc0d6.Y",
-              "side": "east",
-              "width": 4
-            }
-          ],
-          "src": [
-            {
-              "column": 21,
-              "endColumn": 29,
-              "endLine": 4,
-              "line": 4
-            }
-          ],
-          "width": 4
-        },
         {
           "id": "dff:dff:5d546605c6",
           "info": {
@@ -374,6 +306,74 @@
               "endColumn": 30,
               "endLine": 4,
               "line": 3
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "const:4'b0001:694afbebd8",
+          "info": {
+            "value": "4'b0001"
+          },
+          "kind": "const",
+          "label": "4'b0001",
+          "pins": [
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:const:4'b0001:694afbebd8.Y",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 29,
+              "endLine": 4,
+              "line": 4
+            }
+          ],
+          "width": 4
+        },
+        {
+          "id": "arith:add:dc806dc0d6",
+          "kind": "arith",
+          "label": "+",
+          "op": "add",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:q",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:const:4'b0001:694afbebd8.Y",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:arith:add:dc806dc0d6.Y",
+              "side": "east",
+              "width": 4
+            }
+          ],
+          "src": [
+            {
+              "column": 21,
+              "endColumn": 29,
+              "endLine": 4,
+              "line": 4
             }
           ],
           "width": 4

@@ -95,7 +95,12 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
   const namesBySig = new Map<string, { name: string; src: SrcRange[] }>();
   const aliasesBySig = new Map<string, string[]>();
   const srcBySig = new Map<string, SrcRange[]>();
-  for (const [nn, info] of Object.entries(ym.netnames)) {
+  // Yosys dict order differs between builds (0.70+219 renamed auto cells from $type$src$n to
+  // $src$type$n, which reorders write_json output). Every array below is built in an order of
+  // our own: net names alphabetically, cells by source position, so the IR is the same for any
+  // Yosys build and the golden files hold for the native and the bundled engine alike.
+  const netnameEntries = Object.entries(ym.netnames).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  for (const [nn, info] of netnameEntries) {
     const sig = info.bits.map(bitKey).join(",");
     const src = parseSrc(info.attributes?.["src"]);
     if (!srcBySig.has(sig)) srcBySig.set(sig, src);
@@ -106,7 +111,7 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
   }
   // Single-bit lookup: name of a 1-bit signal containing the bit at index i -> "name[i]"
   const bitName = new Map<string, string>();
-  for (const [nn, info] of Object.entries(ym.netnames)) {
+  for (const [nn, info] of netnameEntries) {
     if (info.hide_name === 1 || nn.startsWith("$")) continue;
     info.bits.forEach((b, i) => {
       if (typeof b !== "number") return;
@@ -299,13 +304,8 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
 
   // ---- node ids for cells: hash of kind, op, named nets on pins, ordinal
   const keyCount = new Map<string, number>();
-  const srcOrder = (c: CellInfo): string => {
-    const s = c.src[0];
-    return `${String(s?.line ?? 0).padStart(6, "0")}:${String(s?.column ?? 0).padStart(5, "0")}:${c.cellName}`;
-  };
-  const sortedCells = [...cells].sort((a, b) => (srcOrder(a) < srcOrder(b) ? -1 : 1));
-  for (const c of sortedCells) {
-    if (c.id !== "") continue; // instances keep their user name
+  // Named nets on a cell's pins (what the id hashes, and the tie-break below).
+  const pinNames = (c: CellInfo): string[] => {
     const names: string[] = [];
     for (const p of c.pins) {
       if (p.spec.direction === "out") {
@@ -315,6 +315,24 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
         names.push(...runNames(runsOf(p.bits)));
       }
     }
+    return names;
+  };
+  // Source position first, then kind, op and the sorted pin net names; the Yosys cell name is the
+  // last resort only, because its format changes between builds (cells without a source position,
+  // such as pass-created $auto$ cells, would otherwise follow it).
+  const srcKey = new Map<CellInfo, string>();
+  for (const c of cells) {
+    const s = c.src[0];
+    srcKey.set(c, `${String(s?.line ?? 0).padStart(6, "0")}:${String(s?.column ?? 0).padStart(5, "0")}:${c.kind}:${c.op ?? ""}:${[...pinNames(c)].sort().join(",")}:${c.cellName}`);
+  }
+  const sortedCells = [...cells].sort((a, b) => {
+    const ka = srcKey.get(a)!;
+    const kb = srcKey.get(b)!;
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+  for (const c of sortedCells) {
+    if (c.id !== "") continue; // instances keep their user name
+    const names = pinNames(c);
     const key = `${c.kind}|${c.op ?? ""}|${[...names].sort().join(",")}`;
     const ordinal = keyCount.get(key) ?? 0;
     keyCount.set(key, ordinal + 1);
@@ -340,7 +358,20 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
     }
     return n;
   };
-  for (const dn of driverNets.values()) ensureNet(dn);
+  // Nets in an order of our own: input ports in declaration order, then cell outputs in source
+  // order (driverNets itself was filled in Yosys cell order).
+  const cellRank = new Map(sortedCells.map((c, i) => [c.id, i]));
+  const portRank = new Map(ports.map((p, i) => [`port:${p.name}`, i]));
+  const driverKey = new Map<DriverNet, string>();
+  for (const dn of driverNets.values()) {
+    driverKey.set(dn, dn.ep.node.startsWith("port:") ? `0:${String(portRank.get(dn.ep.node) ?? 0).padStart(5, "0")}` : `1:${String(cellRank.get(dn.ep.node) ?? 0).padStart(6, "0")}:${dn.ep.pin}`);
+  }
+  const sortedDrivers = [...driverNets.values()].sort((a, b) => {
+    const ka = driverKey.get(a)!;
+    const kb = driverKey.get(b)!;
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+  for (const dn of sortedDrivers) ensureNet(dn);
 
   const splitNodes = new Map<string, Node>(); // by driver net id
   const sliceNet = (r: Extract<Run, { kind: "slice" | "repeat" }>): Net => {
@@ -499,8 +530,9 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
     throw new Error("undriven run has no net");
   }
 
-  // Cells -> nodes
-  for (const c of cells) {
+  // Cells -> nodes, in source order (see srcOrder), so node, net and sink order never follow
+  // the Yosys cell names.
+  for (const c of sortedCells) {
     const pins: Pin[] = [];
     for (const p of c.pins) {
       const width = p.bits.length;

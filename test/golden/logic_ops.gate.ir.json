@@ -22,11 +22,11 @@
               "pin": "A"
             },
             {
-              "node": "gate:not:5aba802277",
+              "node": "gate:or:919d004b6d",
               "pin": "A"
             },
             {
-              "node": "gate:or:919d004b6d",
+              "node": "gate:not:5aba802277",
               "pin": "A"
             }
           ],
@@ -92,29 +92,6 @@
         },
         {
           "driver": {
-            "node": "gate:not:5aba802277",
-            "pin": "Y"
-          },
-          "id": "net:y_not",
-          "name": "y_not",
-          "sinks": [
-            {
-              "node": "port:y_not",
-              "pin": "y_not"
-            }
-          ],
-          "src": [
-            {
-              "column": 83,
-              "endColumn": 88,
-              "endLine": 1,
-              "line": 1
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
             "node": "gate:or:919d004b6d",
             "pin": "Y"
           },
@@ -130,6 +107,29 @@
             {
               "column": 70,
               "endColumn": 74,
+              "endLine": 1,
+              "line": 1
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "gate:not:5aba802277",
+            "pin": "Y"
+          },
+          "id": "net:y_not",
+          "name": "y_not",
+          "sinks": [
+            {
+              "node": "port:y_not",
+              "pin": "y_not"
+            }
+          ],
+          "src": [
+            {
+              "column": 83,
+              "endColumn": 88,
               "endLine": 1,
               "line": 1
             }
@@ -183,42 +183,6 @@
           "width": 1
         },
         {
-          "id": "gate:not:5aba802277",
-          "info": {
-            "logical": "1"
-          },
-          "kind": "gate",
-          "label": "NOT",
-          "op": "not",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "",
-              "net": "net:a",
-              "side": "west",
-              "width": 3
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:y_not",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 18,
-              "endColumn": 20,
-              "endLine": 4,
-              "line": 4
-            }
-          ],
-          "width": 1
-        },
-        {
           "id": "gate:or:919d004b6d",
           "info": {
             "logical": "1"
@@ -258,6 +222,42 @@
               "endColumn": 24,
               "endLine": 3,
               "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "gate:not:5aba802277",
+          "info": {
+            "logical": "1"
+          },
+          "kind": "gate",
+          "label": "NOT",
+          "op": "not",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 3
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:y_not",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 18,
+              "endColumn": 20,
+              "endLine": 4,
+              "line": 4
             }
           ],
           "width": 1

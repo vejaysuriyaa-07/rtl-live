@@ -18,11 +18,11 @@
           "name": "a",
           "sinks": [
             {
-              "node": "compare:eq:ff240b921d",
+              "node": "compare:gt:7426c24c31",
               "pin": "A"
             },
             {
-              "node": "compare:gt:7426c24c31",
+              "node": "compare:eq:ff240b921d",
               "pin": "A"
             },
             {
@@ -49,11 +49,11 @@
           "name": "b",
           "sinks": [
             {
-              "node": "compare:eq:ff240b921d",
+              "node": "compare:gt:7426c24c31",
               "pin": "B"
             },
             {
-              "node": "compare:gt:7426c24c31",
+              "node": "compare:eq:ff240b921d",
               "pin": "B"
             },
             {
@@ -73,29 +73,6 @@
         },
         {
           "driver": {
-            "node": "compare:eq:ff240b921d",
-            "pin": "Y"
-          },
-          "id": "net:eq",
-          "name": "eq",
-          "sinks": [
-            {
-              "node": "port:eq",
-              "pin": "eq"
-            }
-          ],
-          "src": [
-            {
-              "column": 48,
-              "endColumn": 50,
-              "endLine": 2,
-              "line": 2
-            }
-          ],
-          "width": 1
-        },
-        {
-          "driver": {
             "node": "compare:gt:7426c24c31",
             "pin": "Y"
           },
@@ -111,6 +88,29 @@
             {
               "column": 44,
               "endColumn": 46,
+              "endLine": 2,
+              "line": 2
+            }
+          ],
+          "width": 1
+        },
+        {
+          "driver": {
+            "node": "compare:eq:ff240b921d",
+            "pin": "Y"
+          },
+          "id": "net:eq",
+          "name": "eq",
+          "sinks": [
+            {
+              "node": "port:eq",
+              "pin": "eq"
+            }
+          ],
+          "src": [
+            {
+              "column": 48,
+              "endColumn": 50,
               "endLine": 2,
               "line": 2
             }
@@ -142,47 +142,6 @@
         }
       ],
       "nodes": [
-        {
-          "id": "compare:eq:ff240b921d",
-          "kind": "compare",
-          "label": "=",
-          "op": "eq",
-          "pins": [
-            {
-              "direction": "in",
-              "id": "A",
-              "label": "",
-              "net": "net:a",
-              "side": "west",
-              "width": 4
-            },
-            {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:b",
-              "side": "west",
-              "width": 4
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:eq",
-              "side": "east",
-              "width": 1
-            }
-          ],
-          "src": [
-            {
-              "column": 15,
-              "endColumn": 21,
-              "endLine": 4,
-              "line": 4
-            }
-          ],
-          "width": 1
-        },
         {
           "id": "compare:gt:7426c24c31",
           "kind": "compare",
@@ -220,6 +179,47 @@
               "endColumn": 20,
               "endLine": 3,
               "line": 3
+            }
+          ],
+          "width": 1
+        },
+        {
+          "id": "compare:eq:ff240b921d",
+          "kind": "compare",
+          "label": "=",
+          "op": "eq",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "A",
+              "label": "",
+              "net": "net:a",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 4
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:eq",
+              "side": "east",
+              "width": 1
+            }
+          ],
+          "src": [
+            {
+              "column": 15,
+              "endColumn": 21,
+              "endLine": 4,
+              "line": 4
             }
           ],
           "width": 1

@@ -18,7 +18,7 @@
           "name": "a",
           "sinks": [
             {
-              "node": "gate:not:5bfea4072e",
+              "node": "gate:or:521727e224",
               "pin": "A"
             },
             {
@@ -30,7 +30,7 @@
               "pin": "in"
             },
             {
-              "node": "gate:or:521727e224",
+              "node": "gate:not:5bfea4072e",
               "pin": "A"
             }
           ],
@@ -53,11 +53,11 @@
           "name": "b",
           "sinks": [
             {
-              "node": "gate:or:bb1baf69b5",
+              "node": "gate:or:521727e224",
               "pin": "B"
             },
             {
-              "node": "gate:or:521727e224",
+              "node": "gate:or:bb1baf69b5",
               "pin": "B"
             }
           ],
@@ -73,26 +73,26 @@
         },
         {
           "driver": {
-            "node": "gate:not:5bfea4072e",
+            "node": "gate:or:521727e224",
             "pin": "Y"
           },
-          "id": "net:nl",
-          "name": "nl",
+          "id": "net:bw",
+          "name": "bw",
           "sinks": [
             {
-              "node": "port:nl",
-              "pin": "nl"
+              "node": "port:bw",
+              "pin": "bw"
             }
           ],
           "src": [
             {
-              "column": 83,
-              "endColumn": 85,
+              "column": 50,
+              "endColumn": 52,
               "endLine": 2,
               "line": 2
             }
           ],
-          "width": 1
+          "width": 3
         },
         {
           "driver": {
@@ -142,26 +142,26 @@
         },
         {
           "driver": {
-            "node": "gate:or:521727e224",
+            "node": "gate:not:5bfea4072e",
             "pin": "Y"
           },
-          "id": "net:bw",
-          "name": "bw",
+          "id": "net:nl",
+          "name": "nl",
           "sinks": [
             {
-              "node": "port:bw",
-              "pin": "bw"
+              "node": "port:nl",
+              "pin": "nl"
             }
           ],
           "src": [
             {
-              "column": 50,
-              "endColumn": 52,
+              "column": 83,
+              "endColumn": 85,
               "endLine": 2,
               "line": 2
             }
           ],
-          "width": 3
+          "width": 1
         },
         {
           "driver": {
@@ -189,13 +189,10 @@
       ],
       "nodes": [
         {
-          "id": "gate:not:5bfea4072e",
-          "info": {
-            "logical": "1"
-          },
+          "id": "gate:or:521727e224",
           "kind": "gate",
-          "label": "NOT",
-          "op": "not",
+          "label": "OR",
+          "op": "or",
           "pins": [
             {
               "direction": "in",
@@ -206,23 +203,31 @@
               "width": 3
             },
             {
+              "direction": "in",
+              "id": "B",
+              "label": "",
+              "net": "net:b",
+              "side": "west",
+              "width": 3
+            },
+            {
               "direction": "out",
               "id": "Y",
               "label": "",
-              "net": "net:nl",
+              "net": "net:bw",
               "side": "east",
-              "width": 1
+              "width": 3
             }
           ],
           "src": [
             {
               "column": 15,
-              "endColumn": 17,
-              "endLine": 6,
-              "line": 6
+              "endColumn": 20,
+              "endLine": 3,
+              "line": 3
             }
           ],
-          "width": 1
+          "width": 3
         },
         {
           "id": "gate:or:bb1baf69b5",
@@ -335,10 +340,13 @@
           "width": 1
         },
         {
-          "id": "gate:or:521727e224",
+          "id": "gate:not:5bfea4072e",
+          "info": {
+            "logical": "1"
+          },
           "kind": "gate",
-          "label": "OR",
-          "op": "or",
+          "label": "NOT",
+          "op": "not",
           "pins": [
             {
               "direction": "in",
@@ -349,31 +357,23 @@
               "width": 3
             },
             {
-              "direction": "in",
-              "id": "B",
-              "label": "",
-              "net": "net:b",
-              "side": "west",
-              "width": 3
-            },
-            {
               "direction": "out",
               "id": "Y",
               "label": "",
-              "net": "net:bw",
+              "net": "net:nl",
               "side": "east",
-              "width": 3
+              "width": 1
             }
           ],
           "src": [
             {
               "column": 15,
-              "endColumn": 20,
-              "endLine": 3,
-              "line": 3
+              "endColumn": 17,
+              "endLine": 6,
+              "line": 6
             }
           ],
-          "width": 3
+          "width": 1
         }
       ],
       "ports": [

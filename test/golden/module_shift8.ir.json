@@ -49,12 +49,12 @@
           "name": "d",
           "sinks": [
             {
-              "node": "pmux:0a76310958",
-              "pin": "B0"
-            },
-            {
               "node": "inst:u1",
               "pin": "d"
+            },
+            {
+              "node": "pmux:0a76310958",
+              "pin": "B0"
             }
           ],
           "src": [
@@ -92,29 +92,6 @@
         },
         {
           "driver": {
-            "node": "pmux:0a76310958",
-            "pin": "Y"
-          },
-          "id": "net:q",
-          "name": "q",
-          "sinks": [
-            {
-              "node": "port:q",
-              "pin": "q"
-            }
-          ],
-          "src": [
-            {
-              "column": 79,
-              "endColumn": 80,
-              "endLine": 1,
-              "line": 1
-            }
-          ],
-          "width": 8
-        },
-        {
-          "driver": {
             "node": "inst:u1",
             "pin": "q"
           },
@@ -122,12 +99,12 @@
           "name": "q1",
           "sinks": [
             {
-              "node": "pmux:0a76310958",
-              "pin": "B1"
-            },
-            {
               "node": "inst:u2",
               "pin": "d"
+            },
+            {
+              "node": "pmux:0a76310958",
+              "pin": "B1"
             }
           ],
           "src": [
@@ -149,12 +126,12 @@
           "name": "q2",
           "sinks": [
             {
-              "node": "pmux:0a76310958",
-              "pin": "B2"
-            },
-            {
               "node": "inst:u3",
               "pin": "d"
+            },
+            {
+              "node": "pmux:0a76310958",
+              "pin": "B2"
             }
           ],
           "src": [
@@ -189,83 +166,32 @@
             }
           ],
           "width": 8
-        }
-      ],
-      "nodes": [
+        },
         {
-          "id": "pmux:0a76310958",
-          "info": {
-            "select": "value",
-            "selector": "sel"
+          "driver": {
+            "node": "pmux:0a76310958",
+            "pin": "Y"
           },
-          "kind": "pmux",
-          "label": "PMUX",
-          "pins": [
+          "id": "net:q",
+          "name": "q",
+          "sinks": [
             {
-              "direction": "in",
-              "id": "B0",
-              "label": "0",
-              "net": "net:d",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "in",
-              "id": "B1",
-              "label": "1",
-              "net": "net:q1",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "in",
-              "id": "B2",
-              "label": "2",
-              "net": "net:q2",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "in",
-              "id": "B3",
-              "label": "3",
-              "net": "net:q3",
-              "side": "west",
-              "width": 8
-            },
-            {
-              "direction": "in",
-              "id": "S",
-              "label": "",
-              "net": "net:sel",
-              "side": "south",
-              "width": 2
-            },
-            {
-              "direction": "out",
-              "id": "Y",
-              "label": "",
-              "net": "net:q",
-              "side": "east",
-              "width": 8
+              "node": "port:q",
+              "pin": "q"
             }
           ],
           "src": [
             {
-              "column": 20,
-              "endColumn": 20,
-              "endLine": 10,
-              "line": 10
-            },
-            {
-              "column": 5,
-              "endColumn": 12,
-              "endLine": 12,
-              "line": 7
+              "column": 79,
+              "endColumn": 80,
+              "endLine": 1,
+              "line": 1
             }
           ],
           "width": 8
-        },
+        }
+      ],
+      "nodes": [
         {
           "id": "inst:u1",
           "kind": "blackbox",
@@ -388,6 +314,80 @@
             }
           ],
           "width": 1
+        },
+        {
+          "id": "pmux:0a76310958",
+          "info": {
+            "select": "value",
+            "selector": "sel"
+          },
+          "kind": "pmux",
+          "label": "PMUX",
+          "pins": [
+            {
+              "direction": "in",
+              "id": "B0",
+              "label": "0",
+              "net": "net:d",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "B1",
+              "label": "1",
+              "net": "net:q1",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "B2",
+              "label": "2",
+              "net": "net:q2",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "B3",
+              "label": "3",
+              "net": "net:q3",
+              "side": "west",
+              "width": 8
+            },
+            {
+              "direction": "in",
+              "id": "S",
+              "label": "",
+              "net": "net:sel",
+              "side": "south",
+              "width": 2
+            },
+            {
+              "direction": "out",
+              "id": "Y",
+              "label": "",
+              "net": "net:q",
+              "side": "east",
+              "width": 8
+            }
+          ],
+          "src": [
+            {
+              "column": 20,
+              "endColumn": 20,
+              "endLine": 10,
+              "line": 10
+            },
+            {
+              "column": 5,
+              "endColumn": 12,
+              "endLine": 12,
+              "line": 7
+            }
+          ],
+          "width": 8
         }
       ],
       "ports": [
