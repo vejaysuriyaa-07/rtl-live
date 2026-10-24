@@ -914,4 +914,8 @@ Scope: the v0.5.0 brief (cross-platform tool lookup, CI, Marketplace readiness; 
 - Review before the commit: one gap, fixed. The cell tie-break still ended in the Yosys cell name for cells sharing line, column, kind and op (cells without a source position, such as pass-created `$auto$` cells, would follow the build's naming); the key now includes the sorted pin net names before the cell name, and both sort keys are precomputed once per element. Goldens unchanged by that. Confirmed by the review: `write_json` already emits netnames sorted (`design->sort()`), so no net changes its primary name; the clearance fix is right for horizontal legs too and both callers wanted the documented semantics.
 - The layout budget test (`svgBus.test.ts`, every golden under 100 ms, best of three, inside the parallel suite) failed in three full wasm runs on this Mac at load average 12 to 20 (other applications), with rca4 at 125 to 148 ms; alone it is 13 to 25 ms with the regenerated goldens and with the committed ones alike, so the budget is load-bound here and not a regression. The brew run of the full suite passed at the same time.
 
-Next step: push `main`, watch CI run six: Ubuntu native step green with the OSS CAD Suite Yosys; then publish (see "How to publish" above; the changelog's Unreleased entries argue for shipping as 0.5.1 with `/ship 0.5.1`).
+### Sixth CI run (40088822763): green on all three OSes (2026-10-24)
+
+- Commit `14d5fb1`. Ubuntu 3m55s ("Check the Yosys version" printed `yosys 0.70+219 found on PATH`, native step 694 passing), macOS 3m31s, Windows 7m37s. First fully green run of the workflow.
+
+Next step: `/ship 0.5.1`, then publish (see "How to publish" above).

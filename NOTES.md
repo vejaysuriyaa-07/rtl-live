@@ -25,13 +25,13 @@ in place so it stays under about 2,000 words.
   tests now restore text with a `WorkspaceEdit`, a root hook prints the extension log on failure, and the
   profile logs upload from `RTL_LIVE_IT_ROOT`. Run five: macOS and Windows green; Ubuntu native step showed
   that the IR order followed Yosys's cell names (changed in 0.70+219); fixed in `fromYosys.ts` (see archive,
-  "Fifth CI run"). Run six needs a push, which only VJ does.
+  "Fifth CI run"). Run six (40088822763, commit `14d5fb1`): green on all three OSes; Ubuntu 3m55s with the
+  native step at 694 passing on Yosys 0.70+219, macOS 3m31s, Windows 7m37s.
 - Not published. Marketplace steps are in the archive under "How to publish" (v0.5 work log).
 
 ## Next step
 
-1. VJ pushes `main`; watch CI run six: all three OSes green, the Ubuntu native step included. If macOS fails
-   again, read the failed test's "RTL Live after ..." dump and the `ud/logs` folder in `artifacts-macos-latest`.
+1. Ship 0.5.1 (`/ship 0.5.1`: the CHANGELOG "Unreleased" entries become the 0.5.1 section), then publish.
 2. Then follow "How to publish" (archive, v0.5 work log): publisher id `vejaysuriyaa`, upload the vsix or
    `npx vsce publish`, tag `v0.5.0`, replace the README install line with the Marketplace link.
 3. Candidate v0.6 work, in this order: a `case` fixture with duplicate arms (rtlView pmux merging), a replication
