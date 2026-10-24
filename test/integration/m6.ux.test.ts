@@ -1,6 +1,6 @@
 import * as assert from "node:assert";
 import * as vscode from "vscode";
-import { getApi, openFixture } from "./util";
+import { getApi, openFixture, restoreText } from "./util";
 
 function waitFor<T>(what: string, ms: number, probe: () => T | undefined): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -58,10 +58,11 @@ suite("M6 UX", () => {
     await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
   });
 
-  test("deleting endmodule keeps the diagram with a stale badge and banner; undo clears it", async function () {
+  test("deleting endmodule keeps the diagram with a stale badge and banner; restoring the text clears it", async function () {
     this.timeout(120_000);
     const api = await getApi();
     const { doc, editor } = await openFixture("7458.v");
+    const original = doc.getText();
     const good = await api.nextRender((e) => e.doc.sourceUri === doc.uri.toString() && e.doc.fidelity === "synthesized", 90_000);
     const goodNodes = good.doc.modules["top_module"]!.nodes.length;
     assert.ok(goodNodes >= 6);
@@ -73,7 +74,7 @@ suite("M6 UX", () => {
     assert.ok(last && last.type === "render");
     assert.strictEqual(last.doc.fidelity, "synthesized");
     assert.strictEqual(last.doc.modules["top_module"]!.nodes.length, goodNodes);
-    await vscode.commands.executeCommand("undo");
+    await restoreText(doc, original);
     await waitFor("synthesized again", 60_000, () => (api.controller.currentStatus.fidelity === "synthesized" ? true : undefined));
     await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
   });

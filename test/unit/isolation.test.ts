@@ -86,3 +86,31 @@ describe("test isolation", () => {
     }
   });
 });
+
+describe("isolation root override", () => {
+  // CI sets RTL_LIVE_IT_ROOT so the VS Code logs of the throwaway profile survive the run and can
+  // be uploaded; the folder is still private to the run and still a copy of the fixtures.
+  it("RTL_LIVE_IT_ROOT keeps the profile under the given folder", async () => {
+    const { mkdtempSync, existsSync } = await import("node:fs");
+    const base = mkdtempSync(join(TMP, "rl-root-"));
+    const prev = process.env["RTL_LIVE_IT_ROOT"];
+    process.env["RTL_LIVE_IT_ROOT"] = base;
+    try {
+      const mod = (await import(/* @vite-ignore */ join(ROOT, "test", "isolation.mjs"))) as { isolatedLaunch(label: string): { root: string; userDataDir: string; workspaceFolder: string; launchArgs: string[] } };
+      const launch = mod.isolatedLaunch("unit");
+      expect(launch.root).toBe(join(base, "unit"));
+      expect(launch.userDataDir.startsWith(launch.root)).toBe(true);
+      expect(resolve(launch.workspaceFolder)).not.toBe(REPO_FIXTURES);
+      expect(existsSync(join(launch.workspaceFolder, "hdlbits", "7458.v"))).toBe(true);
+      expect(argValue(launch.launchArgs, "user-data-dir")).toBe(launch.userDataDir);
+      // A second launch with the same label starts clean.
+      const again = mod.isolatedLaunch("unit");
+      expect(again.root).toBe(launch.root);
+      expect(existsSync(join(again.workspaceFolder, "hdlbits", "7458.v"))).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env["RTL_LIVE_IT_ROOT"];
+      else process.env["RTL_LIVE_IT_ROOT"] = prev;
+      rmSync(base, { recursive: true, force: true });
+    }
+  });
+});

@@ -49,3 +49,16 @@ export function withTimeout<T>(p: Promise<T>, ms: number, what: string): Promise
   });
 }
 
+
+/**
+ * Puts a document's text back through the workspace edit API. Tests use this instead of the
+ * "undo" command: that command acts on whichever editor has focus, and on a slow runner the
+ * focus can sit in the webview or another input when the test reaches it. CI run three on macOS
+ * timed out twice in M8, both times right after an undo that produced no re-render.
+ */
+export async function restoreText(doc: vscode.TextDocument, text: string): Promise<void> {
+  const edit = new vscode.WorkspaceEdit();
+  edit.replace(doc.uri, new vscode.Range(doc.positionAt(0), doc.positionAt(doc.getText().length)), text);
+  assert.ok(await vscode.workspace.applyEdit(edit), "restore edit failed");
+  assert.strictEqual(doc.getText(), text, "document text restored");
+}

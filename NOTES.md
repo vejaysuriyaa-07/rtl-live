@@ -5,23 +5,30 @@ Full phase-by-phase logs (M0 to M7, v0.2 to v0.5, mutation testing, CI runs) are
 open it only when a detail is needed, by heading. New work logs go to the archive; this file is rewritten
 in place so it stays under about 2,000 words.
 
-## Current version and status (2026-10-23)
+## Current version and status (2026-10-24)
 
-- Version 0.5.0, release commit `e30d65e`, then `eb1c022` (M11 integration test fixed for runners without Yosys).
-- Gates on the current tree: vitest unit, golden and accuracy 688 passing (39 files), also green with
-  `RTL_LIVE_TEST_BACKEND=wasm` and with Icarus hidden (`RTL_LIVE_IVERILOG=off`); integration 20 (also 20 with
-  `RTL_LIVE_YOSYS=off`); webview 96; packaged 20 against the vsix; typecheck and lint clean; hygiene check passed.
+- Version 0.5.0, release commit `e30d65e`, then `eb1c022` (M11 fixed for runners without Yosys) and the CI fix
+  for runs three and four (OSS CAD Suite Yosys on Ubuntu, integration tests restore text through the API).
+- Gates on the current tree: vitest unit, golden and accuracy 692 passing (40 files), with native Yosys 0.70 and
+  with `RTL_LIVE_TEST_BACKEND=wasm`; also green with Icarus hidden (`RTL_LIVE_IVERILOG=off`); integration 20
+  (also 20 with `RTL_LIVE_YOSYS=off`); webview 96; packaged 20 against the vsix; typecheck and lint clean;
+  hygiene check passed.
 - `rtl-live-0.5.0.vsix` (22 files, 17.5 MB) built and installed in `~/Applications/Visual Studio Code.app`
   (`vejaysuriyaa.rtl-live@0.5.0`). Running windows need "Developer: Reload Window".
 - CI (`.github/workflows/ci.yml`, Ubuntu 24.04, macOS, Windows): run one failed in the accuracy harness without
-  Icarus (fixed), run two failed in M11 (fixed). Run three has not happened: it needs a push, which only VJ does.
+  Icarus (fixed), run two in M11 (fixed), runs three and four in the Ubuntu native-Yosys step (apt Yosys 0.33
+  rejects `write_json -noscopeinfo`; fixed by installing the OSS CAD Suite release, pinned by the `OSS_CAD_SUITE`
+  date tag, with `scripts/check-yosys.mjs` skipping the step with a notice when Yosys is missing or below 0.40).
+  Run three also had two M8 timeouts on macOS right after the `undo` command (runs two and four passed); the
+  tests now restore text with a `WorkspaceEdit`, a root hook prints the extension log on failure, and the
+  profile logs upload from `RTL_LIVE_IT_ROOT`. Run five needs a push, which only VJ does.
 - Not published. Marketplace steps are in the archive under "How to publish" (v0.5 work log).
 
 ## Next step
 
-1. VJ pushes `main`; watch CI run three: integration green on all three OSes, the
-   `built-in yosys: loading bundled files from disk` lines on macOS and Windows, Ubuntu native-Yosys step without
-   golden diffs, Windows unit step showing "4 skipped" and nothing else about iverilog, `@v7` actions start cleanly.
+1. VJ pushes `main`; watch CI run five: "Check the Yosys version (Ubuntu)" prints the OSS CAD Suite Yosys and the
+   native step runs without golden diffs; integration green on all three OSes. If macOS fails again, read the
+   failed test's "RTL Live after ..." dump and the `ud/logs` folder in `artifacts-macos-latest`.
 2. Then follow "How to publish" (archive, v0.5 work log): publisher id `vejaysuriyaa`, upload the vsix or
    `npx vsce publish`, tag `v0.5.0`, replace the README install line with the Marketplace link.
 3. Candidate v0.6 work, in this order: a `case` fixture with duplicate arms (rtlView pmux merging), a replication
@@ -58,10 +65,11 @@ Platform:
 
 - The yowasp wasm needs the `exnref` flag on Node below 24; the worker sets it. If a future VS Code ships an
   older V8, the wasm engine fails to compile and the extension falls back to the structural view (logged).
-- CI checks still to confirm on a real run: Windows `vscode-test` with the long `--user-data-dir`; Playwright and
-  tree-sitter wasm under an LF checkout on Windows; macOS wasm cold start (80 MB) inside the 20 s preload;
-  Ubuntu apt Yosys 0.33 and the `-noscopeinfo` / `proc -norom` retry; integration run time with the VS Code
-  download on three runners (cache `.vscode-test/` if over 15 minutes).
+- Confirmed by CI runs three and four: Windows `vscode-test` with the long `--user-data-dir`, Playwright and
+  tree-sitter wasm under an LF checkout on Windows, macOS wasm cold start inside the preload, run time 3 to 9
+  minutes per OS. Still open: the extension's own `-noscopeinfo` / `proc -norom` retry against an old native
+  Yosys is only unit-tested (CI now uses a current Yosys); the macOS M8 timeout of run three has no confirmed
+  root cause, only a test that no longer depends on the `undo` command and logs that upload next time.
 
 ## Key decisions
 
@@ -75,6 +83,9 @@ Platform:
   Tool Paths" prints the report with one engine line in every state (`describeEngine`).
 - Test switches: `RTL_LIVE_TEST_BACKEND=wasm|native`, `RTL_LIVE_<TOOL>=off` hides a tool from the lookup
   (used to rehearse runners without Yosys or Icarus). L1 equivalence checks skip, not fail, without Icarus.
+  `RTL_LIVE_IT_ROOT=<short path>` keeps the integration suite's VS Code profile for log collection (CI sets it).
+  Integration tests change documents only through the API (`editor.edit`, `restoreText`), never through
+  focus-dependent commands such as `undo`.
 - Integration tests are bundled by esbuild to `dist/test/integration/*.test.js` (cjs, `vscode` and `mocha`
   external) and run by `@vscode/test-cli` with the tdd UI. The webview falls back to an in-page stub when
   `acquireVsCodeApi` is absent, so the same `dist/webview.js` runs under Playwright
@@ -96,7 +107,9 @@ Platform:
 ## Environment (verified 2026-10-22)
 
 - macOS 15.1, Apple Silicon. Node v23.1.0, npm 10.9.0, git 2.47.0.
-- Native yosys: not installed via brew; the wasm backend is the default path on this machine.
+- Native yosys 0.70+post at `/opt/homebrew/bin/yosys` (found 2026-10-24; earlier notes said none), so vitest and
+  the integration suite use the native backend here; `RTL_LIVE_TEST_BACKEND=wasm` and `RTL_LIVE_YOSYS=off`
+  rehearse the wasm path.
 - verilator 5.052 and iverilog at `/opt/homebrew/bin`. docker at `/usr/local/bin/docker`. emcc not installed.
 - `code` CLI: use the bundled one in `~/Applications/Visual Studio Code.app` (not on PATH).
 

@@ -17,6 +17,11 @@ jobs:
       matrix:
         # Ubuntu is pinned so a move of ubuntu-latest to a new release cannot change the toolchain by surprise.
         os: [ubuntu-24.04, macos-latest, windows-latest]
+    env:
+      # Native Yosys for the Ubuntu runner. apt ships 0.33, which rejects "write_json -noscopeinfo"
+      # and fails every golden test; the OSS CAD Suite release is current. Pinned by date so the
+      # toolchain changes only on purpose: bump the tag, read the native step's output, commit.
+      OSS_CAD_SUITE: "2026-10-24"
     steps:
       - uses: actions/checkout@v7
 
@@ -56,20 +61,42 @@ jobs:
       - name: Webview tests
         run: npx playwright test
 
+      # RTL_LIVE_IT_ROOT keeps the throwaway VS Code profile so its logs upload on failure. It is set on
+      # these two steps only: the unit suite's isolation test expects the default temp-folder profile.
       - name: Integration tests (Linux, under xvfb)
         if: runner.os == 'Linux'
         run: xvfb-run -a npx vscode-test
+        env:
+          RTL_LIVE_IT_ROOT: ${{ runner.temp }}/rl
 
       - name: Integration tests
         if: runner.os != 'Linux'
         run: npx vscode-test
+        env:
+          RTL_LIVE_IT_ROOT: ${{ runner.temp }}/rl
 
-      - name: Install Yosys (Ubuntu)
+      # If the download fails, the next step reports no yosys and the native step is skipped with a
+      # notice instead of failing the job. GITHUB_PATH prepends, so the suite's iverilog and vvp also
+      # shadow apt's for the native step; the accuracy checks there run with the suite's Icarus.
+      - name: Install Yosys (Ubuntu, OSS CAD Suite ${{ env.OSS_CAD_SUITE }})
         if: runner.os == 'Linux'
-        run: sudo apt-get install -y yosys
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          file="oss-cad-suite-linux-x64-${OSS_CAD_SUITE//-/}.tgz"
+          url="https://github.com/YosysHQ/oss-cad-suite-build/releases/download/${OSS_CAD_SUITE}/${file}"
+          curl -fsSL --retry 3 -o "${RUNNER_TEMP}/${file}" "$url"
+          tar -xzf "${RUNNER_TEMP}/${file}" -C "${RUNNER_TEMP}"
+          rm -f "${RUNNER_TEMP}/${file}"
+          echo "${RUNNER_TEMP}/oss-cad-suite/bin" >> "$GITHUB_PATH"
+
+      - name: Check the Yosys version (Ubuntu)
+        if: runner.os == 'Linux'
+        id: yosys
+        run: node scripts/check-yosys.mjs
 
       - name: Unit, golden and accuracy tests (native Yosys, Ubuntu)
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && steps.yosys.outputs.ok == 'true'
         run: npx vitest run
         env:
           RTL_LIVE_TEST_BACKEND: native
@@ -91,5 +118,5 @@ jobs:
           name: artifacts-${{ matrix.os }}
           path: |
             artifacts/
-            .vscode-test/user-data/logs/
+            ${{ runner.temp }}/rl/*/ud/logs/
           if-no-files-found: ignore

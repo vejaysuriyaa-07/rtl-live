@@ -1,6 +1,6 @@
 import * as assert from "node:assert";
 import * as vscode from "vscode";
-import { fixturePath, getApi, openFixture, withTimeout } from "./util";
+import { fixturePath, getApi, openFixture, restoreText, withTimeout } from "./util";
 
 function waitFor<T>(what: string, ms: number, probe: () => T | undefined): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -28,6 +28,7 @@ suite("M8 editing", () => {
     await vscode.commands.executeCommand("workbench.view.extension.rtlLive");
     await withTimeout(api.whenReady(), 10_000, "webview ready");
     const { doc, editor } = await openFixture("7458.v");
+    const original = doc.getText();
     const good = await api.nextRender((e) => e.doc.sourceUri === doc.uri.toString() && e.doc.fidelity === "synthesized", 90_000);
     const goodNodes = good.doc.modules["top_module"]!.nodes.length;
     // Break the file: remove endmodule.
@@ -48,9 +49,8 @@ suite("M8 editing", () => {
     assert.strictEqual(api.controller.currentStatus.fidelity, "stale");
     assert.match(api.controller.currentStatus.message ?? "", /1 port added/);
     assert.ok(api.provider.webviewLogs.length >= 0);
-    // Fix everything: both edits undone.
-    await vscode.commands.executeCommand("undo");
-    await vscode.commands.executeCommand("undo");
+    // Fix everything: put the original text back (both edits gone).
+    await restoreText(doc, original);
     await waitFor("synthesized again", 60_000, () => (api.controller.currentStatus.fidelity === "synthesized" ? true : undefined));
     const last = api.provider.lastRenderMessage;
     assert.ok(last && last.type === "render" && !last.doc.modules["top_module"]!.ports.some((p) => p.ghost), "ghost ports cleared");
@@ -99,6 +99,7 @@ suite("M8 error messages", () => {
     await vscode.commands.executeCommand("workbench.view.extension.rtlLive");
     await withTimeout(api.whenReady(), 10_000, "webview ready");
     const { doc, editor } = await openFixture("7458.v");
+    const original = doc.getText();
     await api.nextRender((e) => e.doc.sourceUri === doc.uri.toString(), 10_000);
     const uri = doc.uri.toString();
     // 1. Remove the ';' of "assign w1 = p2a & p2b;" (line 5).
@@ -107,13 +108,13 @@ suite("M8 error messages", () => {
     let e = await bannerAfter(api, uri, () => editor.edit((b) => b.delete(new vscode.Range(4, semi, 4, semi + 1))), /^missing ';'$/);
     assert.strictEqual(e.line, 5);
     assert.strictEqual(e.column, semi + 1);
-    await vscode.commands.executeCommand("undo");
+    await restoreText(doc, original);
     await waitFor("clean again", 10_000, () => (api.provider.lastError === null ? true : undefined));
     // 2. Remove endmodule: the message points at the end of the file.
     const endLine = doc.getText().split("\n").findIndex((l) => l.startsWith("endmodule"));
     e = await bannerAfter(api, uri, () => editor.edit((b) => b.delete(new vscode.Range(endLine, 0, endLine, "endmodule".length))), /^missing endmodule$/);
     assert.strictEqual(e.line, endLine, "points at the last line with code");
-    await vscode.commands.executeCommand("undo");
+    await restoreText(doc, original);
     await waitFor("clean again", 10_000, () => (api.provider.lastError === null ? true : undefined));
     // 3. Break the port list: drop the closing ')' of the header (line 3 ends with "output p2y);").
     const l3 = doc.lineAt(2).text;
@@ -126,13 +127,13 @@ suite("M8 error messages", () => {
     const ports = last.doc.modules["top_module"]!.ports;
     assert.ok(ports.some((p) => p.name === "p2y"), "p2y still listed");
     assert.ok(ports.some((p) => p.tentative), "a recovered port is marked tentative");
-    await vscode.commands.executeCommand("undo");
+    await restoreText(doc, original);
     await waitFor("clean again", 10_000, () => (api.provider.lastError === null ? true : undefined));
     // 4. Drop an operand: "assign w1 = p2a & ;" is a missing operand after '&'.
     const amp = doc.lineAt(4).text.indexOf("& p2b");
     e = await bannerAfter(api, uri, () => editor.edit((b) => b.delete(new vscode.Range(4, amp + 1, 4, amp + 5))), /^missing operand after '&'$/);
     assert.strictEqual(e.line, 5);
-    await vscode.commands.executeCommand("undo");
+    await restoreText(doc, original);
     await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
   });
 });
