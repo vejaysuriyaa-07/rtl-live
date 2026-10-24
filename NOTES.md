@@ -16,24 +16,24 @@ Newest milestone section at the bottom.
 
 ## Pinned versions
 
-| Package | Version | Role |
-| --- | --- | --- |
-| typescript | 5.9.3 | strict typecheck |
-| esbuild | 0.28.2 | all bundles |
-| web-tree-sitter | 0.27.1 | structural parser runtime |
-| tree-sitter-cli | 0.27.1 | grammar wasm build (minor matches web-tree-sitter) |
-| tree-sitter-verilog | 1.0.0 | grammar (spec said 1.0.3; npm's latest is 1.0.0, see M1) |
-| @yowasp/yosys | 0.70.1258 | wasm synthesis backend |
-| elkjs | 0.12.0 | layout |
-| d3-selection / d3-zoom | 3.0.0 | pan and zoom |
-| vitest | 5.0.5 | unit and golden tests |
-| @vscode/test-cli / @vscode/test-electron | 0.0.15 / 3.1.0 | integration tests |
-| mocha | 12.0.3 | integration test runner |
-| @playwright/test | 1.64.1 | webview tests and screenshots |
-| @vscode/vsce | 4.0.0 | packaging |
-| eslint / typescript-eslint | 9.39.5 / 8.72.0 | lint |
-| prettier | 3.9.10 | format |
-| @types/vscode | 1.100.0 | engine ^1.100.0 |
+| Package                                  | Version         | Role                                                     |
+| ---------------------------------------- | --------------- | -------------------------------------------------------- |
+| typescript                               | 5.9.3           | strict typecheck                                         |
+| esbuild                                  | 0.28.2          | all bundles                                              |
+| web-tree-sitter                          | 0.27.1          | structural parser runtime                                |
+| tree-sitter-cli                          | 0.27.1          | grammar wasm build (minor matches web-tree-sitter)       |
+| tree-sitter-verilog                      | 1.0.0           | grammar (spec said 1.0.3; npm's latest is 1.0.0, see M1) |
+| @yowasp/yosys                            | 0.70.1258       | wasm synthesis backend                                   |
+| elkjs                                    | 0.12.0          | layout                                                   |
+| d3-selection / d3-zoom                   | 3.0.0           | pan and zoom                                             |
+| vitest                                   | 5.0.5           | unit and golden tests                                    |
+| @vscode/test-cli / @vscode/test-electron | 0.0.15 / 3.1.0  | integration tests                                        |
+| mocha                                    | 12.0.3          | integration test runner                                  |
+| @playwright/test                         | 1.64.1          | webview tests and screenshots                            |
+| @vscode/vsce                             | 4.0.0           | packaging                                                |
+| eslint / typescript-eslint               | 9.39.5 / 8.72.0 | lint                                                     |
+| prettier                                 | 3.9.10          | format                                                   |
+| @types/vscode                            | 1.100.0         | engine ^1.100.0                                          |
 
 ## Decisions
 
@@ -48,11 +48,13 @@ Newest milestone section at the bottom.
 Status: done
 
 Verified:
+
 - `npm run build`, `npm run typecheck`, `npm run lint` clean.
 - `npm test`: 7 unit tests pass (CSP string exact, nonce on every script tag, no http/https URLs, protocol guards).
 - `npm run test:integration`: VS Code stable downloaded by @vscode/test-electron, `workbench.view.extension.rtlLive` opened, `resolveWebviewView` ran, webview posted `ready` (576 ms).
 
 Issues hit:
+
 - npm 10.9.0 (bundled with Node 23) crashes in arborist (`Cannot read properties of null (reading 'edgesOut')`) while resolving vitest's optional peer set. Workaround: `npx -y npm@12 install`. npm 12 blocks install scripts by default, so `esbuild`, `tree-sitter-cli` and `@vscode/vsce-sign` install scripts were run by hand (`node install.js` in each package). vitest pinned to 4.1.12 (5.x needs vite 8 / rolldown which the same npm bug tripped on).
 - vitest config renamed to `vitest.config.mts` to avoid the Vite ESM-in-CJS warning.
 
@@ -61,22 +63,26 @@ Issues hit:
 Status: done
 
 Grammar:
+
 - `tree-sitter-verilog` on npm tops out at 1.0.0 (the spec said 1.0.3, which does not exist on the registry). Pinned 1.0.0.
 - `tree-sitter-cli` 0.27.1 no longer has `--docker`; `tree-sitter build --wasm` downloads a wasi-sdk clang and binaryen into `~/.cache/tree-sitter` on first run, so neither emscripten nor Docker is needed (Docker Desktop was started but not used). `scripts/build-grammar.mjs` compiles the package's pre-generated `parser.c` (ABI 14) as is and records sha256 and provenance in `assets/wasm/provenance.json`; a unit test checks the hash and the CLI/runtime minor versions.
 - The wasm is 18.3 MB (the Verilog/SV grammar has very large state tables). Load cost measured at 12 ms for `Language.load` plus 7 ms for `Parser.init`; parse of a 15-line module takes about 5 ms.
 - Grammar quirks found and handled: (1) an identifier named `in` as the last element of a concatenation yields a MISSING `++` node (`{sr[2:0], in}`), treated as a non-error; (2) positional instantiation `mod_a u2(q2, q1, clk)` parses as `udp_instantiation`; (3) a named instantiation in a module without other items can parse as `checker_instantiation`. The parser handles all three plus `module_instantiation`, and reads connection lists from text so all forms behave the same.
 
 Parser design:
+
 - Instead of pattern matching the deep CST, the tree-sitter parser collects nodes of interest anywhere in the tree (works under ERROR nodes) and assigns them to module spans (module_header to endmodule, next header or EOF).
 - Recovery paths for partial code: `assign` tokens under ERROR, `always_keyword` under ERROR, instance-looking ERROR text.
 - Fallback scanner (`src/structural/fallbackScanner.ts`): tokenizer plus recursive descent. Both parsers share `textUtils.ts` (identifier extraction, always-block analysis, connection parsing, line index) and pass the same unit tests.
 
 Verified:
+
 - `npm test`: 150 unit tests; every HDLBits fixture's port list matches `test/fixtures/expected/<name>.json` for both parsers (expected files were generated from the tree-sitter parser and checked by eye against the Verilog); partial fixtures p1..p8 produce a module box or the empty state and never throw; 25 prefixes of every fixture yield a valid SchematicDoc; scheduler debounce/cancel tests; LRU cache; ELK option tests; SVG renderer test.
 - `npm run test:integration`: editing `wire.v` with `TextEditor.edit` produced a `render` with ports in/out in well under 500 ms; the ELK layout engine reported `layout engine: worker`, so the Blob-URL worker runs under the real webview CSP (`worker-src blob:`).
 - `npm run test:webview`: `artifacts/m1-wire.png` and `artifacts/m1-7458-structural.png`; `data-port="in"` and `data-port="out"` exist.
 
 Decisions:
+
 - Structural IR draws assigns and always blocks as dashed clouds labelled with the (truncated) expression; instance pins get directions from the defined module when it is in the same file, else from the connection heuristics of section 3.
 - d3 transitions are not used (they need `d3-transition`, which the spec does not list), so fit/zoom are instant; node move tweening is done with CSS in M6.
 - Webview bundles `elkjs/lib/elk.bundled.js` (main-thread fallback) and fetches `dist/elkWorker.js` as text for the Blob worker. Dev bundles carry inline sourcemaps (9 MB); the production build is minified without them.
@@ -88,6 +94,7 @@ Could not verify headlessly: typing feel in the real editor, font metrics of lab
 Status: done
 
 Backend findings:
+
 - Native yosys is not installed on this machine, so every synthesis check ran on `@yowasp/yosys` 0.70.1258 (wasm). The `auto` setting picks native when `yosys -V` answers; the native backend code path (`src/synth/nativeBackend.ts`) is unit-level only on this machine and should be tried once `brew install yosys` is done.
 - The 0.70 yosys wasm uses the WebAssembly exception-handling proposal (`exnref`). Node 23.1 (used for vitest) rejects it with `CompileError: invalid value type 'exn'` unless `--experimental-wasm-exnref` is set; the worker sets it with `v8.setFlagsFromString` before loading the bundle. VS Code 1.143 ships Electron 43 / Chrome 150 where it is on by default, verified by the integration run (`backend: wasm 0.70`).
 - The yowasp bundle resolves its wasm and resource tar with `new URL("./x", import.meta.url)`, so esbuild copies `yosys.core*.wasm` and `yosys-resources.0.tar` (about 80 MB) next to `dist/yosysWorker.mjs`.
@@ -95,12 +102,14 @@ Backend findings:
 - Worker recycling: every 50 runs (setting not exposed; constructor option), when the reported process RSS exceeds 1.5 GB (`process.memoryUsage().rss` inside the worker, which is process wide and therefore a conservative proxy), on any timeout (10 s) and on cancellation. Each worker owns its pending-request map so a terminated worker cannot fail requests on its replacement (bug found by the N=3 recycle test).
 
 IR:
+
 - `src/ir/fromYosys.ts` rebuilds bus-level nets from bit ids: every driving endpoint defines one net; sinks whose bit vectors are slices, repeats or concatenations go through split/join/const nodes. This follows netlistsvg's splitter/joiner idea (MIT) but the code is original, so nothing was ported.
 - Stable ids: `kind:op:sha256(kind|op|sorted named nets|ordinal)[0:10]`; ordinal is by source order among nodes with the same key. Instances keep `inst:<user name>`. The "comment line at the top" test passes for 7458, notgate, vectorgates and xnor_misc. A gate whose op is rewritten by the output-bubble rule keeps the id computed from its original op (`gate:xor:...` for an XNOR made from `~(a ^ b)`); ids only need to be stable, not descriptive.
 - Simplify rules (`src/ir/simplify.ts`, each unit tested): mergeChains (1-bit associative chains over unnamed single-sink nets), dropBuffers, bubbles (input bubble for a NOT feeding one gate; output bubble turning and/or/xor into nand/nor/xnor when the only sink is a NOT). `~(a ^ b)` therefore renders as an XNOR symbol.
 - `a || b` becomes a `$logic_or` cell, mapped to `gate` op `or` with 3-bit inputs and a 1-bit output.
 
 Verified:
+
 - `npm test`: 196 unit and golden tests. M2 fixtures (wire, wire4, notgate, 7458, gates4, xnor_misc, vectorgates) pass the expectations in `test/fixtures/expected/*.json` (`synth.raw` and `synth.simplified` blocks, checked by `test/unit/synthHelpers.ts`). Golden files `test/golden/<fixture>.ir.json` written with sorted keys and generation 0.
 - 7458 raw: 6 AND + 2 OR; simplified: 4 AND (two 2-input, two 3-input) + 2 OR, nets w1..w4 named.
 - Wasm backend tests: N=3 recycle with 7 runs all succeed; cancel then run; timeout (1 ms) then run; broken input reports an ERROR line.
@@ -108,11 +117,13 @@ Verified:
 - Playwright: `artifacts/m2-{7458,gates4,xnor_misc,vectorgates,notgate}.png`; two 3-input ANDs found in the DOM.
 
 Decisions:
+
 - Stale handling: once a document has a synthesized diagram, structural renders are not sent any more; the webview keeps the last good diagram while the status badge turns amber ("Stale", message "synthesizing" or "fix the error to resynthesize") and the banner shows the first error. The spec's "overlay newer structural boxes" is not implemented (see Known issues); a document without a synthesized diagram yet always shows the structural view.
 - `npm test` builds first so the worker bundle under `dist/` is current.
 - Synthesis expectations and golden files are gated by `COMPLETED_MILESTONES` in `test/unit/synthHelpers.ts`; the M3 to M5 fixtures are added as those milestones complete (`SYNTH_MILESTONES=M3 npx vitest run` runs one ahead of time).
 
 Known issues:
+
 - Structural boxes are not overlaid on a stale synthesized diagram.
 - Bus width labels are drawn once per net near the driver; for very short first segments they can touch the port chevron.
 
@@ -125,6 +136,7 @@ Status: done
 - `~{...} ^ {...}` renders as one 25-bit XOR with an inverted A input (bubble rule).
 
 Verified:
+
 - `npm test`: 223 tests. vector0, vector2, vectorr, vector3, vector4, vector5 pass their expectations; golden files added.
 - `test/unit/svgBus.test.ts` lays out every golden with elkjs in node and asserts that every net wider than 1 bit has a `bus-width` label in the `svg.ts` string output, that vector2's rippers read [7:0], [15:8], [23:16], [31:24], and that the largest golden lays out in under 100 ms (7458 at 68 ms cold, well under 20 ms warm).
 - Playwright: `artifacts/m3-vector{0,2,r,3,4,5}.png`; bus edges and width labels present in the DOM.
@@ -138,6 +150,7 @@ Status: done
 - Unconnected pins (`.cout()`) are detached (pin net null) instead of pointing at an orphan net.
 
 Verified:
+
 - `npm test`: 244 tests. module, module_pos, module_name, module_shift, module_add, module_add_full and multi_module pass, including black-box pin directions (module_pos: p0, p1 output, p2..p5 input; module_add: a, b 16-bit in, cin in, sum 16-bit out, cout out; cout_lo links lo.cout to hi.cin; `1'b0` constant on lo.cin).
 - Playwright (23 passing): double-clicking `add16` in module_add_full shows the add16 module with its adder, the breadcrumb has two crumbs and clicking the first returns to top_module (this found an off-by-one in the breadcrumb handler); black boxes are dashed with the "not defined in this file" tooltip; the dropdown for multi_module lists `inv` and `top_module`. Screenshots `artifacts/m4-*.png`.
 
@@ -153,6 +166,7 @@ Status: done
 - Golden files for wire, wire4 and vector0 changed only by the new `aliases` field (reviewed with diff, regenerated with `npm run test:golden:update`).
 
 Verified:
+
 - `npm test`: 272 tests. mux2_always, module_shift8, dff_async, counter4, shift4, fsm_moore and arith_compare pass their expectations; with `opt -fast` on and off no unknown-cell boxes appear for any of them.
 - Playwright (32 passing): `artifacts/m5-*.png`; counter4 has a DFF with a clock triangle, an adder and a mux; the fsm_moore DFF tooltip lists `states: A = 1'b0, B = 1'b1`.
 
@@ -170,10 +184,10 @@ Status: done
 - Keys: `f` fit, `+`/`=` and `-` zoom, `Backspace` drill up.
 
 Verified:
+
 - Integration (8 passing): cursor on `assign out = ~in` highlights `gate:not:...`; moving to line 1 clears it; `revealSource` moves the selection to line 9 columns 16..23 of 7458.v; deleting `endmodule` gives status stale while the last render message still holds the synthesized 6-node diagram, and undo returns to synthesized.
 - Playwright (47 passing in all): theme screenshots, export SVG XML check (`artifacts/m6-7458-export.svg`), cursor highlight of the OR gate on line 9, keyboard zoom and fit.
 - `npm test`: 272 tests.
-
 
 ## M7: performance, packaging, docs
 
@@ -183,39 +197,40 @@ Status: done
 
 Columns: structural = parse + structural IR p95 over 30 runs (ms); wasm warm = synthesis p50 / p95 over 7 warm runs (ms); ELK = elkjs layout in node p50 / max over 5 runs (ms).
 
-| fixture | nodes | structural tree-sitter p95 | structural fallback p95 | wasm warm p50 / p95 | ELK p50 / max |
-| --- | --- | --- | --- | --- | --- |
-| 7458.v | 6 | 5.0 | 1.4 | 33 / 55 | 20.3 / 115.2 |
-| arith_compare.v | 4 | 2.1 | 0.3 | 12 / 17 | 10.0 / 17.8 |
-| counter4.v | 5 | 1.3 | 0.2 | 13 / 16 | 15.4 / 22.1 |
-| dff_async.v | 1 | 0.6 | 0.0 | 14 / 23 | 8.0 / 12.5 |
-| fsm_moore.v | 7 | 1.1 | 0.1 | 15 / 18 | 16.5 / 28.8 |
-| gates4.v | 3 | 0.4 | 0.0 | 10 / 14 | 5.7 / 6.5 |
-| module.v | 1 | 0.5 | 0.1 | 31 / 331 | 8.1 / 9.3 |
-| module_add.v | 6 | 2.0 | 0.1 | 17 / 21 | 9.4 / 14.5 |
-| module_add_full.v | 6 | 2.5 | 0.3 | 13 / 18 | 9.8 / 10.1 |
-| module_name.v | 1 | 0.5 | 0.0 | 11 / 14 | 7.1 / 8.6 |
-| module_pos.v | 1 | 0.6 | 0.0 | 12 / 14 | 6.4 / 6.8 |
-| module_shift.v | 3 | 1.4 | 0.0 | 12 / 16 | 5.8 / 6.4 |
-| module_shift8.v | 11 | 1.8 | 0.1 | 27 / 373 | 30.6 / 35.0 |
-| multi_module.v | 1 | 0.7 | 0.0 | 13 / 17 | 4.9 / 6.6 |
-| mux2_always.v | 4 | 0.6 | 0.0 | 15 / 19 | 14.9 / 22.4 |
-| notgate.v | 1 | 0.1 | 0.0 | 22 / 36 | 5.0 / 5.5 |
-| shift4.v | 3 | 0.6 | 0.0 | 12 / 18 | 7.8 / 8.0 |
-| vector0.v | 1 | 0.6 | 0.0 | 10 / 11 | 5.0 / 6.7 |
-| vector2.v | 2 | 1.0 | 0.0 | 11 / 261 | 6.4 / 7.8 |
-| vector3.v | 8 | 0.5 | 0.0 | 13 / 16 | 9.6 / 10.3 |
-| vector4.v | 2 | 0.4 | 0.0 | 10 / 12 | 5.2 / 7.3 |
-| vector5.v | 3 | 0.8 | 0.0 | 14 / 16 | 14.1 / 28.2 |
-| vectorgates.v | 5 | 0.7 | 0.0 | 17 / 27 | 8.5 / 9.1 |
-| vectorr.v | 2 | 1.2 | 0.1 | 11 / 12 | 6.4 / 7.0 |
-| wire.v | 0 | 0.1 | 0.0 | 10 / 12 | 4.1 / 4.7 |
-| wire4.v | 0 | 0.4 | 0.0 | 21 / 28 | 5.6 / 6.2 |
-| xnor_misc.v | 3 | 0.6 | 0.0 | 13 / 17 | 7.2 / 8.7 |
+| fixture           | nodes | structural tree-sitter p95 | structural fallback p95 | wasm warm p50 / p95 | ELK p50 / max |
+| ----------------- | ----- | -------------------------- | ----------------------- | ------------------- | ------------- |
+| 7458.v            | 6     | 5.0                        | 1.4                     | 33 / 55             | 20.3 / 115.2  |
+| arith_compare.v   | 4     | 2.1                        | 0.3                     | 12 / 17             | 10.0 / 17.8   |
+| counter4.v        | 5     | 1.3                        | 0.2                     | 13 / 16             | 15.4 / 22.1   |
+| dff_async.v       | 1     | 0.6                        | 0.0                     | 14 / 23             | 8.0 / 12.5    |
+| fsm_moore.v       | 7     | 1.1                        | 0.1                     | 15 / 18             | 16.5 / 28.8   |
+| gates4.v          | 3     | 0.4                        | 0.0                     | 10 / 14             | 5.7 / 6.5     |
+| module.v          | 1     | 0.5                        | 0.1                     | 31 / 331            | 8.1 / 9.3     |
+| module_add.v      | 6     | 2.0                        | 0.1                     | 17 / 21             | 9.4 / 14.5    |
+| module_add_full.v | 6     | 2.5                        | 0.3                     | 13 / 18             | 9.8 / 10.1    |
+| module_name.v     | 1     | 0.5                        | 0.0                     | 11 / 14             | 7.1 / 8.6     |
+| module_pos.v      | 1     | 0.6                        | 0.0                     | 12 / 14             | 6.4 / 6.8     |
+| module_shift.v    | 3     | 1.4                        | 0.0                     | 12 / 16             | 5.8 / 6.4     |
+| module_shift8.v   | 11    | 1.8                        | 0.1                     | 27 / 373            | 30.6 / 35.0   |
+| multi_module.v    | 1     | 0.7                        | 0.0                     | 13 / 17             | 4.9 / 6.6     |
+| mux2_always.v     | 4     | 0.6                        | 0.0                     | 15 / 19             | 14.9 / 22.4   |
+| notgate.v         | 1     | 0.1                        | 0.0                     | 22 / 36             | 5.0 / 5.5     |
+| shift4.v          | 3     | 0.6                        | 0.0                     | 12 / 18             | 7.8 / 8.0     |
+| vector0.v         | 1     | 0.6                        | 0.0                     | 10 / 11             | 5.0 / 6.7     |
+| vector2.v         | 2     | 1.0                        | 0.0                     | 11 / 261            | 6.4 / 7.8     |
+| vector3.v         | 8     | 0.5                        | 0.0                     | 13 / 16             | 9.6 / 10.3    |
+| vector4.v         | 2     | 0.4                        | 0.0                     | 10 / 12             | 5.2 / 7.3     |
+| vector5.v         | 3     | 0.8                        | 0.0                     | 14 / 16             | 14.1 / 28.2   |
+| vectorgates.v     | 5     | 0.7                        | 0.0                     | 17 / 27             | 8.5 / 9.1     |
+| vectorr.v         | 2     | 1.2                        | 0.1                     | 11 / 12             | 6.4 / 7.0     |
+| wire.v            | 0     | 0.1                        | 0.0                     | 10 / 12             | 4.1 / 4.7     |
+| wire4.v           | 0     | 0.4                        | 0.0                     | 21 / 28             | 5.6 / 6.2     |
+| xnor_misc.v       | 3     | 0.6                        | 0.0                     | 13 / 17             | 7.2 / 8.7     |
 
 Worst cases: structural tree-sitter p95 5.0 ms, fallback 1.4 ms, wasm warm p95 373 ms, ELK max 115 ms, wasm cold start 230 ms (preload of a fresh worker).
 
 Budgets (section 9):
+
 - Structural, keystroke to render under 100 ms p95: met in the parser (5 ms p95). End to end inside VS Code the integration test measured 412 to 416 ms for one edit, which includes the 60 ms debounce, the extension host round trip and the test's own event plumbing; the structural pass itself logs a warning above 100 ms and never did.
 - Native yosys under 300 ms p95: not measurable here (no native yosys installed). The native backend is exercised only by its code path; try it after `brew install yosys` and rerun `npm run bench`.
 - Wasm warm under 800 ms p95: met (373 ms). The outliers (module.v 331 ms, module_shift8.v 373 ms, vector2.v 261 ms) are the runs right after a worker recycle (every 50 runs; the bench does 216 runs), which pay the cold start again. Typical warm runs are 11 to 55 ms.
@@ -257,45 +272,43 @@ Visual quality at real DPI and with the real VS Code font, typing feel and the 1
 - The yowasp wasm needs the `exnref` flag on Node below 24; the worker sets it. If a future VS Code ships an older V8, the wasm backend will fail to compile and the extension falls back to the structural view (logged).
 - Next: cursor highlight for nets by name (only declaration ranges today), a "logic" glyph for logical operators, an outline of module ports when the file has several modules, and native yosys measurements.
 
-
 ## Addendum: native yosys measured (2026-10-22)
 
 `brew install yosys` installed Yosys 0.70+post (`/opt/homebrew/bin/yosys`). Rerun of `npm run bench`:
 
-| fixture | nodes | native warm p50 / p95 (ms) | wasm warm p50 / p95 (ms) |
-| --- | --- | --- | --- |
-| 7458.v | 6 | 12 / 14 | 33 / 39 |
-| arith_compare.v | 4 | 10 / 11 | 12 / 12 |
-| counter4.v | 5 | 12 / 13 | 11 / 12 |
-| dff_async.v | 1 | 11 / 11 | 11 / 12 |
-| fsm_moore.v | 7 | 11 / 11 | 11 / 14 |
-| gates4.v | 3 | 10 / 11 | 9 / 11 |
-| module.v | 1 | 13 / 13 | 19 / 303 |
-| module_add.v | 6 | 12 / 13 | 15 / 28 |
-| module_add_full.v | 6 | 12 / 12 | 13 / 17 |
-| module_name.v | 1 | 12 / 13 | 11 / 12 |
-| module_pos.v | 1 | 10 / 13 | 11 / 12 |
-| module_shift.v | 3 | 11 / 11 | 10 / 13 |
-| module_shift8.v | 11 | 19 / 21 | 25 / 358 |
-| multi_module.v | 1 | 11 / 14 | 14 / 18 |
-| mux2_always.v | 4 | 11 / 11 | 13 / 14 |
-| notgate.v | 1 | 11 / 12 | 10 / 13 |
-| shift4.v | 3 | 10 / 11 | 13 / 17 |
-| vector0.v | 1 | 11 / 12 | 11 / 12 |
-| vector2.v | 2 | 12 / 12 | 10 / 277 |
-| vector3.v | 8 | 11 / 11 | 13 / 16 |
-| vector4.v | 2 | 12 / 13 | 10 / 12 |
-| vector5.v | 3 | 14 / 16 | 13 / 15 |
-| vectorgates.v | 5 | 10 / 12 | 13 / 15 |
-| vectorr.v | 2 | 10 / 11 | 10 / 11 |
-| wire.v | 0 | 10 / 10 | 9 / 11 |
-| wire4.v | 0 | 10 / 12 | 17 / 34 |
-| xnor_misc.v | 3 | 13 / 14 | 13 / 18 |
+| fixture           | nodes | native warm p50 / p95 (ms) | wasm warm p50 / p95 (ms) |
+| ----------------- | ----- | -------------------------- | ------------------------ |
+| 7458.v            | 6     | 12 / 14                    | 33 / 39                  |
+| arith_compare.v   | 4     | 10 / 11                    | 12 / 12                  |
+| counter4.v        | 5     | 12 / 13                    | 11 / 12                  |
+| dff_async.v       | 1     | 11 / 11                    | 11 / 12                  |
+| fsm_moore.v       | 7     | 11 / 11                    | 11 / 14                  |
+| gates4.v          | 3     | 10 / 11                    | 9 / 11                   |
+| module.v          | 1     | 13 / 13                    | 19 / 303                 |
+| module_add.v      | 6     | 12 / 13                    | 15 / 28                  |
+| module_add_full.v | 6     | 12 / 12                    | 13 / 17                  |
+| module_name.v     | 1     | 12 / 13                    | 11 / 12                  |
+| module_pos.v      | 1     | 10 / 13                    | 11 / 12                  |
+| module_shift.v    | 3     | 11 / 11                    | 10 / 13                  |
+| module_shift8.v   | 11    | 19 / 21                    | 25 / 358                 |
+| multi_module.v    | 1     | 11 / 14                    | 14 / 18                  |
+| mux2_always.v     | 4     | 11 / 11                    | 13 / 14                  |
+| notgate.v         | 1     | 11 / 12                    | 10 / 13                  |
+| shift4.v          | 3     | 10 / 11                    | 13 / 17                  |
+| vector0.v         | 1     | 11 / 12                    | 11 / 12                  |
+| vector2.v         | 2     | 12 / 12                    | 10 / 277                 |
+| vector3.v         | 8     | 11 / 11                    | 13 / 16                  |
+| vector4.v         | 2     | 12 / 13                    | 10 / 12                  |
+| vector5.v         | 3     | 14 / 16                    | 13 / 15                  |
+| vectorgates.v     | 5     | 10 / 12                    | 13 / 15                  |
+| vectorr.v         | 2     | 10 / 11                    | 10 / 11                  |
+| wire.v            | 0     | 10 / 10                    | 9 / 11                   |
+| wire4.v           | 0     | 10 / 12                    | 17 / 34                  |
+| xnor_misc.v       | 3     | 13 / 14                    | 13 / 18                  |
 
 - Native warm p95 worst case 20.6 ms (module_shift8), typical 11 to 14 ms including temp-dir setup and process spawn; budget of 300 ms met.
 - Wasm warm p95 358 ms, same recycle outliers as before; structural p95 4.7 ms; ELK max 73 ms; wasm cold start 226 ms.
 - With native yosys present, `npm test` (272) and the golden files pass unchanged: the native and wasm builds of Yosys 0.70 produce identical IR for every fixture. `npm run test:integration` (8 passing) reports `backend: native 0.70+post`.
-
 
 ## Addendum: installed vsix bugs (2026-10-22)
 
@@ -318,21 +331,23 @@ Regression tests: `test/unit/bundle.test.ts` builds the extension-host bundle (d
 
 Every configuration below rendered 7458.v and posted `ready` (`layout engine: worker`, fidelity synthesized), using the unchanged 0.1.0 vsix bytes:
 
-| VS Code | extension loaded as | other extensions | launch |
-| --- | --- | --- | --- |
-| 1.143.0 (test download) | unzipped vsix, dev mode | disabled | vscode-test |
-| 1.106.3 (download) | unzipped vsix, dev mode | disabled | vscode-test |
-| 1.106.3 `~/Applications` binary | unzipped vsix, dev mode | `~/.vscode/extensions` enabled | vscode-test |
-| 1.143.0 | unzipped vsix, dev mode | `~/.vscode/extensions` enabled | vscode-test |
-| 1.106.3 `~/Applications` app | installed with `code --install-extension` into a temp extensions dir | none | `open -a` (translocated, like the real app) with a probe `extensionTestsPath` |
-| 1.106.3 `~/Applications` app | installed by the CLI into the running window, no reload | none | `open -a` |
+| VS Code                         | extension loaded as                                                  | other extensions               | launch                                                                        |
+| ------------------------------- | -------------------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------- |
+| 1.143.0 (test download)         | unzipped vsix, dev mode                                              | disabled                       | vscode-test                                                                   |
+| 1.106.3 (download)              | unzipped vsix, dev mode                                              | disabled                       | vscode-test                                                                   |
+| 1.106.3 `~/Applications` binary | unzipped vsix, dev mode                                              | `~/.vscode/extensions` enabled | vscode-test                                                                   |
+| 1.143.0                         | unzipped vsix, dev mode                                              | `~/.vscode/extensions` enabled | vscode-test                                                                   |
+| 1.106.3 `~/Applications` app    | installed with `code --install-extension` into a temp extensions dir | none                           | `open -a` (translocated, like the real app) with a probe `extensionTestsPath` |
+| 1.106.3 `~/Applications` app    | installed by the CLI into the running window, no reload              | none                           | `open -a`                                                                     |
 
 Findings from `~/Library/Application Support/Code/logs`:
+
 - Two VS Codes share the profile: 1.106.3 from `~/Applications` (quarantined, runs App-Translocated from `/private/var/folders/.../AppTranslocation/...`) and the 1.143.0 copy that `@vscode/test-electron` downloaded into `.vscode-test/`, which was launched from Finder at 02:03 and is where `rtl-live` activated at 02:09 and 02:11 (after a window reload) with the pasted log. That window had `mshr-h.veriloghdl`, `lramseyer.vaporview` and other extensions active.
 - Neither main process logged a `Refused to load`/`Blocked vscode-webview request` for the extension, and the webview never posted a `log` message, so the host cannot tell whether the HTML loaded. `ready` was not logged by the host at all, so "the log never shows the webview posting ready" was true even in working sessions.
 - Running the integration suite with the user's extensions enabled saves the test edits into `test/fixtures/hdlbits/*.v` (an autosave extension) and shifts generation counts (`25 !== 23` in the M2 cancellation test). `test:packaged` keeps `--disable-extensions` unless `RTL_LIVE_EXTENSIONS_DIR` is set. The two dirty fixtures were reverted with `git checkout`.
 
 Diagnostics added so the next blank view explains itself in "RTL Live: Show Log":
+
 - Host: `sidebar webview script <uri>` when the HTML is set, `sidebar webview resolved (visible: ...)`, `<kind> webview ready, replaying N message(s)`.
 - Webview: an inline nonce'd boot script (`BOOT_SCRIPT` in `webviewHtml.ts`) runs before `dist/webview.js`. It owns the single `acquireVsCodeApi()` call (`webview/vscodeApi.ts` reuses it via `window.__rtlLiveVsCodeApi`), posts `webview booting (vscode api)`, and reports `failed to load <uri>` for a script or stylesheet that does not load, `uncaught <message> at <file>:<line>` and `unhandled rejection: ...`. Unit tests check the boot script is nonce'd, precedes the bundle and has no http URLs; the CSP string is unchanged.
 
@@ -360,7 +375,6 @@ sidebar webview ready, replaying 3 message(s)
 ```
 
 Both running VS Code windows (1.106.3 and the 1.143.0 copy) still hold the old 0.1.0 files until "Developer: Reload Window".
-
 
 ## v0.2 work log (2026-10-22)
 
@@ -397,20 +411,20 @@ PARTIAL: ACCURACY.md section 5.2 fixtures and 5.3 editing cases are unknown (fil
 
 ### Phase 3: bug fixes (done 2026-10-22)
 
-| Bug | Status | Commit |
-| --- | --- | --- |
-| 1 module title overflows, Fit above 100% | fixed: frame grows to its title, `FIT_MAX_SCALE` 1, L3 checks the title | `cd9e22e` |
-| 2 badge and drawing disagree | fixed: last good diagram stays with "Stale" and overlaid port changes; structural view with errors says "Editing" | `fa4d083`, `dd00a4a` |
-| 3 vague error messages, dropped ports | fixed: specific messages with end-of-file positions, Verilator refinement, recovered ports greyed | `bbc3cdd`, `dd00a4a` |
-| 4 sidebar stuck after sleep | fixed: heartbeat, resync on focus and visibility, active editor re-read | `86d1103` |
-| 5 logical vs bitwise | fixed in the IR and export; drawn with a `&&`/`||` glyph (Phase 4 adds the nonzero reducer look) | `9604f48` |
-| 6 structural overlay on stale | fixed for ports (added, removed, changed) | `fa4d083` |
-| 7 replicated groups | fixed: `{5{a,b,c,d,e}}` is one join of the group into an `x5` pin | `dd00a4a` |
-| 8 bus label on the chevron | fixed: label on the longest segment, L3 clearance check against symbols and chevrons | `cd9e22e` |
-| 9 untitled files | fixed: Verilog-mode untitled renders, Plain Text gets a one-click hint | `fa4d083` |
-| 10 ports in a grid | fixed: ports own the first and last layers, components not separated | `cd9e22e` |
-| 11 blank webview in a new window | fixed: ready watchdog, retry, failure page with Reload Window | `86d1103` |
-| 12 tests share the real profile | fixed: Phase 1 | `fecd4d6` |
+| Bug                                      | Status                                                                                                            | Commit               |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1 module title overflows, Fit above 100% | fixed: frame grows to its title, `FIT_MAX_SCALE` 1, L3 checks the title                                           | `cd9e22e`            |
+| 2 badge and drawing disagree             | fixed: last good diagram stays with "Stale" and overlaid port changes; structural view with errors says "Editing" | `fa4d083`, `dd00a4a` |
+| 3 vague error messages, dropped ports    | fixed: specific messages with end-of-file positions, Verilator refinement, recovered ports greyed                 | `bbc3cdd`, `dd00a4a` |
+| 4 sidebar stuck after sleep              | fixed: heartbeat, resync on focus and visibility, active editor re-read                                           | `86d1103`            |
+| 5 logical vs bitwise                     | fixed in the IR and export; drawn with a `&&`/`                                                                   |                      | ` glyph (Phase 4 adds the nonzero reducer look) | `9604f48` |
+| 6 structural overlay on stale            | fixed for ports (added, removed, changed)                                                                         | `fa4d083`            |
+| 7 replicated groups                      | fixed: `{5{a,b,c,d,e}}` is one join of the group into an `x5` pin                                                 | `dd00a4a`            |
+| 8 bus label on the chevron               | fixed: label on the longest segment, L3 clearance check against symbols and chevrons                              | `cd9e22e`            |
+| 9 untitled files                         | fixed: Verilog-mode untitled renders, Plain Text gets a one-click hint                                            | `fa4d083`            |
+| 10 ports in a grid                       | fixed: ports own the first and last layers, components not separated                                              | `cd9e22e`            |
+| 11 blank webview in a new window         | fixed: ready watchdog, retry, failure page with Reload Window                                                     | `86d1103`            |
+| 12 tests share the real profile          | fixed: Phase 1                                                                                                    | `fecd4d6`            |
 
 Also fixed on the way: host messages were ordered per document, so a long-edited file silenced a freshly opened one (`8567cf3`).
 
@@ -495,20 +509,20 @@ Suite at the pause: typecheck and lint clean; unit 375 (21 files); integration 1
 
 The spec documents arrived during this phase (`fd5eca0`). Items that were PARTIAL for lack of them, now mapped:
 
-| Item | Where it goes |
-| --- | --- |
-| Bug 1 (module title overflows its box, Fit above 100%) | Phase 3, next: structural module box grows to its title (`nodeSize`/`moduleToElk` for the port-only case), `FIT_MAX_SCALE` to 1 (also closes every L3 "fit" failure) |
-| Bug 7 (`{5{a,b,c,d,e}}` expands to one wire per bit) | Phase 3: periodic run detection in `fromYosys` `joinFor` (inner join of the group, outer pin `x5`), exporter already handles `{N{...}}` of any width |
-| Bug 8 (bus label touches the port chevron) | Phase 3 (or 5): place the width label on the longest segment of the first edge, L3 overlap check against port shapes |
-| Bug 10 (ports scattered in a grid when the file has errors) | Phase 3: `elk.separateConnectedComponents=false` plus model order for port-only graphs; unit check that inputs are on the left, outputs on the right, in declaration order |
-| ACCURACY 5.2 fixtures (rca4, mux4_case, en_flop, scan_flop, latch_vs_flop, counter8_reset, compare4, bitwise_vs_logical, inverted_gates) | Phase 2 backfill, done first thing in Phase 4 with expectations written to the "Must show" lines (existing case_mux, dff_enable, latch_en, logic_ops, nand_nor stay as variants) |
-| ACCURACY 5.1 "must show" rows for existing fixtures | Phase 4: add missing assertions (counter4 adder feedback, module_shift8 mux labels 0..3, fsm_moore comparator kept) |
-| ACCURACY 5.3 editing cases | `module top_module(` title fits (bug 1 test), `module top_module(input a, output b` ports left/right (bug 10 test), delete endmodule (done), switch tab (done), sleep (manual, A5) |
-| ACCURACY 2 and 3 (RTL view and gate view) | Phase 4: two Yosys scripts (RTL: `proc; opt_clean; opt_dff; opt_clean`, no `opt_expr` so `state == B` stays a comparator; gate: current script), `$pmux` plus `$eq` on one selector collapsed to an N:1 mux with select-value labels, EN flop in RTL view, mux-in-front-of-D in gate view, toolbar toggle, badge shows the view, `synth.rtl` and `synth.gate` blocks in expected JSON, accuracy report gains an `rtl` view |
-| ACCURACY 6.4 golden screenshots | Phase 5: Playwright `toHaveScreenshot` baselines per fixture, light and dark, committed |
-| BUG_HUNT Part A | Phase 6: A1 and A2 as parser, IR and integration tests with new fixtures; A2 semantics (multiple drivers, undriven, unused, loop, latch, blocking vs non-blocking) as visible warning badges; A3 to A6 where feasible, rest in "Manual checks" |
-| BUG_HUNT Part B | Phase 5 |
-| BUG_HUNT Part C | out of scope except search and trace as a stretch |
+| Item                                                                                                                                     | Where it goes                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bug 1 (module title overflows its box, Fit above 100%)                                                                                   | Phase 3, next: structural module box grows to its title (`nodeSize`/`moduleToElk` for the port-only case), `FIT_MAX_SCALE` to 1 (also closes every L3 "fit" failure)                                                                                                                                                                                                                                                       |
+| Bug 7 (`{5{a,b,c,d,e}}` expands to one wire per bit)                                                                                     | Phase 3: periodic run detection in `fromYosys` `joinFor` (inner join of the group, outer pin `x5`), exporter already handles `{N{...}}` of any width                                                                                                                                                                                                                                                                       |
+| Bug 8 (bus label touches the port chevron)                                                                                               | Phase 3 (or 5): place the width label on the longest segment of the first edge, L3 overlap check against port shapes                                                                                                                                                                                                                                                                                                       |
+| Bug 10 (ports scattered in a grid when the file has errors)                                                                              | Phase 3: `elk.separateConnectedComponents=false` plus model order for port-only graphs; unit check that inputs are on the left, outputs on the right, in declaration order                                                                                                                                                                                                                                                 |
+| ACCURACY 5.2 fixtures (rca4, mux4_case, en_flop, scan_flop, latch_vs_flop, counter8_reset, compare4, bitwise_vs_logical, inverted_gates) | Phase 2 backfill, done first thing in Phase 4 with expectations written to the "Must show" lines (existing case_mux, dff_enable, latch_en, logic_ops, nand_nor stay as variants)                                                                                                                                                                                                                                           |
+| ACCURACY 5.1 "must show" rows for existing fixtures                                                                                      | Phase 4: add missing assertions (counter4 adder feedback, module_shift8 mux labels 0..3, fsm_moore comparator kept)                                                                                                                                                                                                                                                                                                        |
+| ACCURACY 5.3 editing cases                                                                                                               | `module top_module(` title fits (bug 1 test), `module top_module(input a, output b` ports left/right (bug 10 test), delete endmodule (done), switch tab (done), sleep (manual, A5)                                                                                                                                                                                                                                         |
+| ACCURACY 2 and 3 (RTL view and gate view)                                                                                                | Phase 4: two Yosys scripts (RTL: `proc; opt_clean; opt_dff; opt_clean`, no `opt_expr` so `state == B` stays a comparator; gate: current script), `$pmux` plus `$eq` on one selector collapsed to an N:1 mux with select-value labels, EN flop in RTL view, mux-in-front-of-D in gate view, toolbar toggle, badge shows the view, `synth.rtl` and `synth.gate` blocks in expected JSON, accuracy report gains an `rtl` view |
+| ACCURACY 6.4 golden screenshots                                                                                                          | Phase 5: Playwright `toHaveScreenshot` baselines per fixture, light and dark, committed                                                                                                                                                                                                                                                                                                                                    |
+| BUG_HUNT Part A                                                                                                                          | Phase 6: A1 and A2 as parser, IR and integration tests with new fixtures; A2 semantics (multiple drivers, undriven, unused, loop, latch, blocking vs non-blocking) as visible warning badges; A3 to A6 where feasible, rest in "Manual checks"                                                                                                                                                                             |
+| BUG_HUNT Part B                                                                                                                          | Phase 5                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| BUG_HUNT Part C                                                                                                                          | out of scope except search and trace as a stretch                                                                                                                                                                                                                                                                                                                                                                          |
 
 Exact next step: bug 1. Add a unit test that lays out `structuralToIr` of `module top_module(` and asserts the title text box fits the module frame and that `FIT_MAX_SCALE === 1`; then set the cap, size the frame to the title, and run `npm run test:accuracy:update` (the L3 "fit" entries disappear from `known-failures.json`; review the diff). Then bugs 10, 7, 8 in that order, each test first, then update docs/ACCURACY_REPORT.md and this section, and close Phase 3 with the full suite and `npm run test:packaged`.
 
@@ -522,26 +536,26 @@ docs/BUGS.md items 13 to 18 were pasted by VJ at the start of the session and wr
 
 Triage of every BUGS.md item against the baseline build:
 
-| Bug | Status | How checked |
-| --- | --- | --- |
-| 1 title overflows, Fit above 100% | fixed in v0.2.0 (test: `moduleFrame.test.ts` "grows to fit a long title", "never zooms past 100 percent") | unit |
-| 2 badge and drawing disagree | fixed in v0.2.0 (test: `m8.editing.test.ts` "bug 2", `overlay.test.ts`) | integration |
-| 3 vague error messages, dropped ports | fixed in v0.2.0 (test: `errorMessages.test.ts`, `m8.editing.test.ts` "bug 3"); the dropped-port part regressed as bug 13 | integration |
-| 4 sidebar stuck after sleep | fixed in v0.2.0 (test: `lifecycle.test.ts`, `m7.lifecycle.test.ts` "hiding and showing the view resyncs") | integration |
-| 5 logical vs bitwise | fixed in v0.2.0 (test: `synth.test.ts` logical rows, `bitwise_vs_logical` fixture L2); glyph readability is bug 17 | accuracy |
-| 6 structural overlay on stale | fixed in v0.2.0 (test: `overlay.test.ts`, `m7.states.spec.ts` ghost overlay) | webview |
-| 7 replicated groups | fixed in v0.2.0 (test: `synth.test.ts` "bug 7") | unit |
-| 8 bus label on the chevron | fixed in v0.2.0 (test: accuracy L3 `noOverlap` 2b on every fixture) | accuracy |
-| 9 untitled files | fixed in v0.2.0 (test: `m8.editing.test.ts` "bug 9") | integration |
-| 10 ports in a grid | fixed in v0.2.0 (test: `portPlacement.test.ts`) | unit |
-| 11 blank webview in a new window | fixed in v0.2.0 (test: `m7.lifecycle.test.ts` "a page that never posts ready") | integration |
-| 12 tests share the real profile | fixed in v0.2.0 (test: `isolation.test.ts`) | unit |
-| 13 port vanishes during recovery | still reproduces: `input p1a, p1b, p1c p1d p1e, p1f,` parses to p1a p1b p1d p1f ... p1e (tentative); p1c is gone and the w2 cloud reads only p1a and p1b. Fixture `test/fixtures/partial/p9_two_missing_commas.v` | scratch parse of the fixture |
-| 14 crowded fan-out | still reproduces: in vectorgates (rtl view) the nearest parallel segments of different nets (`a`, `b` trunks) are 6 px apart; junction dots are r 2.5 on a 3 px bus stroke | scratch layout metrics |
-| 15 join labels cramped | still reproduces: `[5:3]` and `[2:0]` on the out_not join are 8.5 px text 12 px apart (3 px gap), no own label space | scratch layout metrics |
-| 16 dashed yellow segment | still reproduces with the HDLBits solution form `assign out_not[5:3] = ~b; assign out_not[2:0] = ~a;`: `multiplyDrivenSignals` counts names, so disjoint slices of one vector get the "multiple drivers" badge (the dashed warning style) and an error in the banner. The tracked `vectorgates.v` uses one concatenation assign and shows nothing. New fixture `test/fixtures/hdlbits/vectorgates_slices.v` (expected JSON copied from vectorgates) | scratch synth of the new fixture |
-| 17 logical OR glyph | still reproduces by design: `||` glyph inside an OR gate, tooltip says `logical: 1` | scratch render titles |
-| 18 explanations for every symbol | still reproduces: tooltips exist on nets, ports and nodes but read as data (`op: not`, `width: 3`); none on junctions, crossings, bubbles, slashes; no legend | scratch render titles |
+| Bug                                   | Status                                                                                                                                                                                                                                                                                                                                                                                                                                              | How checked                      |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| 1 title overflows, Fit above 100%     | fixed in v0.2.0 (test: `moduleFrame.test.ts` "grows to fit a long title", "never zooms past 100 percent")                                                                                                                                                                                                                                                                                                                                           | unit                             |
+| 2 badge and drawing disagree          | fixed in v0.2.0 (test: `m8.editing.test.ts` "bug 2", `overlay.test.ts`)                                                                                                                                                                                                                                                                                                                                                                             | integration                      |
+| 3 vague error messages, dropped ports | fixed in v0.2.0 (test: `errorMessages.test.ts`, `m8.editing.test.ts` "bug 3"); the dropped-port part regressed as bug 13                                                                                                                                                                                                                                                                                                                            | integration                      |
+| 4 sidebar stuck after sleep           | fixed in v0.2.0 (test: `lifecycle.test.ts`, `m7.lifecycle.test.ts` "hiding and showing the view resyncs")                                                                                                                                                                                                                                                                                                                                           | integration                      |
+| 5 logical vs bitwise                  | fixed in v0.2.0 (test: `synth.test.ts` logical rows, `bitwise_vs_logical` fixture L2); glyph readability is bug 17                                                                                                                                                                                                                                                                                                                                  | accuracy                         |
+| 6 structural overlay on stale         | fixed in v0.2.0 (test: `overlay.test.ts`, `m7.states.spec.ts` ghost overlay)                                                                                                                                                                                                                                                                                                                                                                        | webview                          |
+| 7 replicated groups                   | fixed in v0.2.0 (test: `synth.test.ts` "bug 7")                                                                                                                                                                                                                                                                                                                                                                                                     | unit                             |
+| 8 bus label on the chevron            | fixed in v0.2.0 (test: accuracy L3 `noOverlap` 2b on every fixture)                                                                                                                                                                                                                                                                                                                                                                                 | accuracy                         |
+| 9 untitled files                      | fixed in v0.2.0 (test: `m8.editing.test.ts` "bug 9")                                                                                                                                                                                                                                                                                                                                                                                                | integration                      |
+| 10 ports in a grid                    | fixed in v0.2.0 (test: `portPlacement.test.ts`)                                                                                                                                                                                                                                                                                                                                                                                                     | unit                             |
+| 11 blank webview in a new window      | fixed in v0.2.0 (test: `m7.lifecycle.test.ts` "a page that never posts ready")                                                                                                                                                                                                                                                                                                                                                                      | integration                      |
+| 12 tests share the real profile       | fixed in v0.2.0 (test: `isolation.test.ts`)                                                                                                                                                                                                                                                                                                                                                                                                         | unit                             |
+| 13 port vanishes during recovery      | still reproduces: `input p1a, p1b, p1c p1d p1e, p1f,` parses to p1a p1b p1d p1f ... p1e (tentative); p1c is gone and the w2 cloud reads only p1a and p1b. Fixture `test/fixtures/partial/p9_two_missing_commas.v`                                                                                                                                                                                                                                   | scratch parse of the fixture     |
+| 14 crowded fan-out                    | still reproduces: in vectorgates (rtl view) the nearest parallel segments of different nets (`a`, `b` trunks) are 6 px apart; junction dots are r 2.5 on a 3 px bus stroke                                                                                                                                                                                                                                                                          | scratch layout metrics           |
+| 15 join labels cramped                | still reproduces: `[5:3]` and `[2:0]` on the out_not join are 8.5 px text 12 px apart (3 px gap), no own label space                                                                                                                                                                                                                                                                                                                                | scratch layout metrics           |
+| 16 dashed yellow segment              | still reproduces with the HDLBits solution form `assign out_not[5:3] = ~b; assign out_not[2:0] = ~a;`: `multiplyDrivenSignals` counts names, so disjoint slices of one vector get the "multiple drivers" badge (the dashed warning style) and an error in the banner. The tracked `vectorgates.v` uses one concatenation assign and shows nothing. New fixture `test/fixtures/hdlbits/vectorgates_slices.v` (expected JSON copied from vectorgates) | scratch synth of the new fixture |
+| 17 logical OR glyph                   | still reproduces by design: `                                                                                                                                                                                                                                                                                                                                                                                                                       |                                  | `glyph inside an OR gate, tooltip says`logical: 1` | scratch render titles |
+| 18 explanations for every symbol      | still reproduces: tooltips exist on nets, ports and nodes but read as data (`op: not`, `width: 3`); none on junctions, crossings, bubbles, slashes; no legend                                                                                                                                                                                                                                                                                       | scratch render titles            |
 
 The new vectorgates_slices fixture also fails structural L3 (the cloud for two slice assigns to `out_not` is sized for one line and shows the second assign's text; `out_not` has no width label) and rtl and gate L3 (the false warning badge sits on the `[5:3]` ripper label). All four are in `known-failures.json` for Phase 1 to clear.
 
@@ -559,15 +573,15 @@ New L3 checks in `test/accuracy/layout.ts`, run on every fixture in all three vi
 
 A/B of the ELK spacing over all 44 fixtures in three views (132 layouts), measured on the rounded layout: crossings between nets, parallel pairs of different nets under 8 px, and total drawing area. Ripper pins were already at a 16 px pitch for this run.
 
-| set | edgeEdge | edgeEdgeBetweenLayers | edgeNodeBetweenLayers | nodeNodeBetweenLayers | crossings | pairs under 8 px | min gap | area |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A (v0.2) | 10 | 10 | 20 | 44 | 305 | 20 | 4 | 11.5M px2 |
-| B (brief) | 12 | 12 | 20 | 56 | 301 | 22 | 3 | 12.4M |
-| C | 12 | 12 | 24 | 56 | 303 | 25 | 3 | 13.0M |
-| D | 16 | 16 | 28 | 64 | 307 | 2 | 6 | 13.9M |
-| E | 14 | 14 | 24 | 64 | 309 | 7 | 7 | 13.1M |
-| F | 16 | 16 | 24 | 56 | 309 | 4 | 5 | 12.7M |
-| G | 20 | 20 | 28 | 64 | 307 | 6 | 5 | 14.1M |
+| set       | edgeEdge | edgeEdgeBetweenLayers | edgeNodeBetweenLayers | nodeNodeBetweenLayers | crossings | pairs under 8 px | min gap | area      |
+| --------- | -------- | --------------------- | --------------------- | --------------------- | --------- | ---------------- | ------- | --------- |
+| A (v0.2)  | 10       | 10                    | 20                    | 44                    | 305       | 20               | 4       | 11.5M px2 |
+| B (brief) | 12       | 12                    | 20                    | 56                    | 301       | 22               | 3       | 12.4M     |
+| C         | 12       | 12                    | 24                    | 56                    | 303       | 25               | 3       | 13.0M     |
+| D         | 16       | 16                    | 28                    | 64                    | 307       | 2                | 6       | 13.9M     |
+| E         | 14       | 14                    | 24                    | 64                    | 309       | 7                | 7       | 13.1M     |
+| F         | 16       | 16                    | 24                    | 56                    | 309       | 4                | 5       | 12.7M     |
+| G         | 20       | 20                    | 28                    | 64                    | 307       | 6                | 5       | 14.1M     |
 
 Set D was chosen (20 percent more area than v0.2, 2 close pairs left). A second A/B of the node placement strategy with set D: network simplex 307 crossings and 2 close pairs; Brandes-Koepf 259 crossings, 0 close pairs, min gap 11 px, area +4 percent; Brandes-Koepf balanced 295 and 15; linear segments 275 and 0. Brandes-Koepf is now the default (`webview/layout/toElk.ts`).
 
@@ -613,27 +627,27 @@ Result: L3 passes on every fixture in all three views, including the four new ch
 
 ### v0.3 summary
 
-| Phase | What | Commits |
-| --- | --- | --- |
-| 0 triage | baseline, bugs 13 to 18 reproduced, fixtures `p9_two_missing_commas.v`, `vectorgates_slices.v` | `b839563` |
-| 1 correctness | bit-accurate drivers and a join for slice assigns (16); swallowed port names recovered (13) | `94665b2`, `77c2b82` |
-| 2 layout | four new L3 checks; spacing A/B (set D) and Brandes-Koepf; T-only junctions; labels on their own wires; before and after shots | `7af30e4`, `b677bba`, `4ff290a` |
-| 3 clarity | logical operators as any-1 boxes (17); tooltips on everything with the source line, legend, wording (18) | `53f576a`, `0a00f7e`, `ef11e57` |
-| 4 deferred | focus mode, designed states, contact sheet | `9e28cd3`, `a11c0ab` |
-| 5 release | 0.3.0, package, install | `ffc06ab` |
+| Phase         | What                                                                                                                           | Commits                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| 0 triage      | baseline, bugs 13 to 18 reproduced, fixtures `p9_two_missing_commas.v`, `vectorgates_slices.v`                                 | `b839563`                       |
+| 1 correctness | bit-accurate drivers and a join for slice assigns (16); swallowed port names recovered (13)                                    | `94665b2`, `77c2b82`            |
+| 2 layout      | four new L3 checks; spacing A/B (set D) and Brandes-Koepf; T-only junctions; labels on their own wires; before and after shots | `7af30e4`, `b677bba`, `4ff290a` |
+| 3 clarity     | logical operators as any-1 boxes (17); tooltips on everything with the source line, legend, wording (18)                       | `53f576a`, `0a00f7e`, `ef11e57` |
+| 4 deferred    | focus mode, designed states, contact sheet                                                                                     | `9e28cd3`, `a11c0ab`            |
+| 5 release     | 0.3.0, package, install                                                                                                        | `ffc06ab`                       |
 
 Final status of every docs/BUGS.md item:
 
-| Bug | Final status |
-| --- | --- |
-| 1 to 12 | fixed in v0.2.0, regression tests confirmed in the Phase 0 triage table |
-| 13 port vanishes during recovery | fixed `77c2b82` (test: `portRecovery.test.ts`, including the typing fuzz) |
-| 14 crowded fan-out | fixed `b677bba` (test: accuracy L3 `wireSpacing` and `junctions` on every fixture; `postprocess.test.ts`) |
-| 15 join labels cramped | fixed `b677bba` (test: accuracy L3 `labelsClear` and `noOverlap`) |
-| 16 dashed yellow segment | fixed `94665b2` (test: `drivers.test.ts`; the dashed style is the multiple-driver warning and its tooltip names the bits) |
-| 17 logical OR glyph | fixed `53f576a` (test: `tooltips.test.ts` "logical operators drawn as reduce boxes", `m9.legend.spec.ts`) |
-| 18 explanations for every symbol | fixed `0a00f7e`, `ef11e57` (test: `tooltips.test.ts`, `legend.test.ts`, `m9.legend.spec.ts`) |
-| 5 to 8 known issues | fixed in v0.2.0; 8 re-checked by the v0.3 label placement (`b677bba`) |
+| Bug                              | Final status                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1 to 12                          | fixed in v0.2.0, regression tests confirmed in the Phase 0 triage table                                                   |
+| 13 port vanishes during recovery | fixed `77c2b82` (test: `portRecovery.test.ts`, including the typing fuzz)                                                 |
+| 14 crowded fan-out               | fixed `b677bba` (test: accuracy L3 `wireSpacing` and `junctions` on every fixture; `postprocess.test.ts`)                 |
+| 15 join labels cramped           | fixed `b677bba` (test: accuracy L3 `labelsClear` and `noOverlap`)                                                         |
+| 16 dashed yellow segment         | fixed `94665b2` (test: `drivers.test.ts`; the dashed style is the multiple-driver warning and its tooltip names the bits) |
+| 17 logical OR glyph              | fixed `53f576a` (test: `tooltips.test.ts` "logical operators drawn as reduce boxes", `m9.legend.spec.ts`)                 |
+| 18 explanations for every symbol | fixed `0a00f7e`, `ef11e57` (test: `tooltips.test.ts`, `legend.test.ts`, `m9.legend.spec.ts`)                              |
+| 5 to 8 known issues              | fixed in v0.2.0; 8 re-checked by the v0.3 label placement (`b677bba`)                                                     |
 
 Layout A/B numbers: see Phase 2 above (set D plus Brandes-Koepf: 259 crossings over 132 layouts, no parallel wires of different nets under 8 px, min gap 11 px, area 14.8M px2 against 11.5M in v0.2).
 
@@ -676,10 +690,10 @@ Scope: docs/BUGS.md items 19 and 20. Baseline at `21e9e52`: unit, golden and acc
 - Test counts: unit, golden and accuracy 612 passing (31 files); integration 17; webview 65; packaged 17. Accuracy report unchanged in pass counts (structural L1 4/44, everything else 44/44 or 5/5 asserted) with the two new L3 checks.
 - Hygiene check passed. No file under `test/fixtures/` changed. Nothing pushed.
 
-| Bug | Final status |
-| --- | --- |
+| Bug                    | Final status                                                                                                                                                                 |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 19 crowded fan-out hub | fixed `9bfb574` (test: accuracy L3 `junctionSpacing` and `crossingClearance` on every fixture and view; `harness.test.ts`; `postprocess.test.ts`; `toElk.test.ts` pin pitch) |
-| 20 legend labels | fixed `87afe2b` (test: `legend.test.ts` sample layout; `m9.legend.spec.ts` rendered scale and overlap, light and dark) |
+| 20 legend labels       | fixed `87afe2b` (test: `legend.test.ts` sample layout; `m9.legend.spec.ts` rendered scale and overlap, light and dark)                                                       |
 
 Known issue: `docs/BUGS.md` items 13 to 18 were only in this log until `7299f8f`; the tracked list now carries 1 to 20.
 
@@ -733,13 +747,13 @@ Studied for look only, no code copied (THIRD_PARTY_NOTICES.md records this): net
 - `npm run package`: `rtl-live-0.4.0.vsix`, 22 files, 17.52 MB (the 22nd is `dist/codicon.ttf`). Installed with the bundled CLI of `~/Applications/Visual Studio Code.app`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.4.0`. Running windows need "Developer: Reload Window".
 - The Stryker run started before this work (`a5bb707`, 11350 mutants over the pre-v0.4 tree) kept running throughout; its workers were paused with SIGSTOP for the timing measurements and the full vitest gate, a few minutes in all, so a handful of in-flight mutants may be recorded as timeouts. Its report and triage are the next step, in their own section.
 
-| Brief item | Final status |
-| --- | --- |
-| 1 references | studied, no code reused, codicons credited |
-| 2 tokens | `tokens.ts` plus `:root`, test-enforced; strokes, colours, fills, corners, dots, type, hover, motion, high contrast as specified; static shadow A/B done, not adopted |
-| 3 polish | toolbar, badges, banner, hint, breadcrumb, states, Legend; export print palette with margin and fonts, theme as a setting |
-| 4 proof | `artifacts/v04-before/`, `artifacts/v04-after/` with 14 compare images; three review rounds recorded above |
-| 5 rules | L1, L2, L3 all passing in every view (accuracy baseline unchanged); render budget held and tested; behaviour tests first for hover and export; screenshots in light, dark and high contrast; 0.4.0 packaged, tested and installed |
+| Brief item   | Final status                                                                                                                                                                                                                      |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 references | studied, no code reused, codicons credited                                                                                                                                                                                        |
+| 2 tokens     | `tokens.ts` plus `:root`, test-enforced; strokes, colours, fills, corners, dots, type, hover, motion, high contrast as specified; static shadow A/B done, not adopted                                                             |
+| 3 polish     | toolbar, badges, banner, hint, breadcrumb, states, Legend; export print palette with margin and fonts, theme as a setting                                                                                                         |
+| 4 proof      | `artifacts/v04-before/`, `artifacts/v04-after/` with 14 compare images; three review rounds recorded above                                                                                                                        |
+| 5 rules      | L1, L2, L3 all passing in every view (accuracy baseline unchanged); render budget held and tested; behaviour tests first for hover and export; screenshots in light, dark and high contrast; 0.4.0 packaged, tested and installed |
 
 Next step: triage the mutation report when the run ends (`artifacts/mutation/mutation.json`; `node` the survivor summary by file), add tests for real gaps, record the score in NOTES.md.
 
@@ -771,11 +785,11 @@ Scope: docs/BUGS.md items 21 to 23, recorded in `a6835a3` together with the lear
 - Gates on the final tree: unit, golden and accuracy 643 passing (35 files); integration 19; webview 94; typecheck and lint clean; hygiene check passed; no existing file under `test/fixtures/` changed (two new partial fixtures); nothing pushed. `npm run test:perf` was not run: the Stryker workers were still using every core (load average above 25) and the 16 ms budget is only meaningful on a quiet CPU; the render path did not change in this release.
 - `npm run package`: `rtl-live-0.4.1.vsix`, 22 files, 17.52 MB. `npm run test:packaged`: 19 passing against the unzipped vsix. Installed with the bundled CLI of `~/Applications/Visual Studio Code.app`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.4.1`. Running windows need "Developer: Reload Window".
 
-| Bug | Final status |
-| --- | --- |
-| 21 ports-only module | fixed `edfc823` (test: `portsOnly.test.ts`; `m10.states.spec.ts` empty state and hinted ports) |
-| 22 error order | fixed `249f830` (test: `errorMessages.test.ts`; `m10.states.spec.ts` banner list; `m8.editing.test.ts`) |
-| 23 ghosted valid ports | fixed `249f830` (test: `portRecovery.test.ts`; `m8.editing.test.ts`) |
+| Bug                    | Final status                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| 21 ports-only module   | fixed `edfc823` (test: `portsOnly.test.ts`; `m10.states.spec.ts` empty state and hinted ports)          |
+| 22 error order         | fixed `249f830` (test: `errorMessages.test.ts`; `m10.states.spec.ts` banner list; `m8.editing.test.ts`) |
+| 23 ghosted valid ports | fixed `249f830` (test: `portRecovery.test.ts`; `m8.editing.test.ts`)                                    |
 
 Next step: none for v0.4.1; the mutation triage follows in its own section.
 
@@ -871,4 +885,12 @@ Scope: the v0.5.0 brief (cross-platform tool lookup, CI, Marketplace readiness; 
 - CI: Icarus is installed before the unit step where it is easy (`apt-get install iverilog` on Ubuntu, `brew install icarus-verilog` on macOS), so the equivalence checks really run on two of the three runners; Windows stays skipped. `actions/checkout`, `actions/setup-node` and `actions/upload-artifact` moved to `@v7`, their current majors on the Node 24 runtime (checkout and setup-node switched to node24 at v5, upload-artifact at v6; the run warned that Node 20 is deprecated). Ubuntu pinned to `ubuntu-24.04` so a future `ubuntu-latest` move cannot change the toolchain unannounced.
 - Check on the next CI run: (1) macOS `brew install icarus-verilog` time and that the harness tests show as run, not skipped, in the vitest output; (2) Ubuntu apt `iverilog` is 12.0 and `yosys` 0.33 on 24.04: watch the native-engine step for golden diffs and the feature-flag retry; (3) Windows shows "4 skipped" in the unit step and nothing else about iverilog; (4) the `@v7` actions start without a runner-version complaint (hosted runners are current; only self-hosted ones below v2.327.1 would fail); (5) the integration step on all three, which the first run never reached.
 
-Next step: push `main`, watch the CI run against the four points above, then follow "How to publish" above.
+### Second CI run (40054775588): fixed
+
+- Integration failed on all three OSes, M11 only: `AssertionError: engine line` at `m11.tools.test.js:97`. Cause: the test waited for a `synthesis backend:` log line, but `log.recent()` keeps the last 400 lines, so it matched the line of the engine the earlier tests had loaded. Setting the bogus `rtlLive.yosysPath` restarts the lookup and, on a runner without Yosys, the 80 MB wasm reload; Show Tool Paths ran in that window with no backend and printed `not started`. Reproduced locally with `RTL_LIVE_YOSYS=off npx vscode-test -g M11`: 1 failing, the same assertion; after the fix 1 passing with Yosys hidden and with Yosys present.
+- Fix: `describeEngine()` (pure, `toolLookup.ts`) gives the report one engine line in every state: `built-in wasm yosys, loading` while warming up, `not decided yet, looking for yosys` during the lookup, `not started`, `off`, or the engine in use. `SynthManager.whenDecided()` and the test API `whenEngineDecided()` resolve with the chosen engine once the current lookup and load are done. M11 now reads the report once right after the setting change (an engine line must be there), waits for the decision, then expects `native yosys ... at <path>` when the yosys line names a path and `built-in wasm yosys <version>` when it says not found.
+- `RTL_LIVE_YOSYS=off` (and `RTL_LIVE_<TOOL>=off` in general) makes the lookup skip every existing candidate with the reason `hidden by RTL_LIVE_YOSYS=off`; `findToolSync` returns nothing. Same pattern as `RTL_LIVE_IVERILOG=off`. Documented in README (Development) and CHANGELOG.
+- The `yowasp-yosys: fetched N%` lines are the yowasp runtime's default progress wording; under Node a `file:` URL is read with `fs.readFile` (`@yowasp/runtime/lib/fetch.js`, and `fetchCompile` in the component glue), and the worker imports the bundle by `import.meta.url`, so nothing is downloaded. `test/unit/wasmOffline.test.ts` imports the engine with `globalThis.fetch` replaced by a rejecting stub and asserts `-V` still answers and fetch was never called. The worker now passes its own `fetchProgress` and logs `built-in yosys: loading bundled files from disk, N% of M bytes` at 25 percent steps.
+- Gates: vitest 688 passing (39 files; 3 new: the switch, `describeEngine`, offline start); webview 96; integration 20 with Yosys present and 20 with `RTL_LIVE_YOSYS=off`; typecheck and lint clean; hygiene check passed.
+
+Next step: push `main`, watch CI run three: integration green on all three OSes, the `built-in yosys: loading bundled files from disk` lines on macOS and Windows, and the four points of the first-run checklist. Then follow "How to publish" above.

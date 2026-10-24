@@ -17,6 +17,8 @@ export interface RtlLiveTestApi {
   activationMs: number;
   /** The last few hundred lines of the output channel */
   logLines(): string[];
+  /** Resolves with the engine in use once the current lookup and load have finished. */
+  whenEngineDecided(): Promise<"native" | "wasm" | "off" | "none">;
 }
 
 export function activate(context: vscode.ExtensionContext): RtlLiveTestApi {
@@ -40,8 +42,12 @@ export function activate(context: vscode.ExtensionContext): RtlLiveTestApi {
     vscode.commands.registerCommand("rtlLive.showLog", () => log.show()),
     vscode.commands.registerCommand("rtlLive.openInPanel", () => provider.openInPanel()),
     vscode.commands.registerCommand("rtlLive.fit", () => provider.post({ type: "fit", generation: 0 })),
-    vscode.commands.registerCommand("rtlLive.exportSvg", () => provider.post({ type: "export", generation: 0, format: "svg" })),
-    vscode.commands.registerCommand("rtlLive.exportPng", () => provider.post({ type: "export", generation: 0, format: "png" })),
+    vscode.commands.registerCommand("rtlLive.exportSvg", () =>
+      provider.post({ type: "export", generation: 0, format: "svg" }),
+    ),
+    vscode.commands.registerCommand("rtlLive.exportPng", () =>
+      provider.post({ type: "export", generation: 0, format: "png" }),
+    ),
     vscode.commands.registerCommand("rtlLive.selectTop", () => void ctl.selectTopInteractively()),
     vscode.commands.registerCommand("rtlLive.showToolPaths", () => ctl.showToolPaths()),
   );
@@ -54,6 +60,7 @@ export function activate(context: vscode.ExtensionContext): RtlLiveTestApi {
     controller: ctl,
     activationMs,
     logLines: () => log.recent(),
+    whenEngineDecided: () => ctl.synth.whenDecided(),
     whenResolved: () =>
       provider.resolvedCount > 0
         ? Promise.resolve()

@@ -5,9 +5,23 @@ import type { SchematicDoc } from "../ir/types";
 import type { SimplifyOptions } from "../ir/simplify";
 import type { SynthBackend } from "../synth/backend";
 import { NativeYosysBackend } from "../synth/nativeBackend";
-import { describeLookup, fallbackMessage, locateTool, realLookupEnv, realProbe, type LookupResult, type ToolName } from "../synth/toolLookup";
+import {
+  type LookupResult,
+  type ToolName,
+  describeEngine,
+  describeLookup,
+  fallbackMessage,
+  locateTool,
+  realLookupEnv,
+  realProbe,
+} from "../synth/toolLookup";
 import { WasmYosysBackend } from "../synth/wasmBackend";
-import { DEFAULT_FEATURES, synthesize, type BackendFeatures, type SynthesizeResult } from "../synth/synthesize";
+import {
+  DEFAULT_FEATURES,
+  synthesize,
+  type BackendFeatures,
+  type SynthesizeResult,
+} from "../synth/synthesize";
 import type { StructuralFile } from "../structural/types";
 import type { SynthView } from "../synth/script";
 import { LruCache, sha256 } from "./cache";
@@ -70,7 +84,12 @@ export class SynthManager implements vscode.Disposable {
 
   /** Verified verilator path, or undefined; resolved once per settings change. */
   locateVerilator(): Promise<string | undefined> {
-    this.verilatorPromise ??= locateTool("verilator", this.settings.verilatorPath, realLookupEnv(), realProbe).then((r) => {
+    this.verilatorPromise ??= locateTool(
+      "verilator",
+      this.settings.verilatorPath,
+      realLookupEnv(),
+      realProbe,
+    ).then((r) => {
       this.lookups.verilator = r;
       for (const line of describeLookup("verilator", r)) log.info(line);
       return r.found?.path;
@@ -91,9 +110,19 @@ export class SynthManager implements vscode.Disposable {
       if (r) lines.push(...describeLookup(tool, r));
       else lines.push(`${tool}: not looked up yet`);
     }
-    const engine = this.backendName === "native" ? `native yosys ${this.version ?? ""} at ${this.backendPath ?? "?"}` : this.backendName === "wasm" ? `built-in wasm yosys ${this.version ?? ""}` : this.backendName === "off" ? "off (rtlLive.synthesisBackend)" : "not started";
-    lines.push(`synthesis engine: ${engine.replace(/\s+at/, " at").replace(/  +/g, " ")}`);
-    lines.push(`platform: ${process.platform} ${process.arch}, PATH has ${(process.env["PATH"] ?? process.env["Path"] ?? "").split(process.platform === "win32" ? ";" : ":").filter((d) => d !== "").length} folders`);
+    lines.push(
+      describeEngine({
+        setting: this.settings.backend,
+        backend: this.backend?.name ?? "none",
+        ...(this.version !== undefined ? { version: this.version } : {}),
+        ...(this.backendPath !== undefined ? { path: this.backendPath } : {}),
+        warmingUp: this.warmingUp,
+        deciding: this.backendPromise !== undefined && this.backend === undefined,
+      }),
+    );
+    lines.push(
+      `platform: ${process.platform} ${process.arch}, PATH has ${(process.env["PATH"] ?? process.env["Path"] ?? "").split(process.platform === "win32" ? ";" : ":").filter((d) => d !== "").length} folders`,
+    );
     return lines;
   }
 
@@ -113,7 +142,8 @@ export class SynthManager implements vscode.Disposable {
   }
 
   applySettings(next: SynthSettings): void {
-    const backendChanged = next.backend !== this.settings.backend || next.yosysPath !== this.settings.yosysPath;
+    const backendChanged =
+      next.backend !== this.settings.backend || next.yosysPath !== this.settings.yosysPath;
     const verilatorChanged = next.verilatorPath !== this.settings.verilatorPath;
     this.settings = next;
     if (verilatorChanged) {
@@ -130,6 +160,11 @@ export class SynthManager implements vscode.Disposable {
       void this.ensureBackend();
     }
     this.stateEmitter.fire();
+  }
+
+  /** Resolves with the engine in use once the current lookup and load have finished. */
+  whenDecided(): Promise<"native" | "wasm" | "off" | "none"> {
+    return this.ensureBackend().then(() => this.backendName);
   }
 
   /** Resolve (and preload) the backend; safe to call many times. */
@@ -158,7 +193,9 @@ export class SynthManager implements vscode.Disposable {
         return native;
       }
       const notice = fallbackMessage(s.backend, r);
-      log.warn(`no usable native yosys (${s.backend === "native" ? "rtlLive.synthesisBackend is native" : "auto"}); falling back to the built-in engine`);
+      log.warn(
+        `no usable native yosys (${s.backend === "native" ? "rtlLive.synthesisBackend is native" : "auto"}); falling back to the built-in engine`,
+      );
       if (notice && !this.fallbackNoticeShown) {
         this.fallbackNoticeShown = true;
         void vscode.window.showInformationMessage(`RTL Live: ${notice}`, "Show tool paths").then((pick) => {
@@ -174,7 +211,9 @@ export class SynthManager implements vscode.Disposable {
     try {
       await wasm.preload();
       this.version = await wasm.version();
-      log.info(`synthesis backend: wasm yosys ${this.version ?? "?"} (cold start ${(performance.now() - t0).toFixed(0)} ms)`);
+      log.info(
+        `synthesis backend: wasm yosys ${this.version ?? "?"} (cold start ${(performance.now() - t0).toFixed(0)} ms)`,
+      );
     } catch (e) {
       log.error("wasm yosys failed to start", e);
       wasm.dispose();
@@ -194,23 +233,58 @@ export class SynthManager implements vscode.Disposable {
     return sha256(text, top, view, this.settingsKey());
   }
 
-  async run(args: { view: SynthView; text: string; file: StructuralFile; top: string; sourceUri: string; generation: number; signal: AbortSignal }): Promise<SynthesizeResult | undefined> {
+  async run(args: {
+    view: SynthView;
+    text: string;
+    file: StructuralFile;
+    top: string;
+    sourceUri: string;
+    generation: number;
+    signal: AbortSignal;
+  }): Promise<SynthesizeResult | undefined> {
     const backend = await this.ensureBackend();
     if (!backend || args.signal.aborted) return undefined;
     this.stats.runs++;
-    let res = await synthesize(backend, { ...args, optimize: this.settings.optimize, extraPasses: this.settings.extraPasses || undefined, simplify: this.simplifyOptions(), timeoutMs: SYNTH_TIMEOUT_MS }, this.features);
+    let res = await synthesize(
+      backend,
+      {
+        ...args,
+        optimize: this.settings.optimize,
+        extraPasses: this.settings.extraPasses || undefined,
+        simplify: this.simplifyOptions(),
+        timeoutMs: SYNTH_TIMEOUT_MS,
+      },
+      this.features,
+    );
     // Older yosys: retry without unsupported flags once, then remember.
-    if (!res.ok && !res.cancelled && /norom|noscopeinfo|unknown option|Unknown option|does not support/i.test(res.stderr)) {
+    if (
+      !res.ok &&
+      !res.cancelled &&
+      /norom|noscopeinfo|unknown option|Unknown option|does not support/i.test(res.stderr)
+    ) {
       const before = { ...this.features };
       if (/norom/i.test(res.stderr)) this.features.procNorom = false;
       if (/noscopeinfo/i.test(res.stderr)) this.features.noScopeInfo = false;
       if (before.procNorom !== this.features.procNorom || before.noScopeInfo !== this.features.noScopeInfo) {
-        log.warn(`backend lacks a flag; retrying with procNorom=${this.features.procNorom} noScopeInfo=${this.features.noScopeInfo}`);
-        res = await synthesize(backend, { ...args, optimize: this.settings.optimize, extraPasses: this.settings.extraPasses || undefined, simplify: this.simplifyOptions(), timeoutMs: SYNTH_TIMEOUT_MS }, this.features);
+        log.warn(
+          `backend lacks a flag; retrying with procNorom=${this.features.procNorom} noScopeInfo=${this.features.noScopeInfo}`,
+        );
+        res = await synthesize(
+          backend,
+          {
+            ...args,
+            optimize: this.settings.optimize,
+            extraPasses: this.settings.extraPasses || undefined,
+            simplify: this.simplifyOptions(),
+            timeoutMs: SYNTH_TIMEOUT_MS,
+          },
+          this.features,
+        );
       }
     }
     if (res.ok) {
-      for (const t of res.unknownCellTypes) logOnce(`cell:${t}`, `unknown yosys cell type ${t} drawn as a generic box`);
+      for (const t of res.unknownCellTypes)
+        logOnce(`cell:${t}`, `unknown yosys cell type ${t} drawn as a generic box`);
     } else if (!res.cancelled) {
       this.stats.failures++;
     }

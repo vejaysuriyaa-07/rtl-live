@@ -14,8 +14,17 @@ try {
 }
 
 type Tree = { [name: string]: Tree | string | Uint8Array };
-type RunOptions = { stdout?: (b: Uint8Array | null) => void; stderr?: (b: Uint8Array | null) => void; decodeASCII?: boolean };
-type YosysModule = { runYosys: (args?: string[], files?: Tree, options?: RunOptions) => Promise<Tree>; version: string };
+type FetchProgress = { source: { argv0: string }; totalLength: number; doneLength: number };
+type RunOptions = {
+  stdout?: (b: Uint8Array | null) => void;
+  stderr?: (b: Uint8Array | null) => void;
+  decodeASCII?: boolean;
+  fetchProgress?: (p: FetchProgress) => void;
+};
+type YosysModule = {
+  runYosys: (args?: string[], files?: Tree, options?: RunOptions) => Promise<Tree>;
+  version: string;
+};
 
 let yosysModule: Promise<YosysModule> | undefined;
 let runs = 0;
@@ -35,14 +44,42 @@ async function handle(req: WorkerRequest): Promise<void> {
     if (req.kind === "preload") {
       const t0 = performance.now();
       const y = await loadYosys();
-      await y.runYosys();
+      // The runtime reads its wasm and resource tar from the files next to this bundle (file: URLs
+      // go through fs, never the network). Its default progress line says "fetched"; say what happens.
+      let lastStep = -1;
+      await y.runYosys(
+        undefined,
+        {},
+        {
+          fetchProgress: (p) => {
+            const percent = p.totalLength > 0 ? Math.round((100 * p.doneLength) / p.totalLength) : 100;
+            const step = Math.floor(percent / 25);
+            if (step === lastStep) return;
+            lastStep = step;
+            console.log(
+              `built-in yosys: loading bundled files from disk, ${percent}% of ${p.totalLength} bytes`,
+            );
+          },
+        },
+      );
       reply({ id: req.id, kind: "preload", ok: true, elapsedMs: performance.now() - t0 });
       return;
     }
     if (req.kind === "version") {
       const y = await loadYosys();
       let text = "";
-      await y.runYosys(["-V"], {}, { stdout: (b) => { if (b) text += decoder.decode(b); }, decodeASCII: false }).catch(() => undefined);
+      await y
+        .runYosys(
+          ["-V"],
+          {},
+          {
+            stdout: (b) => {
+              if (b) text += decoder.decode(b);
+            },
+            decodeASCII: false,
+          },
+        )
+        .catch(() => undefined);
       reply({ id: req.id, kind: "version", ok: true, version: text.trim() || y.version });
       return;
     }
@@ -53,11 +90,19 @@ async function handle(req: WorkerRequest): Promise<void> {
     let ok = true;
     let outFiles: Tree = {};
     try {
-      outFiles = await y.runYosys(req.args, { ...req.files }, {
-        stdout: (b) => { if (b) stdout += decoder.decode(b); },
-        stderr: (b) => { if (b) stderr += decoder.decode(b); },
-        decodeASCII: false,
-      });
+      outFiles = await y.runYosys(
+        req.args,
+        { ...req.files },
+        {
+          stdout: (b) => {
+            if (b) stdout += decoder.decode(b);
+          },
+          stderr: (b) => {
+            if (b) stderr += decoder.decode(b);
+          },
+          decodeASCII: false,
+        },
+      );
     } catch (e) {
       ok = false;
       const err = e as { code?: number; files?: Tree; message?: string };
@@ -66,7 +111,14 @@ async function handle(req: WorkerRequest): Promise<void> {
     }
     runs++;
     const raw = outFiles[req.outputFile];
-    const output = raw === undefined ? undefined : raw instanceof Uint8Array ? decoder.decode(raw) : typeof raw === "string" ? raw : undefined;
+    const output =
+      raw === undefined
+        ? undefined
+        : raw instanceof Uint8Array
+          ? decoder.decode(raw)
+          : typeof raw === "string"
+            ? raw
+            : undefined;
     reply({
       id: req.id,
       kind: "run",
@@ -79,7 +131,12 @@ async function handle(req: WorkerRequest): Promise<void> {
       runs,
     });
   } catch (e) {
-    reply({ id: req.id, kind: "error", ok: false, message: e instanceof Error ? (e.stack ?? e.message) : String(e) });
+    reply({
+      id: req.id,
+      kind: "error",
+      ok: false,
+      message: e instanceof Error ? (e.stack ?? e.message) : String(e),
+    });
   }
 }
 

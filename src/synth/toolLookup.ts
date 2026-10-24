@@ -59,6 +59,12 @@ export const VERSION_ARGS: Record<ToolName, string[]> = {
 
 export const VERIFY_TIMEOUT_MS = 3000;
 
+/** RTL_LIVE_<TOOL>=off hides an installed tool, to rehearse what a machine without it does. */
+function hiddenBySwitch(tool: ToolName, e: LookupEnv): string | undefined {
+  const name = `RTL_LIVE_${tool.toUpperCase()}`;
+  return e.env[name] === "off" ? `hidden by ${name}=off` : undefined;
+}
+
 export function realLookupEnv(env: NodeJS.ProcessEnv = process.env): LookupEnv {
   return {
     platform: process.platform,
@@ -96,7 +102,11 @@ export function commonDirs(e: LookupEnv): string[] {
     out.push(p.join(e.home, "oss-cad-suite", "bin"));
   } else {
     out.push("/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", p.join(e.home, ".local", "bin"));
-    out.push(p.join(e.home, "oss-cad-suite", "bin"), "/opt/oss-cad-suite/bin", p.join(e.home, "opt", "oss-cad-suite", "bin"));
+    out.push(
+      p.join(e.home, "oss-cad-suite", "bin"),
+      "/opt/oss-cad-suite/bin",
+      p.join(e.home, "opt", "oss-cad-suite", "bin"),
+    );
   }
   return out;
 }
@@ -106,7 +116,10 @@ export function candidateNames(tool: ToolName, e: LookupEnv): string[] {
   if (e.platform !== "win32") return [tool];
   const exts = (e.env["PATHEXT"] ?? ".COM;.EXE;.BAT;.CMD").split(";").filter((x) => x !== "");
   // .exe first: a .cmd or .bat wrapper cannot be spawned without a shell and is skipped by the probe.
-  const ordered = [...exts.filter((x) => x.toLowerCase() === ".exe"), ...exts.filter((x) => x.toLowerCase() !== ".exe")];
+  const ordered = [
+    ...exts.filter((x) => x.toLowerCase() === ".exe"),
+    ...exts.filter((x) => x.toLowerCase() !== ".exe"),
+  ];
   return [...ordered.map((x) => `${tool}${x.toLowerCase()}`), tool];
 }
 
@@ -120,7 +133,11 @@ function pathDirs(e: LookupEnv): string[] {
 }
 
 /** Every candidate file in lookup order, without probing. The setting comes first when set. */
-export function candidates(tool: ToolName, configured: string | undefined, e: LookupEnv): { path: string; source: LookupSource; from: string }[] {
+export function candidates(
+  tool: ToolName,
+  configured: string | undefined,
+  e: LookupEnv,
+): { path: string; source: LookupSource; from: string }[] {
   const p = pathApi(e.platform);
   const out: { path: string; source: LookupSource; from: string }[] = [];
   const setting = configured?.trim() ?? "";
@@ -150,7 +167,12 @@ function spawnable(path: string, e: LookupEnv): boolean {
 
 export function parseVersion(tool: ToolName, output: string): string {
   const line = output.split(/\r?\n/).find((l) => l.trim() !== "") ?? "";
-  const m = tool === "yosys" ? /Yosys\s+(\S+)/.exec(line) : tool === "verilator" ? /Verilator\s+(\S+)/.exec(line) : /Icarus Verilog version\s+(\S+)/.exec(line);
+  const m =
+    tool === "yosys"
+      ? /Yosys\s+(\S+)/.exec(line)
+      : tool === "verilator"
+        ? /Verilator\s+(\S+)/.exec(line)
+        : /Icarus Verilog version\s+(\S+)/.exec(line);
   return m?.[1] ?? line.trim();
 }
 
@@ -158,32 +180,61 @@ export function parseVersion(tool: ToolName, output: string): string {
  * Finds a tool and verifies it. A candidate that is missing, not a file, not
  * spawnable or does not answer its version flag is skipped with a reason.
  */
-export async function locateTool(tool: ToolName, configured: string | undefined, e: LookupEnv, probe: ToolProbe, timeoutMs = VERIFY_TIMEOUT_MS): Promise<LookupResult> {
+export async function locateTool(
+  tool: ToolName,
+  configured: string | undefined,
+  e: LookupEnv,
+  probe: ToolProbe,
+  timeoutMs = VERIFY_TIMEOUT_MS,
+): Promise<LookupResult> {
   const skipped: SkippedCandidate[] = [];
   const searched: string[] = [];
+  const hidden = hiddenBySwitch(tool, e);
   for (const c of candidates(tool, configured, e)) {
     if (!searched.includes(c.from)) searched.push(c.from);
     if (!e.isFile(c.path)) {
       if (c.source === "setting") skipped.push({ path: c.path, source: c.source, reason: "not found" });
       continue;
     }
+    if (hidden) {
+      skipped.push({ path: c.path, source: c.source, reason: hidden });
+      continue;
+    }
     if (!spawnable(c.path, e)) {
-      skipped.push({ path: c.path, source: c.source, reason: "a .cmd or .bat wrapper cannot be run directly; point the setting at the .exe" });
+      skipped.push({
+        path: c.path,
+        source: c.source,
+        reason: "a .cmd or .bat wrapper cannot be run directly; point the setting at the .exe",
+      });
       continue;
     }
     const out = await probe(c.path, VERSION_ARGS[tool], timeoutMs);
     if (out === undefined) {
-      skipped.push({ path: c.path, source: c.source, reason: `did not answer ${VERSION_ARGS[tool].join(" ")} within ${timeoutMs} ms` });
+      skipped.push({
+        path: c.path,
+        source: c.source,
+        reason: `did not answer ${VERSION_ARGS[tool].join(" ")} within ${timeoutMs} ms`,
+      });
       continue;
     }
-    return { found: { tool, path: c.path, source: c.source, from: c.from, version: parseVersion(tool, out) }, skipped, searched };
+    return {
+      found: { tool, path: c.path, source: c.source, from: c.from, version: parseVersion(tool, out) },
+      skipped,
+      searched,
+    };
   }
   return { skipped, searched };
 }
 
 /** First existing candidate without probing; for callers that verify later (tests, bench). */
-export function findToolSync(tool: ToolName, configured: string | undefined, e: LookupEnv = realLookupEnv()): string | undefined {
-  for (const c of candidates(tool, configured, e)) if (e.isFile(c.path) && spawnable(c.path, e)) return c.path;
+export function findToolSync(
+  tool: ToolName,
+  configured: string | undefined,
+  e: LookupEnv = realLookupEnv(),
+): string | undefined {
+  if (hiddenBySwitch(tool, e)) return undefined;
+  for (const c of candidates(tool, configured, e))
+    if (e.isFile(c.path) && spawnable(c.path, e)) return c.path;
   return undefined;
 }
 
@@ -192,22 +243,60 @@ export function findToolSync(tool: ToolName, configured: string | undefined, e: 
  * yosys could be used while the setting left the choice open. Undefined when the user chose the
  * engine, or when native yosys was found.
  */
-export function fallbackMessage(backendSetting: "auto" | "native" | "wasm" | "off", r: LookupResult | undefined): string | undefined {
+export function fallbackMessage(
+  backendSetting: "auto" | "native" | "wasm" | "off",
+  r: LookupResult | undefined,
+): string | undefined {
   if (backendSetting === "wasm" || backendSetting === "off") return undefined;
   if (r?.found) return undefined;
   const skipped = r?.skipped.find((s) => s.source === "setting");
-  if (skipped) return `Using the built-in engine. rtlLive.yosysPath points at ${skipped.path}, which ${skipped.reason === "not found" ? "does not exist" : skipped.reason}.`;
+  if (skipped)
+    return `Using the built-in engine. rtlLive.yosysPath points at ${skipped.path}, which ${skipped.reason === "not found" ? "does not exist" : skipped.reason}.`;
   return "Using the built-in engine. Install Yosys for faster results, or set rtlLive.yosysPath.";
+}
+
+export interface EngineState {
+  setting: "auto" | "native" | "wasm" | "off";
+  backend: "native" | "wasm" | "none";
+  version?: string;
+  path?: string;
+  /** The built-in engine is loading its wasm */
+  warmingUp: boolean;
+  /** A lookup or load is in flight and no backend has been chosen yet */
+  deciding: boolean;
+}
+
+/** The engine line of the "Show tool paths" report; there is always one, whatever the state. */
+export function describeEngine(st: EngineState): string {
+  let engine: string;
+  if (st.setting === "off") engine = "off (rtlLive.synthesisBackend)";
+  else if (st.backend === "native")
+    engine = ["native yosys", st.version, "at", st.path ?? "?"]
+      .filter((x) => x !== undefined && x !== "")
+      .join(" ");
+  else if (st.backend === "wasm")
+    engine = ["built-in wasm yosys", st.version].filter((x) => x !== undefined && x !== "").join(" ");
+  else if (st.warmingUp) engine = "built-in wasm yosys, loading";
+  else if (st.deciding) engine = "not decided yet, looking for yosys";
+  else engine = "not started";
+  return `synthesis engine: ${engine}`;
 }
 
 /** One line per tool for the "Show tool paths" command and the log. */
 export function describeLookup(tool: ToolName, r: LookupResult): string[] {
   const lines: string[] = [];
   if (r.found) {
-    const how = r.found.source === "setting" ? "from the setting" : r.found.source === "PATH" ? `on PATH (${r.found.from})` : `in ${r.found.from}`;
+    const how =
+      r.found.source === "setting"
+        ? "from the setting"
+        : r.found.source === "PATH"
+          ? `on PATH (${r.found.from})`
+          : `in ${r.found.from}`;
     lines.push(`${tool}: ${r.found.path} (${r.found.version ?? "version unknown"}, ${how})`);
   } else {
-    lines.push(`${tool}: not found. Searched ${r.searched.length} folder${r.searched.length === 1 ? "" : "s"}: ${r.searched.join(", ")}`);
+    lines.push(
+      `${tool}: not found. Searched ${r.searched.length} folder${r.searched.length === 1 ? "" : "s"}: ${r.searched.join(", ")}`,
+    );
   }
   for (const s of r.skipped) lines.push(`  skipped ${s.path}: ${s.reason}`);
   return lines;

@@ -18,10 +18,10 @@ From the Marketplace: search for "RTL Live" in the Extensions view. From a file:
 
 It works out of the box with the built-in synthesis engine (Yosys compiled to WebAssembly, about 80 MB, loaded on first use). Installing a native Yosys makes synthesis several times faster:
 
-| OS | Install |
-| --- | --- |
-| macOS | `brew install yosys` |
-| Ubuntu, Debian | `sudo apt install yosys` |
+| OS              | Install                                                                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| macOS           | `brew install yosys`                                                                                                                                         |
+| Ubuntu, Debian  | `sudo apt install yosys`                                                                                                                                     |
 | Windows, any OS | [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build/releases): unpack and put its `bin` folder on PATH, or set `rtlLive.yosysPath` to `yosys.exe` |
 
 The extension looks for `yosys` in `rtlLive.yosysPath`, then on PATH, then in `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`, `~/.local/bin` and an `oss-cad-suite/bin` folder. "RTL Live: Show Tool Paths" prints what it found. Verilator is optional and only sharpens error messages.
@@ -48,18 +48,18 @@ More screenshots in `media/screenshots/`: `module_add.png` (hierarchy), `vectorg
 
 ## Settings
 
-| Setting | Default | Meaning |
-| --- | --- | --- |
-| `rtlLive.synthesisBackend` | `auto` | `auto` uses native Yosys when one answers `yosys -V`, else the built-in engine; `native`, `wasm`, or `off` (structural view only). |
-| `rtlLive.yosysPath` | `""` | Path to a native yosys binary (`yosys.exe` on Windows). Empty searches PATH and the common folders listed above. |
-| `rtlLive.verilatorPath` | `""` | Path to a verilator binary. Empty searches PATH and the common folders. |
-| `rtlLive.lintWithVerilator` | `true` | When the file does not parse or synthesis fails and Verilator is available, run `verilator --lint-only` to sharpen the message. |
-| `rtlLive.yosysExtraPasses` | `""` | Extra passes inserted before `write_json`, separated by semicolons. |
-| `rtlLive.optimize` | `false` | Runs `opt -fast` before writing the netlist (smaller diagram, further from the source text). |
-| `rtlLive.bubbles` | `true` | Draw a NOT that feeds a single gate as an inversion bubble on that gate. |
-| `rtlLive.structuralDebounceMs` | `60` | Delay between a keystroke and the structural update. |
-| `rtlLive.synthDebounceMs` | `300` | Delay after the last keystroke before synthesis runs. |
-| `rtlLive.exportPalette` | `print` | Colours of exported files: `print` is dark lines on white with a margin; `theme` keeps the editor colours. |
+| Setting                        | Default | Meaning                                                                                                                            |
+| ------------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `rtlLive.synthesisBackend`     | `auto`  | `auto` uses native Yosys when one answers `yosys -V`, else the built-in engine; `native`, `wasm`, or `off` (structural view only). |
+| `rtlLive.yosysPath`            | `""`    | Path to a native yosys binary (`yosys.exe` on Windows). Empty searches PATH and the common folders listed above.                   |
+| `rtlLive.verilatorPath`        | `""`    | Path to a verilator binary. Empty searches PATH and the common folders.                                                            |
+| `rtlLive.lintWithVerilator`    | `true`  | When the file does not parse or synthesis fails and Verilator is available, run `verilator --lint-only` to sharpen the message.    |
+| `rtlLive.yosysExtraPasses`     | `""`    | Extra passes inserted before `write_json`, separated by semicolons.                                                                |
+| `rtlLive.optimize`             | `false` | Runs `opt -fast` before writing the netlist (smaller diagram, further from the source text).                                       |
+| `rtlLive.bubbles`              | `true`  | Draw a NOT that feeds a single gate as an inversion bubble on that gate.                                                           |
+| `rtlLive.structuralDebounceMs` | `60`    | Delay between a keystroke and the structural update.                                                                               |
+| `rtlLive.synthDebounceMs`      | `300`   | Delay after the last keystroke before synthesis runs.                                                                              |
+| `rtlLive.exportPalette`        | `print` | Colours of exported files: `print` is dark lines on white with a margin; `theme` keeps the editor colours.                         |
 
 Settings apply live.
 
@@ -121,7 +121,7 @@ npm run bench
 npm run package        # rtl-live-<version>.vsix
 ```
 
-`RTL_LIVE_TEST_BACKEND=wasm npm test` forces the built-in engine, which is what CI uses on every OS; the Ubuntu job also runs the native engine. The equivalence check (accuracy L1) needs Icarus Verilog and is skipped when it is not installed. CI runs on Ubuntu, macOS and Windows (`.github/workflows/ci.yml`).
+`RTL_LIVE_TEST_BACKEND=wasm npm test` forces the built-in engine, which is what CI uses on every OS; the Ubuntu job also runs the native engine. The equivalence check (accuracy L1) needs Icarus Verilog and is skipped when it is not installed. `RTL_LIVE_YOSYS=off npm run test:integration` hides an installed Yosys from the extension's lookup, to rehearse a machine without one (`RTL_LIVE_IVERILOG=off` does the same for Icarus). CI runs on Ubuntu, macOS and Windows (`.github/workflows/ci.yml`).
 
 ## Credits
 
