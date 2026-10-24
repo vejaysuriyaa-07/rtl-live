@@ -21,12 +21,19 @@ async function synthDoc(name: string): Promise<{ doc: SchematicDoc; text: string
   return { doc: res.doc!, text, file: parser.parse(text) };
 }
 
+// The simulation checks need Icarus Verilog. Where it is missing (a CI runner without it)
+// they are skipped with that reason, the same way the accuracy suite records L1 as skipped.
+const ICARUS = icarusAvailable();
+const NO_ICARUS = "iverilog not installed; the L1 simulation checks are skipped here";
+
 describe("L1 harness", () => {
-  it("icarus is installed", () => {
+  it("icarus is installed, so the simulation checks below run", (ctx) => {
+    if (!ICARUS) ctx.skip(NO_ICARUS);
     expect(icarusAvailable()).toBe(true);
   });
 
-  it("detects a wrong gate (and swapped for or) in 7458", async () => {
+  it("detects a wrong gate (and swapped for or) in 7458", async (ctx) => {
+    if (!ICARUS) ctx.skip(NO_ICARUS);
     const { doc, text, file } = await synthDoc("7458.v");
     const good = checkEquivalence({ name: "7458.v", source: text, file, doc });
     expect(good.ok, good.reason).toBe(true);
@@ -40,7 +47,8 @@ describe("L1 harness", () => {
     disposeTestBackend();
   });
 
-  it("detects a dropped inversion bubble", async () => {
+  it("detects a dropped inversion bubble", async (ctx) => {
+    if (!ICARUS) ctx.skip(NO_ICARUS);
     const { doc, text, file } = await synthDoc("xnor_misc.v");
     const bad = structuredClone(doc);
     const g = bad.modules["top_module"]!.nodes.find((n) => n.kind === "gate" && n.op === "xnor")!;
@@ -49,7 +57,8 @@ describe("L1 harness", () => {
     disposeTestBackend();
   });
 
-  it("detects a wrong reset value on a clocked design", async () => {
+  it("detects a wrong reset value on a clocked design", async (ctx) => {
+    if (!ICARUS) ctx.skip(NO_ICARUS);
     const { doc, text, file } = await synthDoc("dff_async.v");
     const bad = structuredClone(doc);
     const ff = bad.modules["top_module"]!.nodes.find((n) => n.kind === "dff")!;
