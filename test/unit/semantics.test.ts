@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { combinationalLoopNets, multiplyDrivenSignals } from "../../src/ir/semantics";
+import { combinationalLoopNets, multipleDriverReport, multiplyDrivenSignals } from "../../src/ir/semantics";
 import { structuralToIr } from "../../src/structural/toIr";
 import type { StructuralParser } from "../../src/structural/types";
 import { FIXTURES, makeTreeSitterParser } from "./helpers";
@@ -53,5 +53,35 @@ describe("semantic warnings", () => {
     const res = await synthFixture(parser, text, "counter4.v");
     expect(res.doc!.modules["top_module"]!.nets.every((n) => !n.warnings)).toBe(true);
     expect(res.doc!.diagnostics).toEqual([]);
+  });
+});
+
+// Mutation run (2026-10-23): the bit-range arithmetic of the multiple-driver report had no direct tests.
+describe("multiple drivers on bit ranges", () => {
+  const report = (body: string, decl = "output [7:0] y") => multipleDriverReport(parser.parse(`module t(input [7:0] a, input [7:0] b, ${decl});\n${body}\nendmodule\n`).modules[0]!);
+
+  it("disjoint slices are fine; overlapping slices name the shared bits", () => {
+    expect(report("  assign y[3:0] = a[3:0];\n  assign y[7:4] = b[3:0];")).toEqual([]);
+    const r = report("  assign y[5:2] = a[3:0];\n  assign y[3:0] = b[3:0];");
+    expect(r.map((f) => [f.name, f.bits])).toEqual([["y", "[3:2]"]]);
+    expect(r[0]!.srcs.map((s) => s.line)).toEqual([2, 3]);
+  });
+
+  it("a whole-vector write against a slice names the slice, and a reversed range still counts bits", () => {
+    expect(report("  assign y = a;\n  assign y[0] = b[0];").map((f) => f.bits)).toEqual(["[0]"]);
+    expect(report("  assign y[7:4] = a[3:0];\n  assign y[5:2] = b[3:0];", "output [0:7] y").map((f) => f.bits)).toEqual(["[5:4]"]);
+    expect(report("  assign y[6] = a[0];\n  assign y[6] = b[0];\n  assign y[1:0] = a[1:0];\n  assign y[0] = b[0];").map((f) => f.bits)).toEqual(["[6], [0]"]);
+  });
+
+  it("a clash over every bit, or over whole signals, reports no bit list", () => {
+    expect(report("  assign y[7:0] = a;\n  assign y[7:0] = b;").map((f) => f.bits)).toEqual([undefined]);
+    expect(report("  assign y = a;\n  assign y = b;").map((f) => f.bits)).toEqual([undefined]);
+    expect(report("  assign y = a;\n  assign y = b;", "output y").map((f) => [f.name, f.bits])).toEqual([["y", undefined]]);
+  });
+
+  it("a slice outside the declared range is not a clash, and an undeclared name is a plain clash", () => {
+    expect(report("  assign y = a;\n  assign y[9] = b[0];", "output [3:0] y")).toEqual([]);
+    expect(report("  assign y = a;\n  assign y[2] = b[0];", "output [3:0] y").map((f) => f.bits)).toEqual(["[2]"]);
+    expect(report("  assign q = a;\n  assign q[2] = b[0];", "output y").map((f) => [f.name, f.bits])).toEqual([["q", "[2]"]]);
   });
 });

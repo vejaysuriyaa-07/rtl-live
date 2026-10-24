@@ -262,9 +262,11 @@ function moduleToView(m: SModule, file: StructuralFile, labelLength: number): Mo
   for (const a of m.assigns) for (const l of a.lhs) drivenElsewhere.add(l);
   for (const a of m.always) for (const l of a.assigned) drivenElsewhere.add(l);
   for (const p of m.ports) if (p.direction === "input") drivenElsewhere.add(p.name);
-  for (const inst of m.instances) for (const c of inst.connections) for (const id of c.idents) drivenElsewhere.add(id);
   // An output nothing in this module writes is flagged, so a ports-only module explains itself (bug 21).
-  if (!m.hasErrors) for (const p of ports) if (p.direction !== "input" && !drivenElsewhere.has(p.name)) p.undriven = true;
+  // Instance connections may drive a signal, so they count here but not for pin direction inference.
+  const onInstance = new Set<string>();
+  for (const inst of m.instances) for (const c of inst.connections) for (const id of c.idents) onInstance.add(id);
+  if (!m.hasErrors) for (const p of ports) if (p.direction !== "input" && !drivenElsewhere.has(p.name) && !onInstance.has(p.name)) p.undriven = true;
 
   // Ports connect to nets of the same name.
   for (const p of m.ports) {

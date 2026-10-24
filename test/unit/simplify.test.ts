@@ -109,3 +109,41 @@ describe("simplify rules", () => {
     expect(mergeChains(v4).nodes).toHaveLength(1);
   });
 });
+
+// Mutation run (2026-10-23): the naming rules of dropBuffers survived every flip.
+describe("dropBuffers naming rules", () => {
+  it("keeps a buffer between two named nets (a user-visible rename)", () => {
+    const v = view(
+      [gate("b1", "buf", ["net:a"], "net:t"), gate("g2", "and", ["net:t", "net:c"], "net:y")],
+      [net("net:a", ["port:a", "a"], [["b1", "A"]], "a"), net("net:t", ["b1", "Y"], [["g2", "A"]], "t"), net("net:c", ["port:c", "c"], [["g2", "B"]], "c"), net("net:y", ["g2", "Y"], [], "y")],
+    );
+    const r = dropBuffers(v);
+    expect(r.nodes.map((n) => n.id)).toEqual(["b1", "g2"]);
+    expect(r.nets.map((n) => n.id)).toContain("net:t");
+  });
+
+  it("an unnamed input net takes the dropped output net's name; a named one keeps its own", () => {
+    const v = view(
+      [gate("g0", "or", ["net:p", "net:q"], "net:u"), gate("b1", "buf", ["net:u"], "net:t"), gate("g2", "and", ["net:t", "net:c"], "net:y")],
+      [net("net:p", ["port:p", "p"], [["g0", "A"]], "p"), net("net:q", ["port:q", "q"], [["g0", "B"]], "q"), net("net:u", ["g0", "Y"], [["b1", "A"]]), net("net:t", ["b1", "Y"], [["g2", "A"], ["port:t", "t"]], "t"), net("net:c", ["port:c", "c"], [["g2", "B"]], "c"), net("net:y", ["g2", "Y"], [], "y")],
+    );
+    const r = dropBuffers(v);
+    expect(r.nodes.map((n) => n.id)).toEqual(["g0", "g2"]);
+    const u = r.nets.find((n) => n.id === "net:u")!;
+    expect(u.name).toBe("t");
+    expect(u.sinks).toEqual([{ node: "g2", pin: "A" }, { node: "port:t", pin: "t" }]);
+    expect(r.nodes.find((n) => n.id === "g2")!.pins[0]!.net).toBe("net:u");
+    const w = view(
+      [gate("b1", "buf", ["net:a"], "net:t"), gate("g2", "and", ["net:t", "net:c"], "net:y")],
+      [net("net:a", ["port:a", "a"], [["b1", "A"]], "a"), net("net:t", ["b1", "Y"], [["g2", "A"]]), net("net:c", ["port:c", "c"], [["g2", "B"]], "c"), net("net:y", ["g2", "Y"], [], "y")],
+    );
+    expect(dropBuffers(w).nets.find((n) => n.id === "net:a")!.name).toBe("a");
+  });
+
+  it("a buffer with no output net or no input net is left alone", () => {
+    const v = view([gate("b1", "buf", ["net:a"], null)], [net("net:a", ["port:a", "a"], [["b1", "A"]], "a")]);
+    expect(dropBuffers(v).nodes.map((n) => n.id)).toEqual(["b1"]);
+    const w = view([gate("b1", "buf", [null], "net:t")], [net("net:t", ["b1", "Y"], [], "t")]);
+    expect(dropBuffers(w).nodes.map((n) => n.id)).toEqual(["b1"]);
+  });
+});

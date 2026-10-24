@@ -90,3 +90,52 @@ describe("bug 22: an unfinished statement beats the missing endmodule", () => {
     expect(first("module t(input a, output b);\n  assign b = a\nendmodule\n")).toEqual({ line: 2, column: 15, message: "missing ';'" });
   });
 });
+
+// Mutation run (2026-10-23): the comment and string masking loop, and the case/endcase pairing, survived most flips.
+describe("masking and block pairing details", () => {
+  it("a block comment over several lines keeps every newline and hides its brackets", () => {
+    const t = "module m;\n/* ( {\n [ */ assign s = 1;\nendmodule";
+    const masked = maskCommentsAndStrings(t);
+    expect(masked.length).toBe(t.length);
+    expect(masked.split("\n").length).toBe(4);
+    expect(masked).not.toMatch(/[([{]/);
+    expect(masked.indexOf("assign")).toBe(t.indexOf("assign"));
+    expect(describeSyntaxErrors(t)).toEqual([]);
+  });
+
+  it("an unterminated block comment masks to the end of the file", () => {
+    const t = "module m;\n/* ( oops\nendmodule";
+    const masked = maskCommentsAndStrings(t);
+    expect(masked.trim()).toBe("module m;");
+    expect(masked.length).toBe(t.length);
+  });
+
+  it("a line comment ends at the newline; a string with an escaped quote is one operand", () => {
+    expect(maskCommentsAndStrings("a // x )\nb").replace(/ +/g, " ")).toBe("a \nb");
+    const t = 'module m;\n  assign s = "a\\"b";\nendmodule';
+    const masked = maskCommentsAndStrings(t);
+    expect(masked.length).toBe(t.length);
+    expect(masked).toContain("= 0");
+    expect(masked).not.toContain('"');
+    expect(describeSyntaxErrors(t)).toEqual([]);
+    const open = 'module m;\n  assign s = "abc;\nendmodule';
+    expect(maskCommentsAndStrings(open).split("\n").length).toBe(3);
+  });
+
+  it("case without endcase and begin without end are reported before the module closes", () => {
+    const t = "module m(input s, output reg y);\n  always @(*) case (s)\n    1'b1: y = 1;\n  endmodule\n";
+    expect(describeSyntaxErrors(t).map((e) => e.message)).toContain("missing endcase");
+    const b = "module m(input s, output reg y);\n  always @(*) begin\n    y = s;\n  endmodule\n";
+    expect(describeSyntaxErrors(b).map((e) => e.message)).toContain("missing end");
+    const ok = "module m(input s, output reg y);\n  always @(*) case (s)\n    1'b1: y = 1;\n  endcase\nendmodule\n";
+    expect(describeSyntaxErrors(ok)).toEqual([]);
+    const eof = "module m(input s, output reg y);\n  always @(*) case (s)\n    1'b1: y = 1;\n";
+    expect(describeSyntaxErrors(eof).map((e) => e.message)).toEqual(["missing endcase", "missing endmodule"]);
+    expect(describeSyntaxErrors("module m;\n  end\nendmodule\n").map((e) => e.message)).toEqual(["unexpected 'end'"]);
+  });
+
+  it("an instance opening inside a port list is not an instance", () => {
+    expect(first("module t(input a, output b\n  assign b = a;\nendmodule\n")!.message).toBe("missing ')' to close the port list");
+    expect(first("module t(input a, output b);\n  sub u1(.a(a)\nendmodule\n")!.message).toBe("missing ')' to close the instance connections");
+  });
+});
