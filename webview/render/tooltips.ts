@@ -189,9 +189,10 @@ export function nodeTooltip(node: Node, lines: SourceLines): string {
 export function portTooltip(port: Port, label: string, lines: SourceLines): string {
   const width = port.width > 0 ? port.width : 0;
   const note = port.ghost === "added" ? "Added in the newer text, not synthesized yet." : port.ghost === "removed" ? "Removed in the newer text." : port.ghost === "changed" ? "Changed in the newer text." : port.tentative ? "Recovered from broken text, so it may be wrong." : "";
+  const undriven = port.undriven ? `It is not driven yet: nothing in the module writes ${port.name}. Add assign ${port.name} = ...; or an always block.` : "";
   const dir = port.direction === "input" ? TIP.input : port.direction === "output" ? TIP.output : TIP.inout;
   const bits = width > 1 ? TIP.bus(width) : width === 1 ? TIP.wire : "Width unknown until the file parses.";
-  return [`${port.direction} ${label}`, dir, bits, note, fromLine(port.src, lines)].filter((l) => l !== "").join("\n");
+  return [`${port.direction} ${label}`, dir, bits, note, undriven, fromLine(port.src, lines)].filter((l) => l !== "").join("\n");
 }
 
 export function netTooltip(net: Net | undefined, netId: string, lines: SourceLines): string {

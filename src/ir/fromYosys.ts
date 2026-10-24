@@ -68,7 +68,9 @@ export function fromYosys(design: YosysDesign, opts: FromYosysOptions): FromYosy
   const unknown = new Set<string>();
   const modules: Record<string, ModuleView> = {};
   for (const [name, ym] of Object.entries(design.modules)) {
-    if (ym.attributes && (ym.attributes["blackbox"] !== undefined || ym.attributes["whitebox"] !== undefined)) continue;
+    // Yosys tags a module with no body (ports only) as a blackbox; the user's own modules are drawn anyway.
+    const stub = ym.attributes !== undefined && (ym.attributes["blackbox"] !== undefined || ym.attributes["whitebox"] !== undefined);
+    if (stub && !opts.definedModules.has(name)) continue;
     try {
       modules[name] = moduleView(name, ym, design, opts, unknown);
     } catch (e) {
@@ -238,6 +240,13 @@ function moduleView(name: string, ym: YosysModule, design: YosysDesign, opts: Fr
     for (const p of c.pins) {
       if (p.spec.direction === "out") addDriver({ node: `cell:${c.cellName}`, pin: p.spec.id, bits: p.bits, src: c.src });
     }
+  }
+
+  // Output ports whose bits nothing drives yet (bug 21: a module with ports and no logic).
+  for (const port of ports) {
+    if (port.direction === "input") continue;
+    const bits = ym.ports[port.name]?.bits ?? [];
+    if (bits.length > 0 && bits.every((b) => typeof b === "number" && !bitDriver.has(bitKey(b)))) port.undriven = true;
   }
 
   // ---- runs for a sink bit vector

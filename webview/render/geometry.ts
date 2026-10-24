@@ -35,9 +35,13 @@ export function frameMinWidth(title: string): number {
   return textWidth(title, TITLE_CHAR_W) + TITLE_PAD;
 }
 
+/** Hint drawn beside an output nothing drives yet (bug 21), and the room the port node reserves for it. */
+export const PORT_HINT = "not driven yet";
+export const PORT_HINT_W = textWidth(PORT_HINT, RIPPER_LABEL_CHAR) + 12;
+
 export function portNodeWidth(port: Port): number {
   const label = port.width > 1 ? `${port.name}${port.range ?? `[${port.width - 1}:0]`}` : port.name;
-  return textWidth(label) + 18;
+  return textWidth(label) + 18 + (port.undriven ? PORT_HINT_W : 0);
 }
 
 export interface Size {

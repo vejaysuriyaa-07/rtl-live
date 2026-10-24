@@ -115,6 +115,8 @@ function emptyMessage(doc: SchematicDoc | undefined): string {
   if (doc && doc.moduleNames.length === 0) return "No module found yet. Start with: module top_module(input a, output b);";
   if (state.status.warmingUp) return "Starting Yosys, the synthesizer. The first diagram takes a moment.";
   if (state.status.message?.startsWith("synthesizing")) return "Synthesizing: turning the code into gates.";
+  // A file is open and parsed, but the module to show is not in this doc (bug 21): never claim no file is open.
+  if (doc) return `No diagram for ${currentModuleName(state) ?? doc.top} yet.`;
   return "Open a Verilog file (.v or .sv) to see its schematic.";
 }
 

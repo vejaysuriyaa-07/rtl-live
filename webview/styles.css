@@ -404,6 +404,11 @@ svg.schematic:active {
 .schematic .port-label {
   font-weight: 600;
 }
+.schematic .port-hint {
+  font-size: var(--rl-font-small);
+  fill: var(--rl-muted);
+  font-style: italic;
+}
 .schematic .ripper-label {
   paint-order: stroke;
   stroke: var(--rl-bg);

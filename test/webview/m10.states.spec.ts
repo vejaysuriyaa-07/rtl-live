@@ -100,6 +100,15 @@ test("M10: contact sheet of every fixture", async ({ page }) => {
   await page.screenshot({ path: join(ART, "contact-sheet.png") });
 });
 
+test("bug 21: a doc whose module is missing never shows the no-file message", async ({ page }) => {
+  await page.goto(`${harness.url}/?theme=light`);
+  const doc = goldenDoc("7458");
+  await post(page, { type: "render", generation: 1, doc: { ...doc, modules: {} }, fitOnRender: true });
+  await expect(page.locator("#empty")).toBeVisible();
+  await expect(page.locator("#empty")).toHaveText("No diagram for top_module yet.");
+  await expect(page.locator("#empty")).not.toContainText("Open a Verilog file");
+});
+
 test("bug 22: the banner lists the errors after the first one", async ({ page }) => {
   await page.goto(`${harness.url}/?theme=light`);
   await postRender(page, goldenDoc("7458"));
@@ -112,4 +121,40 @@ test("bug 22: the banner lists the errors after the first one", async ({ page })
   await expect(page.locator("#banner .banner-more")).toHaveText("also: 8:7 missing endmodule");
   await expect(page.locator("#banner button")).toHaveCount(1);
   await page.screenshot({ path: join(ART, "m10-error-list.png") });
+});
+
+test("bug 21: a ports-only module draws a box with every output hinted", async ({ page }) => {
+  // The IR a ports-only module (test/fixtures/partial/p10_ports_only.v) parses to: ports, no nodes, no nets.
+  const src = (line: number, column: number, endColumn: number) => [{ line, column, endLine: line, endColumn }];
+  const port = (name: string, direction: "input" | "output", width: number, column: number, undriven: boolean) => ({
+    name,
+    direction,
+    width,
+    ...(width > 1 ? { range: `[${width - 1}:0]` } : {}),
+    src: src(2, column, column + name.length),
+    ...(undriven ? { undriven: true } : {}),
+  });
+  const golden = goldenDoc("7458");
+  const doc: SchematicDoc = {
+    ...golden,
+    fidelity: "structural",
+    sourceUri: "p10_ports_only.v",
+    modules: {
+      top_module: {
+        name: "top_module",
+        ports: [port("a", "input", 3, 19, false), port("b", "input", 3, 34, false), port("out_or_bitwise", "output", 3, 51, true), port("out_or_logical", "output", 1, 74, true), port("out_not", "output", 6, 103, true)],
+        nodes: [],
+        nets: [],
+        src: src(2, 1, 112)[0]!,
+      },
+    },
+  };
+  for (const theme of ["light", "dark"]) {
+    await page.goto(`${harness.url}/?theme=${theme}`);
+    await postRender(page, doc);
+    await expect(page.locator("svg.schematic g.port.undriven")).toHaveCount(3);
+    await expect(page.locator("svg.schematic g.port.undriven .port-hint").first()).toHaveText("not driven yet");
+    await expect(page.locator("#empty")).toBeHidden();
+    await page.screenshot({ path: join(ART, `v041-ports-only-${theme}.png`) });
+  }
 });

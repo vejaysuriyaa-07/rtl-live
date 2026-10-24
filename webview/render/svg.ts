@@ -7,7 +7,7 @@ import { crossingPoints, junctionOffset, netOfEdge, separateJunctions } from "..
 import { expandLogicalGates } from "./logical";
 import { netTooltip, nodeTooltip, portTooltip, TIP, type SourceLines } from "./tooltips";
 import { symbolMarkup } from "./symbols";
-import { frameMinWidth, junctionRadius } from "./geometry";
+import { frameMinWidth, junctionRadius, PORT_HINT, PORT_HINT_W } from "./geometry";
 import { RADIUS } from "./tokens";
 
 export interface RenderOptions {
@@ -99,12 +99,16 @@ function renderPortNode(port: Port, n: ElkNodeOut, lines: SourceLines): string {
   const label = port.width > 1 ? `${port.name}${port.range ?? `[${port.width - 1}:0]`}` : port.name;
   const w = n.width;
   const h = n.height;
-  const shape = portShapePath(port.direction, w, h);
-  const cls = `port port-${port.direction}${port.width > 1 ? " bus" : ""}${port.ghost ? ` ghost ghost-${port.ghost}` : ""}${port.tentative ? " tentative" : ""}`;
+  // An undriven output keeps its chevron at the frame edge; the hint sits in the room reserved to its left.
+  const hintW = port.undriven && !isInput ? PORT_HINT_W : 0;
+  const shape = portShapePath(port.direction, w - hintW, h);
+  const cls = `port port-${port.direction}${port.width > 1 ? " bus" : ""}${port.ghost ? ` ghost ghost-${port.ghost}` : ""}${port.tentative ? " tentative" : ""}${port.undriven ? " undriven" : ""}`;
+  const hint = hintW > 0 ? `<text class="port-hint" x="${fmt(hintW - 6)}" y="${fmt(h / 2)}" text-anchor="end" dominant-baseline="central">${PORT_HINT}</text>` : "";
   return (
     `<g class="${cls}" data-port="${esc(port.name)}" data-id="${esc(portNodeId(port.name))}"${port.ghost ? ` data-ghost="${port.ghost}"` : ""}${srcAttr(port.src)} transform="translate(${fmt(n.x)},${fmt(n.y)})">` +
-    `<path class="port-shape" d="${shape}"/>` +
+    `<path class="port-shape" d="${shape}"${hintW > 0 ? ` transform="translate(${fmt(hintW)},0)"` : ""}/>` +
     `<text class="port-label" x="${fmt(isInput ? 6 : w - 6)}" y="${fmt(h / 2)}" text-anchor="${isInput ? "start" : "end"}" dominant-baseline="central">${esc(label)}</text>` +
+    hint +
     `<title>${esc(portTooltip(port, label, lines))}</title>` +
     `</g>`
   );

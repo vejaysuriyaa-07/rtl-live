@@ -29,6 +29,8 @@ export interface Port {
   ghost?: "added" | "removed" | "changed";
   /** Recovered from broken text (drawn greyed out) */
   tentative?: boolean;
+  /** Output (or inout) port that nothing drives yet; drawn with a "not driven yet" hint */
+  undriven?: boolean;
 }
 
 export type NodeKind =
