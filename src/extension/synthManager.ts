@@ -4,7 +4,8 @@ import * as vscode from "vscode";
 import type { SchematicDoc } from "../ir/types";
 import type { SimplifyOptions } from "../ir/simplify";
 import type { SynthBackend } from "../synth/backend";
-import { findYosys, NativeYosysBackend } from "../synth/nativeBackend";
+import { NativeYosysBackend } from "../synth/nativeBackend";
+import { describeLookup, fallbackMessage, locateTool, realLookupEnv, realProbe, type LookupResult, type ToolName } from "../synth/toolLookup";
 import { WasmYosysBackend } from "../synth/wasmBackend";
 import { DEFAULT_FEATURES, synthesize, type BackendFeatures, type SynthesizeResult } from "../synth/synthesize";
 import type { StructuralFile } from "../structural/types";
@@ -17,6 +18,7 @@ export type BackendSetting = "auto" | "native" | "wasm" | "off";
 export interface SynthSettings {
   backend: BackendSetting;
   yosysPath: string;
+  verilatorPath: string;
   extraPasses: string;
   optimize: boolean;
   bubbles: boolean;
@@ -28,6 +30,7 @@ export function readSynthSettings(): SynthSettings {
   return {
     backend: c.get<BackendSetting>("synthesisBackend", "auto"),
     yosysPath: c.get<string>("yosysPath", ""),
+    verilatorPath: c.get<string>("verilatorPath", ""),
     extraPasses: c.get<string>("yosysExtraPasses", ""),
     optimize: c.get<boolean>("optimize", false),
     bubbles: c.get<boolean>("bubbles", true),
@@ -52,10 +55,46 @@ export class SynthManager implements vscode.Disposable {
   readonly onDidChangeState = this.stateEmitter.event;
   warmingUp = false;
   version: string | undefined;
+  /** Where the native engine runs from; undefined for the built-in engine */
+  backendPath: string | undefined;
   stats = { runs: 0, cacheHits: 0, failures: 0 };
+  /** Last lookup result per tool, for the badge tooltip and the "Show tool paths" command */
+  readonly lookups: Partial<Record<ToolName, LookupResult>> = {};
+  private verilatorPromise: Promise<string | undefined> | undefined;
+  private fallbackNoticeShown = false;
 
   constructor(private readonly workerPath: string) {
     this.settings = readSynthSettings();
+    void this.locateVerilator();
+  }
+
+  /** Verified verilator path, or undefined; resolved once per settings change. */
+  locateVerilator(): Promise<string | undefined> {
+    this.verilatorPromise ??= locateTool("verilator", this.settings.verilatorPath, realLookupEnv(), realProbe).then((r) => {
+      this.lookups.verilator = r;
+      for (const line of describeLookup("verilator", r)) log.info(line);
+      return r.found?.path;
+    });
+    return this.verilatorPromise;
+  }
+
+  /** The verilator path when the lookup has finished and found one. */
+  get verilatorPath(): string | undefined {
+    return this.lookups.verilator?.found?.path;
+  }
+
+  /** One line per tool plus the engine in use, for the "Show tool paths" command. */
+  toolReport(): string[] {
+    const lines: string[] = [];
+    for (const tool of ["yosys", "verilator"] as const) {
+      const r = this.lookups[tool];
+      if (r) lines.push(...describeLookup(tool, r));
+      else lines.push(`${tool}: not looked up yet`);
+    }
+    const engine = this.backendName === "native" ? `native yosys ${this.version ?? ""} at ${this.backendPath ?? "?"}` : this.backendName === "wasm" ? `built-in wasm yosys ${this.version ?? ""}` : this.backendName === "off" ? "off (rtlLive.synthesisBackend)" : "not started";
+    lines.push(`synthesis engine: ${engine.replace(/\s+at/, " at").replace(/  +/g, " ")}`);
+    lines.push(`platform: ${process.platform} ${process.arch}, PATH has ${(process.env["PATH"] ?? process.env["Path"] ?? "").split(process.platform === "win32" ? ";" : ":").filter((d) => d !== "").length} folders`);
+    return lines;
   }
 
   get currentSettings(): SynthSettings {
@@ -75,12 +114,18 @@ export class SynthManager implements vscode.Disposable {
 
   applySettings(next: SynthSettings): void {
     const backendChanged = next.backend !== this.settings.backend || next.yosysPath !== this.settings.yosysPath;
+    const verilatorChanged = next.verilatorPath !== this.settings.verilatorPath;
     this.settings = next;
+    if (verilatorChanged) {
+      this.verilatorPromise = undefined;
+      void this.locateVerilator();
+    }
     if (backendChanged) {
       this.backend?.dispose();
       this.backend = undefined;
       this.backendPromise = undefined;
       this.version = undefined;
+      this.backendPath = undefined;
       this.cache.clear();
       void this.ensureBackend();
     }
@@ -101,20 +146,27 @@ export class SynthManager implements vscode.Disposable {
   private async createBackend(): Promise<SynthBackend | undefined> {
     const s = this.settings;
     if (s.backend === "native" || s.backend === "auto") {
-      const bin = findYosys(s.yosysPath);
-      if (bin) {
-        const native = new NativeYosysBackend(bin, (m) => log.info(m));
-        const v = await native.version();
-        if (v !== undefined) {
-          this.version = v;
-          log.info(`synthesis backend: native yosys ${v} at ${bin}`);
-          return native;
-        }
-        log.warn(`native yosys at ${bin} did not answer -V`);
-      } else if (s.backend === "native") {
-        log.warn("rtlLive.synthesisBackend is native but no yosys binary was found; falling back to wasm");
+      // Every candidate is verified with -V (3 s) before use, so a broken binary is skipped.
+      const r = await locateTool("yosys", s.yosysPath, realLookupEnv(), realProbe);
+      this.lookups.yosys = r;
+      for (const line of describeLookup("yosys", r)) log.info(line);
+      if (r.found) {
+        const native = new NativeYosysBackend(r.found.path, (m) => log.info(m));
+        this.version = r.found.version;
+        this.backendPath = r.found.path;
+        log.info(`synthesis backend: native yosys ${this.version ?? "?"} at ${r.found.path}`);
+        return native;
+      }
+      const notice = fallbackMessage(s.backend, r);
+      log.warn(`no usable native yosys (${s.backend === "native" ? "rtlLive.synthesisBackend is native" : "auto"}); falling back to the built-in engine`);
+      if (notice && !this.fallbackNoticeShown) {
+        this.fallbackNoticeShown = true;
+        void vscode.window.showInformationMessage(`RTL Live: ${notice}`, "Show tool paths").then((pick) => {
+          if (pick) void vscode.commands.executeCommand("rtlLive.showToolPaths");
+        });
       }
     }
+    this.backendPath = undefined;
     const wasm = new WasmYosysBackend({ workerPath: this.workerPath, log: (m) => log.info(m) });
     this.warmingUp = true;
     this.stateEmitter.fire();

@@ -2,21 +2,13 @@
 import { spawn, execFile } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, delimiter } from "node:path";
-import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { SynthBackend, SynthRunRequest, SynthRunResult } from "./backend";
+import { findToolSync, realLookupEnv } from "./toolLookup";
 
-const CANDIDATES = ["/opt/homebrew/bin/yosys", "/usr/local/bin/yosys"];
-
+/** First yosys candidate on disk (setting, PATH, common folders), unverified; the manager verifies with locateTool. */
 export function findYosys(configured: string | undefined, env: NodeJS.ProcessEnv = process.env): string | undefined {
-  if (configured && configured.trim() !== "") return configured.trim();
-  for (const c of CANDIDATES) if (existsSync(c)) return c;
-  for (const dir of (env["PATH"] ?? "").split(delimiter)) {
-    if (!dir) continue;
-    const p = join(dir, "yosys");
-    if (existsSync(p)) return p;
-  }
-  return undefined;
+  return findToolSync("yosys", configured, realLookupEnv(env));
 }
 
 export class NativeYosysBackend implements SynthBackend {

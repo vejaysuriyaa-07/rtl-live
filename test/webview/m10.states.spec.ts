@@ -158,3 +158,14 @@ test("bug 21: a ports-only module draws a box with every output hinted", async (
     await page.screenshot({ path: join(ART, `v041-ports-only-${theme}.png`) });
   }
 });
+
+test("v0.5: the badge tooltip names the engine and is never silent about the built-in fallback", async ({ page }) => {
+  await page.goto(`${harness.url}/?theme=light`);
+  await post(page, { type: "status", generation: 0, status: { fidelity: "synthesized", view: "rtl", backend: "wasm", backendVersion: "0.70", message: "ready" } });
+  await expect(page.locator(".badge")).toHaveAttribute("title", /Engine: built-in Yosys 0\.70 \(wasm\)\. Install Yosys or set rtlLive\.yosysPath for faster results\./);
+  await post(page, { type: "status", generation: 0, status: { fidelity: "synthesized", view: "rtl", backend: "native", backendVersion: "0.44", backendPath: "/usr/bin/yosys", message: "ready" } });
+  await expect(page.locator(".badge")).toHaveAttribute("title", /Engine: native Yosys 0\.44 at \/usr\/bin\/yosys\./);
+  await expect(page.locator(".status-text")).toHaveText("ready · native 0.44");
+  await post(page, { type: "status", generation: 0, status: { fidelity: "structural", backend: "off", message: "1 module" } });
+  await expect(page.locator(".badge")).toHaveAttribute("title", /Engine: off \(rtlLive\.synthesisBackend\)\./);
+});

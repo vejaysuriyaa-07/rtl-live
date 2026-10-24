@@ -176,6 +176,7 @@ export class Chrome {
           : s.editing
             ? "The code has a syntax error. Showing what could still be read from it."
             : "Drawn from the code text only, not yet synthesized into gates.";
+    b.title += engineLine(s);
     b.dataset["fidelity"] = s.fidelity;
     this.statusEl.append(b);
     const t = document.createElement("span");
@@ -308,4 +309,13 @@ export function buildLegend(): HTMLElement {
   }
   root.append(list);
   return root;
+}
+
+/** Second tooltip line: which synthesis engine runs and where it came from (never silent about a fallback). */
+export function engineLine(s: StatusInfo): string {
+  const v = s.backendVersion ? ` ${s.backendVersion}` : "";
+  if (s.backend === "native") return `\nEngine: native Yosys${v}${s.backendPath ? ` at ${s.backendPath}` : ""}.`;
+  if (s.backend === "wasm") return `\nEngine: built-in Yosys${v} (wasm). Install Yosys or set rtlLive.yosysPath for faster results.`;
+  if (s.backend === "off") return "\nEngine: off (rtlLive.synthesisBackend).";
+  return "";
 }

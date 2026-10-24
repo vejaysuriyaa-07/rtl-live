@@ -15,6 +15,8 @@ export interface RtlLiveTestApi {
   nextRender(predicate?: (ev: RenderEvent) => boolean, timeoutMs?: number): Promise<RenderEvent>;
   /** Milliseconds spent inside activate() */
   activationMs: number;
+  /** The last few hundred lines of the output channel */
+  logLines(): string[];
 }
 
 export function activate(context: vscode.ExtensionContext): RtlLiveTestApi {
@@ -41,6 +43,7 @@ export function activate(context: vscode.ExtensionContext): RtlLiveTestApi {
     vscode.commands.registerCommand("rtlLive.exportSvg", () => provider.post({ type: "export", generation: 0, format: "svg" })),
     vscode.commands.registerCommand("rtlLive.exportPng", () => provider.post({ type: "export", generation: 0, format: "png" })),
     vscode.commands.registerCommand("rtlLive.selectTop", () => void ctl.selectTopInteractively()),
+    vscode.commands.registerCommand("rtlLive.showToolPaths", () => ctl.showToolPaths()),
   );
 
   const activationMs = performance.now() - t0;
@@ -50,6 +53,7 @@ export function activate(context: vscode.ExtensionContext): RtlLiveTestApi {
     provider,
     controller: ctl,
     activationMs,
+    logLines: () => log.recent(),
     whenResolved: () =>
       provider.resolvedCount > 0
         ? Promise.resolve()

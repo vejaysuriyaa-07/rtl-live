@@ -16,6 +16,8 @@ export interface StatusInfo {
   editing?: boolean;
   backend: "native" | "wasm" | "off" | "none";
   backendVersion?: string;
+  /** Native engine binary, when the backend is native */
+  backendPath?: string;
   warmingUp?: boolean;
   message?: string;
 }

@@ -81,6 +81,11 @@
         "command": "rtlLive.showLog",
         "title": "Show Log",
         "category": "RTL Live"
+      },
+      {
+        "command": "rtlLive.showToolPaths",
+        "title": "Show Tool Paths",
+        "category": "RTL Live"
       }
     ],
     "menus": {
@@ -114,6 +119,11 @@
           "command": "rtlLive.showLog",
           "when": "view == rtlLive.schematic",
           "group": "2_debug@1"
+        },
+        {
+          "command": "rtlLive.showToolPaths",
+          "when": "view == rtlLive.schematic",
+          "group": "2_debug@2"
         }
       ]
     },
@@ -146,7 +156,12 @@
         "rtlLive.yosysPath": {
           "type": "string",
           "default": "",
-          "description": "Path to a native yosys binary. Empty means search /opt/homebrew/bin, /usr/local/bin and PATH."
+          "description": "Path to a native yosys binary (yosys.exe on Windows). Empty searches PATH, then /opt/homebrew/bin, /usr/local/bin, /usr/bin, ~/.local/bin and an oss-cad-suite/bin folder. A binary is only used when it answers yosys -V. Without one the built-in engine runs."
+        },
+        "rtlLive.verilatorPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a verilator binary, used to sharpen error messages when rtlLive.lintWithVerilator is on. Empty searches PATH and the same common folders as rtlLive.yosysPath."
         },
         "rtlLive.yosysExtraPasses": {
           "type": "string",

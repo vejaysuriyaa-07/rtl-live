@@ -12,7 +12,7 @@ import { Scheduler, type StructuralJob, type SynthJob } from "./scheduler";
 import type { SchematicViewProvider } from "./schematicView";
 import { readSynthSettings, SynthManager } from "./synthManager";
 import type { SynthView } from "../synth/script";
-import { findVerilator, verilatorLint } from "./verilatorLint";
+import { verilatorLint } from "./verilatorLint";
 import { friendlyVerilatorMessage } from "../structural/errorMessages";
 
 export interface RenderEvent {
@@ -295,6 +295,13 @@ export class Controller implements vscode.Disposable {
     }
   }
 
+  /** "RTL Live: Show Tool Paths": where yosys and verilator were found, and which engine runs. */
+  showToolPaths(): void {
+    log.info("tool paths:");
+    for (const line of this.synth.toolReport()) log.info(`  ${line}`);
+    log.show();
+  }
+
   async selectTopInteractively(): Promise<void> {
     const names = this.lastRender?.doc.moduleNames ?? [];
     if (names.length === 0) {
@@ -316,6 +323,7 @@ export class Controller implements vscode.Disposable {
       view: this.activeView,
       backend: this.synth.backendName,
       ...(this.synth.version !== undefined ? { backendVersion: this.synth.version } : {}),
+      ...(this.synth.backendPath !== undefined ? { backendPath: this.synth.backendPath } : {}),
       warmingUp: this.synth.warmingUp,
     };
     this.provider.post({ type: "status", generation: gen, status: this.status });
@@ -390,7 +398,7 @@ export class Controller implements vscode.Disposable {
   private scheduleLint(job: StructuralJob, top: string, current: BannerError): void {
     this.cancelLint();
     if (!this.synth.currentSettings.lintWithVerilator) return;
-    const binary = findVerilator();
+    const binary = this.synth.verilatorPath;
     if (!binary) return;
     this.lintTimer = setTimeout(() => {
       this.lintTimer = undefined;
@@ -455,7 +463,7 @@ export class Controller implements vscode.Disposable {
       } else {
         let err: BannerError = { message: res.error?.message ?? "synthesis failed", ...(res.error?.line !== undefined ? { line: res.error.line } : {}), ...(res.error?.column !== undefined ? { column: res.error.column } : {}), file: baseName(doc.fileName) };
         if (this.synth.currentSettings.lintWithVerilator) {
-          const v = findVerilator();
+          const v = this.synth.verilatorPath;
           if (v) {
             const lint = await verilatorLint(v, job.text, res.stubs, structural.top).catch(() => undefined);
             if (lint && this.scheduler.currentGeneration(job.docKey) === job.generation) {

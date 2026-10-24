@@ -2,16 +2,12 @@
 import { execFile } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, delimiter } from "node:path";
-import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { findToolSync, realLookupEnv } from "../synth/toolLookup";
 
-export function findVerilator(env: NodeJS.ProcessEnv = process.env): string | undefined {
-  for (const c of ["/opt/homebrew/bin/verilator", "/usr/local/bin/verilator"]) if (existsSync(c)) return c;
-  for (const dir of (env["PATH"] ?? "").split(delimiter)) {
-    const p = join(dir, "verilator");
-    if (dir && existsSync(p)) return p;
-  }
-  return undefined;
+/** First verilator candidate on disk (setting, PATH, common folders), unverified. */
+export function findVerilator(configured?: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
+  return findToolSync("verilator", configured, realLookupEnv(env));
 }
 
 export interface LintMessage {
