@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0
+
+Cross-platform tool lookup, continuous integration and Marketplace readiness.
+
+- Yosys and Verilator are found the same way on every OS: the setting (`rtlLive.yosysPath`, new `rtlLive.verilatorPath`) first, then every folder on PATH (with `.exe` and the other PATHEXT names on Windows), then the common install folders (`/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`, `~/.local/bin`, an `oss-cad-suite/bin`). A binary is used only after it answers its version flag within 3 seconds, so a broken one is skipped and the next is tried. Tools are always started with an argument list, never a shell string.
+- Never silent about the engine: the status badge tooltip names it ("native Yosys 0.44 at /usr/bin/yosys" or "built-in Yosys (wasm)"), the output channel logs every lookup, and the first fall back to the built-in engine shows a one-time notice with a "Show tool paths" button. New command "RTL Live: Show Tool Paths" prints what was found, where, what was skipped and why, and the engine in use.
+- CI: `.github/workflows/ci.yml` runs build, typecheck, lint, the unit, golden and accuracy suites on the built-in engine, the webview suite and the integration suite on Ubuntu, macOS and Windows, plus the native Yosys suite on Ubuntu, and uploads the packaged vsix. `.gitattributes` keeps every text file LF on Windows checkouts (fixture positions depend on it). Scripts resolve their folder with `fileURLToPath` so they run on Windows; the packaged test unzips with PowerShell there. The accuracy suite skips the equivalence level when Icarus Verilog is not installed instead of failing.
+- Marketplace readiness: repository, bugs and homepage links, categories, keywords, gallery banner and the preview flag in package.json; README rewritten for new users with a hero screenshot, features, settings, limitations, privacy and troubleshooting. Not published; see NOTES.md for the checklist.
+
 ## 0.4.1
 
 Three small fixes from docs/BUGS.md (items 21 to 23).

@@ -1,10 +1,23 @@
 {
   "name": "rtl-live",
   "displayName": "RTL Live",
-  "description": "Live Verilog schematic viewer in the sidebar. Structural view updates as you type; gate-level view via Yosys.",
-  "version": "0.4.1",
+  "description": "Live Verilog schematic in the sidebar: the diagram updates as you type, with gate-level views from Yosys and a legend that explains every symbol.",
+  "version": "0.5.0",
   "publisher": "vejaysuriyaa",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vejaysuriyaa-07/rtl-live.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vejaysuriyaa-07/rtl-live/issues"
+  },
+  "homepage": "https://github.com/vejaysuriyaa-07/rtl-live#readme",
   "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1b2430",
+    "theme": "dark"
+  },
+  "preview": true,
   "license": "MIT",
   "private": true,
   "engines": {
@@ -12,15 +25,21 @@
     "node": ">=22"
   },
   "categories": [
+    "Programming Languages",
     "Visualization",
-    "Programming Languages"
+    "Education"
   ],
   "keywords": [
     "verilog",
+    "systemverilog",
     "schematic",
     "rtl",
+    "hdl",
     "yosys",
-    "hdl"
+    "fpga",
+    "digital design",
+    "netlist",
+    "diagram"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [

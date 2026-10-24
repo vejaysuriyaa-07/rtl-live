@@ -823,3 +823,45 @@ Proof, scoped rerun on the four files with hand-built tests (`artifacts/mutation
 How to rerun: `npm run test:mutation` (full, several hours), or scoped with `npx stryker run --mutate src/ir/cellMap.ts --incremental false` (the CLI has no flag for the report file name; to keep the full report, point a small config that spreads `stryker.config.mjs` and sets `jsonReporter.fileName` at `--configFile`). Survivor summaries: group the json by file and line, non-string mutators first.
 
 Next step: a `case` fixture with duplicate arms for `rtlView.ts`, and a replication fixture pass over `fromYosys.ts`; both are v0.5 candidates, not blockers.
+
+## v0.5 work log (2026-10-23)
+
+Scope: the v0.5.0 brief (cross-platform tool lookup, CI, Marketplace readiness; no publishing). Baseline at `9c8f63c`: unit, golden and accuracy 673 passing (37 files); integration 19; webview 94; packaged 19.
+
+### Part A: tool lookup (`dcf3e5c`)
+
+- `src/synth/toolLookup.ts` is the one place that finds `yosys`, `verilator`, `iverilog` and `vvp`. Order: the setting; every PATH folder (platform delimiter; on Windows `PATHEXT` names with `.exe` first, then the bare name); the common folders (`/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`, `~/.local/bin`, `~/oss-cad-suite/bin`, `/opt/oss-cad-suite/bin`, `~/opt/oss-cad-suite/bin`; on Windows `oss-cad-suite\bin` under `LOCALAPPDATA`, `ProgramFiles`, `C:\` and the home folder). `locateTool` probes each existing candidate with its version flag (3 s, `execFile` with an args array, `windowsHide`) and records every skip with a reason; `.cmd` and `.bat` wrappers are skipped because they need a shell. `findToolSync` is the unverified variant for tests and the bench. The file and process probes are injected, so the unit tests fake Linux, macOS and Windows layouts.
+- `SynthManager` resolves yosys inside `createBackend` and verilator at construction and on a `rtlLive.verilatorPath` change; it keeps both `LookupResult`s, logs each `describeLookup` line, sets `backendPath`, and shows the one-time fallback notice (`fallbackMessage`: only when the setting was `auto` or `native` and nothing usable was found; it names a setting that points nowhere or at a broken binary) with a "Show tool paths" button. The controller reads `synth.verilatorPath` instead of probing the disk at every lint.
+- Visible: `StatusInfo.backendPath`; the badge tooltip gets an "Engine:" line (`engineLine` in chrome.ts); command `rtlLive.showToolPaths` ("RTL Live: Show Tool Paths") prints the report to the output channel (tool lines, skips, the engine in use, platform and PATH folder count) and shows it. `log.recent()` keeps the last 400 lines; `RtlLiveTestApi.logLines()` exposes them.
+- Settings: `rtlLive.verilatorPath` added; `rtlLive.yosysPath` description rewritten.
+- Tests first: `test/unit/toolLookup.test.ts` (10 cases: posix and Windows candidate order, setting over PATH, broken binary skipped with reason, nothing found with the searched list, `.cmd` skipped, version parsing, the notice rules); `m10.states.spec.ts` (tooltip per engine); `m11.tools.test.ts` (the command in VS Code with a bogus `rtlLive.yosysPath`, reported as skipped, engine and platform lines present).
+
+### Part B: CI and cross-platform fixes (`5b990cf`)
+
+- `.github/workflows/ci.yml`: matrix ubuntu-latest, macos-latest, windows-latest; `actions/checkout@v4`, `actions/setup-node@v4` (Node `lts/*`, npm cache); `npm ci`, build, typecheck, lint, `vitest run` with `RTL_LIVE_TEST_BACKEND=wasm`, `playwright install --with-deps chromium`, `playwright test`, `vscode-test` (`xvfb-run -a` on Linux), then on Ubuntu `apt-get install yosys iverilog` and a second `vitest run` with `RTL_LIVE_TEST_BACKEND=native`, then `npm run package` and an artifact upload per OS (plus `artifacts/` and the VS Code logs on failure). Concurrency cancels a superseded run on the same ref.
+- Found and fixed locally: every script and `esbuild.config.mjs` and `test/isolation.mjs` resolved their folder with `new URL(...).pathname`, which is `/C:/...` on Windows; now `fileURLToPath`. `scripts/test-packaged.mjs` unzips with `Expand-Archive` on Windows and starts `npm`/`npx` through the shell there (they are `.cmd` shims; the arguments are fixed strings). `test/accuracy/equivalence.ts` hardcoded `/opt/homebrew/bin/iverilog`; it now uses the shared lookup, and `accuracy.test.ts` records L1 as `skipped` and leaves `|L1` entries out of the known-failure comparison when Icarus is missing (rehearsed with `RTL_LIVE_IVERILOG=off`: 45 passing, every L1 "n/a", baseline still enforced for L2 and L3). Nothing in `src/` used a hardcoded separator.
+- `.gitattributes`: `* text=auto eol=lf` plus binary entries (wasm, png, ttf, tar, vsix, gif, ico). The index already held every text file as LF (`git ls-files --eol`: 358 LF, 12 binary), so no renormalisation and no fixture changed.
+- What to check on the first CI run (the workflow only runs after a push): (1) Windows: `vscode-test` downloading VS Code and launching with the long `--user-data-dir` path; (2) Windows: the Playwright harness server and `tree-sitter` wasm loading under the LF checkout; (3) macOS runner: no Yosys, so the wasm engine's 80 MB cold start must fit the 20 s preload in `synthHelpers` (`timeoutMs: 20_000` per synth); (4) Ubuntu apt Yosys is 0.33 on 24.04: the feature-flag retry for `-noscopeinfo` and `proc -norom` must engage, watch for golden diffs from an older Yosys (if they appear, pin the native run to the OSS CAD Suite nightly instead of apt); (5) the integration suite's VS Code download on three runners doubles the run time; cache `.vscode-test/` with `actions/cache` if it exceeds 15 minutes.
+
+### Part C: Marketplace readiness (release commit)
+
+- package.json: description rewritten, `repository`, `bugs`, `homepage` (GitHub), categories Programming Languages, Visualization, Education; keywords verilog, systemverilog, schematic, rtl, hdl, yosys, fpga, digital design, netlist, diagram; `galleryBanner` `#1b2430` dark; `preview: true`; `engines.vscode` stays `^1.100.0` (May 2025). `private: true` stays: it only stops `npm publish`, `vsce` does not read it.
+- Icon: `media/icon.png` is already a 128 x 128 RGBA PNG (an AND gate on a dark rounded square), readable at 32 px; unchanged.
+- README rewritten for strangers: hero screenshot (`media/screenshots/7458.png`, served from the repository once it is public because `repository` is set), two-sentence pitch, install table per OS (Homebrew, apt, OSS CAD Suite), the lookup order, features, settings, known limitations, privacy, troubleshooting, architecture, development, CI badge at the top.
+- `vsce ls` lists 20 files: the four docs, package.json, the two icons and the 13 `dist/` bundles and assets; nothing else ships. `npm run package` finished with no warnings: `rtl-live-0.5.0.vsix`, 22 files, 17.52 MB.
+
+### How to publish (user steps, nothing done here)
+
+1. Push `main` to GitHub so the README images and the CI badge resolve.
+2. Create a publisher at https://marketplace.visualstudio.com/manage with the id `vejaysuriyaa` (the `publisher` field), signed in with the Microsoft account you want to own the listing.
+3. Upload `rtl-live-0.5.0.vsix` on the management page ("New extension", "Visual Studio Code"), or run `npx vsce publish` after `npx vsce login vejaysuriyaa` with a Personal Access Token (Azure DevOps, scope "Marketplace: Manage"). Keep the token out of the repository.
+4. The listing shows the README, the icon and the gallery banner; `preview: true` adds the Preview tag. Remove it when the first feedback round is in.
+5. After publishing, replace the install line in README with the Marketplace link and tag the release (`git tag v0.5.0`).
+
+### Release
+
+- Commits: `dcf3e5c` feat(tools); `5b990cf` ci; release commit with version 0.5.0, CHANGELOG, README, the `RTL_LIVE_IVERILOG=off` rehearsal switch in `equivalence.ts`, and this log.
+- Gates on the final tree: unit, golden and accuracy 685 passing (38 files), also green with `RTL_LIVE_TEST_BACKEND=wasm` and with Icarus hidden; integration 20 (M11 is new); webview 96; packaged 20 against the vsix; typecheck and lint clean; hygiene check passed; no existing file under `test/fixtures/` changed; nothing pushed, no account or token touched.
+- Installed with the bundled CLI of `~/Applications/Visual Studio Code.app`; `--list-extensions --show-versions` prints `vejaysuriyaa.rtl-live@0.5.0`. Running windows need "Developer: Reload Window".
+
+Next step: push `main`, watch the first CI run on the three runners against the list in Part B, then follow "How to publish" above.

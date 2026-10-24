@@ -27,11 +27,13 @@ export interface EquivalenceResult {
 
 // Icarus Verilog is found like every other tool: PATH first, then the common folders
 // (test/unit/toolLookup.test.ts); the suite skips L1 when it is not installed.
-export const IVERILOG = findToolSync("iverilog", process.env["RTL_LIVE_IVERILOG"]) ?? "iverilog";
-export const VVP = findToolSync("vvp", process.env["RTL_LIVE_VVP"]) ?? "vvp";
+// RTL_LIVE_IVERILOG=off hides Icarus to rehearse what CI runners without it do.
+const HIDDEN = process.env["RTL_LIVE_IVERILOG"] === "off";
+export const IVERILOG = (HIDDEN ? undefined : findToolSync("iverilog", process.env["RTL_LIVE_IVERILOG"])) ?? "iverilog";
+export const VVP = (HIDDEN ? undefined : findToolSync("vvp", process.env["RTL_LIVE_VVP"])) ?? "vvp";
 
 export function icarusAvailable(): boolean {
-  return existsSync(IVERILOG) && existsSync(VVP);
+  return !HIDDEN && existsSync(IVERILOG) && existsSync(VVP);
 }
 
 /** Deterministic PRNG (mulberry32) so a failure reproduces. */
