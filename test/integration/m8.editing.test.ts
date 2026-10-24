@@ -1,6 +1,6 @@
 import * as assert from "node:assert";
 import * as vscode from "vscode";
-import { getApi, openFixture, withTimeout } from "./util";
+import { fixturePath, getApi, openFixture, withTimeout } from "./util";
 
 function waitFor<T>(what: string, ms: number, probe: () => T | undefined): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -188,5 +188,29 @@ suite("M8 partial headers", () => {
     );
     assert.strictEqual(api.controller.currentStatus.editing, true);
     await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
+  });
+});
+
+suite("v0.4.1 editing", () => {
+  test("bugs 22 and 23: a lone assign without endmodule explains the assign first and keeps the clean ports solid", async function () {
+    this.timeout(60_000);
+    const api = await getApi();
+    await vscode.commands.executeCommand("workbench.view.extension.rtlLive");
+    await withTimeout(api.whenReady(), 10_000, "webview ready");
+    const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(fixturePath("partial", "p11_assign_keyword_only.v")));
+    await vscode.window.showTextDocument(doc);
+    const err = await waitFor("banner", 15_000, () => {
+      const e = api.provider.lastError;
+      return e && e.message.startsWith("assign is incomplete") ? e : undefined;
+    });
+    assert.strictEqual(err.line, 9);
+    assert.strictEqual(err.column, 7);
+    assert.deepStrictEqual(err.more?.map((m) => `${m.line}:${m.column} ${m.message}`), ["9:7 missing endmodule"]);
+    const last = api.provider.lastRenderMessage;
+    assert.ok(last && last.type === "render");
+    const ports = last.doc.modules["top_module"]!.ports;
+    assert.strictEqual(ports.length, 12);
+    assert.deepStrictEqual(ports.filter((p) => p.tentative).map((p) => p.name), [], "a clean header is never ghosted");
+    await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
   });
 });

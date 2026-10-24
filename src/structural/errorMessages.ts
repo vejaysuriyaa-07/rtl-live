@@ -260,6 +260,7 @@ export function describeSyntaxErrors(text: string): SError[] {
     let d = 0;
     let last: Tok = t;
     let terminated = false;
+    let sawEquals = false;
     let j = i + 1;
     for (; j < toks.length; j++) {
       const u = toks[j]!;
@@ -272,7 +273,14 @@ export function describeSyntaxErrors(text: string): SError[] {
         break;
       } else if (d === 0 && (STATEMENT_KEYWORDS.has(u.text) || BLOCK_STOPS.has(u.text))) break;
       else if (d === 0 && startsProc && isIdent(u) && toks[j + 1] !== undefined && (toks[j + 1]!.text === "=" || toks[j + 1]!.text === "<=")) break;
+      if (d === 0 && u.text === "=") sawEquals = true;
       last = u;
+    }
+    // "assign" alone, or "assign y" with no '=': the statement never got to its expression (bug 22).
+    if (t.text === "assign" && !terminated && !sawEquals && d === 0 && (last === t || isIdent(last))) {
+      issues.push({ offset: last.end, message: "assign is incomplete: write assign name = expression;", rank: 0 });
+      i = Math.max(i, j - 1);
+      continue;
     }
     if (terminated) {
       // "assign y = a &;" ends properly but the expression does not.

@@ -58,7 +58,7 @@ describe.each(["tree-sitter", "fallback"] as const)("structural parser: %s", (wh
         const file = parser().parse(text);
         const doc = structuralToIr(file, { sourceUri: name, generation: 1, top: selectTop({ modules: file.modules }) });
         expect(doc.version).toBe(1);
-        if (name.startsWith("p8")) {
+        if (name.startsWith("p8_")) {
           expect(file.modules.length).toBe(0);
           expect(doc.top).toBe("");
           return;
@@ -67,23 +67,23 @@ describe.each(["tree-sitter", "fallback"] as const)("structural parser: %s", (wh
         expect(doc.top).not.toBe("");
         expect(doc.modules[doc.top]).toBeDefined();
         const m = file.modules.find((x) => x.name === doc.top)!;
-        if (name.startsWith("p1")) expect(m.ports.map((p) => p.name)).toEqual(["a", "b"]);
-        if (name.startsWith("p2")) expect(m.ports.map((p) => p.name)).toContain("a");
-        if (name.startsWith("p3")) {
+        if (name.startsWith("p1_")) expect(m.ports.map((p) => p.name)).toEqual(["a", "b"]);
+        if (name.startsWith("p2_")) expect(m.ports.map((p) => p.name)).toContain("a");
+        if (name.startsWith("p3_")) {
           expect(m.ports.map((p) => p.name)).toEqual(["a", "b", "out"]);
           expect(m.assigns.length).toBeLessThanOrEqual(1);
         }
-        if (name.startsWith("p4")) {
+        if (name.startsWith("p4_")) {
           expect(m.ports.map((p) => p.name)).toEqual(["in", "out"]);
           expect(m.assigns.length).toBe(1);
         }
-        if (name.startsWith("p5")) expect(m.ports.map((p) => p.name)).toEqual(["a", "b", "out"]);
-        if (name.startsWith("p6")) {
+        if (name.startsWith("p5_")) expect(m.ports.map((p) => p.name)).toEqual(["a", "b", "out"]);
+        if (name.startsWith("p6_")) {
           expect(m.ports.map((p) => p.name)).toEqual(["clk", "d", "q"]);
           expect(m.always.length).toBe(1);
           expect(m.always[0]!.assigned).toContain("q");
         }
-        if (name.startsWith("p7")) {
+        if (name.startsWith("p7_")) {
           expect(file.modules.map((x) => x.name)).toEqual(["good", "top_module"]);
           expect(doc.top).toBe("top_module");
           expect(file.modules[0]!.ports.map((p) => p.name)).toEqual(["x", "y"]);

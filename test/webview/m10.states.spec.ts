@@ -99,3 +99,17 @@ test("M10: contact sheet of every fixture", async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: Math.min(height + 24, 6000) });
   await page.screenshot({ path: join(ART, "contact-sheet.png") });
 });
+
+test("bug 22: the banner lists the errors after the first one", async ({ page }) => {
+  await page.goto(`${harness.url}/?theme=light`);
+  await postRender(page, goldenDoc("7458"));
+  await post(page, {
+    type: "error",
+    generation: 1,
+    error: { message: "assign is incomplete: write assign name = expression;", line: 8, column: 7, file: "7458.v", more: [{ line: 8, column: 7, message: "missing endmodule" }] },
+  });
+  await expect(page.locator("#banner .banner-text")).toContainText("7458.v:8:7  assign is incomplete: write assign name = expression;");
+  await expect(page.locator("#banner .banner-more")).toHaveText("also: 8:7 missing endmodule");
+  await expect(page.locator("#banner button")).toHaveCount(1);
+  await page.screenshot({ path: join(ART, "m10-error-list.png") });
+});

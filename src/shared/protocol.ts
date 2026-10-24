@@ -25,6 +25,8 @@ export interface BannerError {
   line?: number;
   column?: number;
   message: string;
+  /** The errors after the first one, in source order (bug 22) */
+  more?: { line?: number; column?: number; message: string }[];
 }
 
 /** Advice shown above the diagram with an optional action button (e.g. untitled Plain Text that looks like Verilog). */

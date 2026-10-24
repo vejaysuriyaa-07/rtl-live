@@ -199,6 +199,12 @@ export class Chrome {
     text.className = "banner-text";
     const lead = this.lastFidelity === "stale" ? "Showing the last good diagram. " : "";
     text.textContent = `${lead}${where ? `${where}  ` : ""}${err.message}`;
+    if (err.more && err.more.length > 0) {
+      const more = document.createElement("span");
+      more.className = "banner-more";
+      more.textContent = `also: ${err.more.map((m) => `${m.line !== undefined ? `${m.line}${m.column !== undefined ? `:${m.column}` : ""} ` : ""}${m.message}`).join("; ")}`;
+      text.append(more);
+    }
     this.bannerEl.append(text);
     if (err.line !== undefined) {
       const line = err.line;

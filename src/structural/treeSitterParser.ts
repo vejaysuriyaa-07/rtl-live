@@ -224,6 +224,8 @@ function recoveredPortName(declText: string): string | undefined {
   return name && !RESERVED.has(name) ? name : undefined;
 }
 
+const HEADER_NODE_TYPES = new Set(["module_ansi_header", "module_nonansi_header", "list_of_port_declarations", "list_of_ports"]);
+
 const HEADER_STOP = new Set(["assign", "always", "always_comb", "always_ff", "initial", "wire", "reg", "logic", "localparam", "parameter", "endmodule", "module"]);
 
 /**
@@ -332,6 +334,10 @@ function extractPorts(nodes: TsNode[], span: ModuleSpan, typedefs: Set<string>, 
   let lastDir: PortDirection = "input";
   let lastRange: string | undefined;
   const ansi = nodes.filter((n) => n.type === "ansi_port_declaration");
+  // A broken body wraps the whole module in one ERROR node (bug 23). Ports are only tentative when
+  // the error sits inside the header itself: an ERROR or MISSING node that ends within the header.
+  const headerEnd = Math.max(span.headerNode.endIndex, ...nodes.filter((n) => HEADER_NODE_TYPES.has(n.type)).map((n) => n.endIndex));
+  const headerBroken = nodes.some((n) => n.startIndex < headerEnd && n.endIndex <= headerEnd && (n.type === "ERROR" || (n.isMissing && !isGrammarQuirkMissing(n))));
   for (const a of ansi) {
     const dirNode = firstOfType(a, "port_direction");
     const dir = dirNode ? directionOf(dirNode.text) : undefined;
@@ -342,7 +348,7 @@ function extractPorts(nodes: TsNode[], span: ModuleSpan, typedefs: Set<string>, 
     } else if (dim !== undefined) {
       lastRange = dim;
     }
-    const broken = inErrorContext(a);
+    const broken = a.hasError || (headerBroken && inErrorContext(a));
     const treeName = identName(directChildOfType(a, "port_identifier") ?? firstOfType(a, "port_identifier"));
     const r = parseRange(lastRange);
     // A missing comma makes tree-sitter read "p1c p1d" as type p1c, port p1d. An identifier

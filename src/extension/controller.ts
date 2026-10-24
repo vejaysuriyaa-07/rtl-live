@@ -346,7 +346,10 @@ export class Controller implements vscode.Disposable {
       const st = this.state(job.docKey);
       st.structural = { generation: job.generation, file, top, text: job.text };
       const first = file.errors[0] ?? ir.diagnostics.find((d) => d.severity === "error");
-      const error: BannerError | null = first ? { ...(first.line !== undefined ? { line: first.line } : {}), ...(first.column !== undefined ? { column: first.column } : {}), message: first.message, file: baseName(doc.fileName) } : null;
+      const more = file.errors.slice(1, 4).map((e) => ({ line: e.line, column: e.column, message: e.message }));
+      const error: BannerError | null = first
+        ? { ...(first.line !== undefined ? { line: first.line } : {}), ...(first.column !== undefined ? { column: first.column } : {}), message: first.message, file: baseName(doc.fileName), ...(more.length > 0 ? { more } : {}) }
+        : null;
       if (error) this.scheduleLint(job, top, error);
       else this.cancelLint();
       const synthOn = this.synth.backendName !== "off";

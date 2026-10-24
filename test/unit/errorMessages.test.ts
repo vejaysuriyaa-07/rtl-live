@@ -71,3 +71,22 @@ describe("syntax error messages", () => {
     expect(friendlyVerilatorMessage("syntax error, unexpected end of file")).toBe("unexpected 'end of file'");
   });
 });
+
+describe("bug 22: an unfinished statement beats the missing endmodule", () => {
+  it("a lone assign is explained first, missing endmodule listed second at the same spot", () => {
+    const e = describeSyntaxErrors("module t(input a, output b);\n\nassign\n");
+    expect(e[0]).toEqual({ line: 3, column: 7, message: "assign is incomplete: write assign name = expression;" });
+    expect(e[1]).toEqual({ line: 3, column: 7, message: "missing endmodule" });
+  });
+
+  it("assign with a name but no '=' is incomplete too, and the parser's errors keep that order", () => {
+    const text = "module t(input a, output b);\n  assign b\nendmodule\n";
+    expect(first(text)).toEqual({ line: 2, column: 11, message: "assign is incomplete: write assign name = expression;" });
+    const refined = refineErrors("module t(input a, output b);\n\nassign\n", [{ line: 1, column: 1, message: "syntax error" }]);
+    expect(refined.map((r) => r.message)).toEqual(["assign is incomplete: write assign name = expression;", "missing endmodule"]);
+  });
+
+  it("a complete assign without ';' still says missing ';'", () => {
+    expect(first("module t(input a, output b);\n  assign b = a\nendmodule\n")).toEqual({ line: 2, column: 15, message: "missing ';'" });
+  });
+});

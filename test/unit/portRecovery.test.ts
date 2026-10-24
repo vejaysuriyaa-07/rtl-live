@@ -46,3 +46,29 @@ describe("port recovery", () => {
     expect(failures).toEqual([]);
   });
 });
+
+describe("bug 23: only ports recovered from broken code are ghosted", () => {
+  it("a clean header followed by a broken body keeps every port solid", () => {
+    const text = readFileSync(join(PARTIAL, "p11_assign_keyword_only.v"), "utf8");
+    const file = parser.parse(text);
+    const m = file.modules[0]!;
+    expect(m.ports.map((p) => p.name)).toEqual(["p1a", "p1b", "p1c", "p1d", "p1e", "p1f", "p1y", "p2a", "p2b", "p2c", "p2d", "p2y"]);
+    expect(m.ports.filter((p) => p.tentative).map((p) => p.name)).toEqual([]);
+    expect(file.hasErrors).toBe(true);
+    expect(file.errors.map((e) => `${e.line}:${e.column} ${e.message}`)).toEqual(["9:7 assign is incomplete: write assign name = expression;", "9:7 missing endmodule"]);
+    const doc = structuralToIr(file, { sourceUri: "t", generation: 1, top: "top_module" });
+    expect(doc.modules["top_module"]!.ports.some((p) => p.tentative)).toBe(false);
+  });
+
+  it("a missing endmodule alone ghosts nothing", () => {
+    const file = parser.parse(readFileSync(join(PARTIAL, "p4_missing_endmodule.v"), "utf8"));
+    expect(file.modules[0]!.ports.map((p) => `${p.name}${p.tentative ? "?" : ""}`)).toEqual(["in", "out"]);
+  });
+
+  it("a broken header still ghosts the ports near the break", () => {
+    const file = parser.parse("module t(input a, output b\n  assign b = a;\nendmodule\n");
+    expect(file.modules[0]!.ports.map((p) => `${p.name}${p.tentative ? "?" : ""}`)).toEqual(["a", "b?"]);
+    const two = parser.parse(readFileSync(join(PARTIAL, "p9_two_missing_commas.v"), "utf8"));
+    expect(two.modules[0]!.ports.filter((p) => p.tentative).map((p) => p.name)).toEqual(["p1c", "p1d", "p1e"]);
+  });
+});
