@@ -325,7 +325,9 @@ function clearOfOthersIndexed(seg: Seg, net: string, others: SegIndex): boolean 
   if (vertical) others.eachVerticalBetween(at - CLEARANCE, at + CLEARANCE, parallel);
   else others.eachHorizontalBetween(at - CLEARANCE, at + CLEARANCE, parallel);
   if (!clear) return false;
-  // A perpendicular wire of another net must not pass through either end of the moved leg.
+  // A perpendicular wire of another net must not pass through either end of the moved leg: for a
+  // vertical leg that is a horizontal wire whose y is within CLEARANCE of the end's y and whose x
+  // range reaches the end's x (the axes were swapped before, so arith_compare kept a 4-way).
   for (const end of [seg.a, seg.b]) {
     const endAlong = vertical ? end.y : end.x;
     const endAcross = vertical ? end.x : end.y;
@@ -333,10 +335,10 @@ function clearOfOthersIndexed(seg: Seg, net: string, others: SegIndex): boolean 
       if (!clear || o.net === net) return;
       const oLo = vertical ? Math.min(o.a.x, o.b.x) : Math.min(o.a.y, o.b.y);
       const oHi = vertical ? Math.max(o.a.x, o.b.x) : Math.max(o.a.y, o.b.y);
-      if (endAlong > oLo - CLEARANCE && endAlong < oHi + CLEARANCE) clear = false;
+      if (endAcross > oLo - CLEARANCE && endAcross < oHi + CLEARANCE) clear = false;
     };
-    if (vertical) others.eachHorizontalBetween(endAcross - CLEARANCE, endAcross + CLEARANCE, perpendicular);
-    else others.eachVerticalBetween(endAcross - CLEARANCE, endAcross + CLEARANCE, perpendicular);
+    if (vertical) others.eachHorizontalBetween(endAlong - CLEARANCE, endAlong + CLEARANCE, perpendicular);
+    else others.eachVerticalBetween(endAlong - CLEARANCE, endAlong + CLEARANCE, perpendicular);
     if (!clear) return false;
   }
   return true;

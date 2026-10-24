@@ -7,12 +7,14 @@ in place so it stays under about 2,000 words.
 
 ## Current version and status (2026-10-24)
 
-- Version 0.5.0, release commit `e30d65e`, then `eb1c022` (M11 fixed for runners without Yosys) and the CI fix
-  for runs three and four (OSS CAD Suite Yosys on Ubuntu, integration tests restore text through the API).
-- Gates on the current tree: vitest unit, golden and accuracy 692 passing (40 files), with native Yosys 0.70 and
-  with `RTL_LIVE_TEST_BACKEND=wasm`; also green with Icarus hidden (`RTL_LIVE_IVERILOG=off`); integration 20
-  (also 20 with `RTL_LIVE_YOSYS=off`); webview 96; packaged 20 against the vsix; typecheck and lint clean;
-  hygiene check passed.
+- Version 0.5.0, release commit `e30d65e`, then `eb1c022` (M11 fixed for runners without Yosys), `d13b3e8`
+  (CI: OSS CAD Suite Yosys on Ubuntu, integration tests restore text through the API) and the IR ordering fix
+  (diagram independent of the Yosys build, junction clearance axes). CHANGELOG "Unreleased" lists the
+  user-facing changes since 0.5.0; ship them as 0.5.1 (`/ship 0.5.1`).
+- Gates on the current tree: vitest unit, golden and accuracy 694 passing (40 files) with brew Yosys 0.70+post,
+  with the OSS CAD Suite 0.70+219 and with `RTL_LIVE_TEST_BACKEND=wasm`; also green with Icarus hidden
+  (`RTL_LIVE_IVERILOG=off`); integration 20 (also 20 with `RTL_LIVE_YOSYS=off`); webview 96; packaged 20
+  against the vsix; typecheck and lint clean; hygiene check passed.
 - `rtl-live-0.5.0.vsix` (22 files, 17.5 MB) built and installed in `~/Applications/Visual Studio Code.app`
   (`vejaysuriyaa.rtl-live@0.5.0`). Running windows need "Developer: Reload Window".
 - CI (`.github/workflows/ci.yml`, Ubuntu 24.04, macOS, Windows): run one failed in the accuracy harness without
@@ -21,14 +23,15 @@ in place so it stays under about 2,000 words.
   date tag, with `scripts/check-yosys.mjs` skipping the step with a notice when Yosys is missing or below 0.40).
   Run three also had two M8 timeouts on macOS right after the `undo` command (runs two and four passed); the
   tests now restore text with a `WorkspaceEdit`, a root hook prints the extension log on failure, and the
-  profile logs upload from `RTL_LIVE_IT_ROOT`. Run five needs a push, which only VJ does.
+  profile logs upload from `RTL_LIVE_IT_ROOT`. Run five: macOS and Windows green; Ubuntu native step showed
+  that the IR order followed Yosys's cell names (changed in 0.70+219); fixed in `fromYosys.ts` (see archive,
+  "Fifth CI run"). Run six needs a push, which only VJ does.
 - Not published. Marketplace steps are in the archive under "How to publish" (v0.5 work log).
 
 ## Next step
 
-1. VJ pushes `main`; watch CI run five: "Check the Yosys version (Ubuntu)" prints the OSS CAD Suite Yosys and the
-   native step runs without golden diffs; integration green on all three OSes. If macOS fails again, read the
-   failed test's "RTL Live after ..." dump and the `ud/logs` folder in `artifacts-macos-latest`.
+1. VJ pushes `main`; watch CI run six: all three OSes green, the Ubuntu native step included. If macOS fails
+   again, read the failed test's "RTL Live after ..." dump and the `ud/logs` folder in `artifacts-macos-latest`.
 2. Then follow "How to publish" (archive, v0.5 work log): publisher id `vejaysuriyaa`, upload the vsix or
    `npx vsce publish`, tag `v0.5.0`, replace the README install line with the Marketplace link.
 3. Candidate v0.6 work, in this order: a `case` fixture with duplicate arms (rtlView pmux merging), a replication
@@ -92,8 +95,10 @@ Platform:
   (`window.__rtlLiveTestHooks.posted` collects messages).
 - `SchematicViewProvider` replays the last `render`, `status`, `error` and `theme` message when a webview
   becomes ready, so hide/show and "Open in editor panel" start with the current diagram.
-- Never use Yosys auto-generated cell names as IDs (`stableIds.ts`). Errors are caught at layer boundaries and
-  turned into Diagnostics, never thrown into VS Code.
+- Never use Yosys auto-generated cell names as IDs (`stableIds.ts`), and never let their order through either:
+  `fromYosys.ts` sorts net names, iterates cells in source order and inserts nets ports-first, so the IR and the
+  drawing are the same for every Yosys build (0.70+219 renamed the auto cells, which reordered `write_json`).
+  Errors are caught at layer boundaries and turned into Diagnostics, never thrown into VS Code.
 - `.gitattributes`: `* text=auto eol=lf` plus binary entries; the index was already all LF, no fixture changed.
   Scripts resolve their folder with `fileURLToPath`, never `new URL(...).pathname` (breaks on Windows).
 - Mutation testing: StrykerJS 10 with the vitest runner (`npm run test:mutation`, several hours; scoped runs

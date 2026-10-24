@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The diagram no longer depends on which Yosys build produced the netlist. Yosys 0.70+219 (OSS CAD Suite) renamed its auto-generated cells, which reordered its JSON output and with it the nodes, nets and wire order of the drawing; the netlist reader now orders everything itself (net names alphabetically, cells by source position, nets by port then source position), so the built-in engine and any native Yosys draw the same picture. The golden IR files were regenerated once; their content is unchanged.
+- Fixed a 4-way junction that could survive the junction pass: the clearance test for a slid branch looked up perpendicular wires on the wrong axis and refused a valid slide (seen on arith_compare with the new wire order).
 - "RTL Live: Show Tool Paths" always prints an engine line: "built-in wasm yosys, loading" while the built-in engine reads its 80 MB of bundled files, "not decided yet, looking for yosys" during the lookup, then the engine in use. Before, the report said "not started" for a moment after a settings change, which also made the integration test flaky on machines without a native Yosys.
 - The built-in engine's start-up log says what happens: "built-in yosys: loading bundled files from disk". The runtime's default wording was "fetched", though the files have always been read from disk; a unit test now starts the engine with network access disabled to keep it that way.
 - Development: `RTL_LIVE_YOSYS=off` hides an installed Yosys from the lookup (reported as skipped with that reason), to rehearse what a machine without one does. Same pattern as `RTL_LIVE_IVERILOG=off`.
